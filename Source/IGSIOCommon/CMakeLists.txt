@@ -1,65 +1,35 @@
-PROJECT(vtkVideoIO)
-
-OPTION(VTKVIDEOIO_ENABLE_MKV "Enable mkv reading/writing" ON)
-IF (VTKVIDEOIO_ENABLE_MKV)
-  FIND_PACKAGE(libwebm REQUIRED)
-ENDIF()
-
-ADD_DEFINITIONS(-DVTKVIDEOIO)
+PROJECT(vtkIGSIOCommon)
 
 # --------------------------------------------------------------------------
 # Configure library
 SET(${PROJECT_NAME}_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${vtkIGSIOCommon_INCLUDES}
   CACHE INTERNAL ""
   )
 
 SET(${PROJECT_NAME}_SRCS
-  vtkGenericVideoReader.cxx
-  vtkGenericVideoWriter.cxx
-  #vtkVideoIOFactory.cxx
+  igsioCommon.cxx
+  igsioVideoFrame.cxx
+  igsioTrackedFrame.cxx
+  vtkTrackedFrameList.cxx
   )
 
 SET(${PROJECT_NAME}_HDRS
-  vtkGenericVideoReader.h
-  vtkGenericVideoWriter.h
-  #vtkVideoIOFactory.h
+  igsioCommon.h
+  igsioCommon.txx
+  igsioVideoFrame.h
+  igsioVideoFrame.txx
+  igsioTrackedFrame.h
+  vtkTrackedFrameList.h
   )
 
 SET(${PROJECT_NAME}_LIBS
   vtkCommonCore
-  vtkCommonDataModel
   vtksys
   vtkIOImage
-  vtkIGSIOCommon
+  vtkImagingCore
   )
-
-IF (VTKVIDEOIO_ENABLE_MKV)
-  ADD_DEFINITIONS(-DVTKVIDEOIO_USE_MKV)
-  SET(MKV_SRCS
-    MKV/vtkMKVReader.cxx
-    MKV/vtkMKVWriter.cxx
-    )
-  SET(MKV_HDRS
-    MKV/vtkMKVReader.h
-    MKV/vtkMKVWriter.h
-    MKV/vtkMKVUtil.h
-    )
-
-  LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS
-    ${LIBWEBM_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/MKV
-    )
-  LIST(APPEND ${PROJECT_NAME}_SRCS
-    ${MKV_SRCS}
-    )
-  LIST(APPEND ${PROJECT_NAME}_HDRS
-    ${MKV_HDRS}
-    )
-
-ENDIF()
 
 #-----------------------------------------------------------------------------
 # Create the library
@@ -69,9 +39,6 @@ ELSE()
   ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})
 ENDIF()
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_LIBS})
-IF (VTKVIDEOIO_ENABLE_MKV)
-  TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${LIBWEBM_LIBRARIES})
-ENDIF()
 
 INSTALL(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}
   RUNTIME DESTINATION ${IGSIO_INSTALL_BIN_DIR} COMPONENT RuntimeLibraries
@@ -92,5 +59,5 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} CACHE INTERNAL 
 # --------------------------------------------------------------------------
 # Testing
 IF(BUILD_TESTING)
-  ADD_SUBDIRECTORY(Testing)
+  #ADD_SUBDIRECTORY(Testing)
 ENDIF()

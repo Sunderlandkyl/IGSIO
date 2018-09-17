@@ -19,6 +19,9 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 #ifndef __vtkGenericVideoReader_h
 #define __vtkGenericVideoReader_h
 
+// IGSIOCommon includes
+#include <vtkTrackedFrameList.h>
+
 // std  includes
 #include <map>
 
@@ -36,6 +39,8 @@ class VTKVIDEOIO_EXPORT vtkGenericVideoReader : public vtkObject
 public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
+  virtual bool ReadFile() { return false; };
+
 protected:
   vtkGenericVideoReader();
   virtual ~vtkGenericVideoReader();
@@ -48,8 +53,14 @@ public:
   vtkSetMacro(Filename, std::string);
   vtkGetMacro(Filename, std::string);
 
+  vtkSetMacro(TrackedFrameList, vtkTrackedFrameList*);
+  vtkTrackedFrameList* GetTrackedFrameList() { return this->TrackedFrameList.GetPointer(); };
+
+  static bool CanReadFile(std::string filename);
+
 protected:
   std::string Filename;
+  vtkSmartPointer<vtkTrackedFrameList> TrackedFrameList;
 };
 
 #endif

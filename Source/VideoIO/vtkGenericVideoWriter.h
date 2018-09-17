@@ -19,6 +19,9 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 #ifndef __vtkGenericVideoWriter_h
 #define __vtkGenericVideoWriter_h
 
+// IGSIOCommon includes
+#include <vtkTrackedFrameList.h>
+
 // std  includes
 #include <map>
 
@@ -45,11 +48,20 @@ private:
   void operator=(const vtkGenericVideoWriter&);        // Not implemented
 
 public:
+
+  virtual bool WriteFile() { return false; };
+
   vtkSetMacro(Filename, std::string);
   vtkGetMacro(Filename, std::string);
 
+  vtkSetMacro(TrackedFrameList, vtkTrackedFrameList*);
+  vtkTrackedFrameList* GetTrackedFrameList() { return TrackedFrameList.GetPointer(); };
+
+  static bool CanWriteFile(std::string filename);
+
 protected:
   std::string Filename;
+  vtkSmartPointer<vtkTrackedFrameList> TrackedFrameList;
 };
 
 #endif

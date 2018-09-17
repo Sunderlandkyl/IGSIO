@@ -22,7 +22,6 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 // VTK includes
 #include <vtkNew.h>
 #include <vtksys/CommandLineArguments.hxx>
-#include <vtkPNGWriter.h>
 
 // vtkVideoIO includes
 #include "vtkMKVReader.h"
@@ -55,9 +54,7 @@ int main(int argc, char* argv[])
 
   vtkNew<vtkMKVReader> mkvReader;
   mkvReader->SetFilename(filename);
-  mkvReader->ReadHeader();
-  mkvReader->ReadContents();
-  mkvReader->Close();
+  mkvReader->ReadFile();
 
   vtkMKVUtil::VideoTrackMap videoTracks = mkvReader->GetVideoTracks();
   if (videoTracks.size() < 1)

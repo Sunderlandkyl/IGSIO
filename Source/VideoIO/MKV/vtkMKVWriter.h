@@ -42,17 +42,22 @@ protected:
   virtual ~vtkMKVWriter();
 
 public:
+
+  virtual bool WriteFile();
+
+  static std::string FourCCToCodecId(std::string);
+
   virtual bool WriteHeader();
 
-  virtual int AddVideoTrack(std::string name, std::string encodingFourCC, int width, int height, std::string language="und");
-  virtual int AddMetadataTrack(std::string name, std::string language="und");
+  virtual int AddVideoTrack(std::string name, std::string encodingFourCC, int width, int height, std::string language = "und");
+  virtual int AddMetadataTrack(std::string name, std::string language = "und");
 
   virtual bool WriteEncodedVideoFrame(unsigned char* encodedFrame, uint64_t size, bool frameType, int trackNumber, double timestampSeconds);
   virtual bool WriteMetadata(std::string metadata, int trackNumber, double timestampSeconds = 0.0, double durationSeconds = SECONDS_IN_NANOSECOND);
 
   virtual void Close();
 
-  static std::string FourCCToCodecId(std::string);
+  static bool CanWriteFile(std::string filename);
 
 protected:
   class vtkInternal;

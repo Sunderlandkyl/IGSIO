@@ -44,12 +44,9 @@ protected:
 
 public:
 
-  virtual bool ReadHeader();
-  virtual bool ReadContents();
+  virtual bool ReadFile();
 
   virtual vtkSmartPointer<vtkUnsignedCharArray> GetRawVideoFrame(int videoTrackNumber, unsigned int frameNumber, double &timestampSec, bool &isKeyFrame);
-
-  virtual void Close();
 
   ///
   static std::string CodecIdToFourCC(std::string);
@@ -59,6 +56,13 @@ public:
 
   ///
   vtkMKVUtil::MetadataTrackMap GetMetadataTracks();
+
+  static bool CanReadFile(std::string filename);
+
+protected:
+  virtual bool ReadHeader();
+  virtual bool ReadContents();
+  virtual void Close();
 
 protected:
   class vtkInternal;

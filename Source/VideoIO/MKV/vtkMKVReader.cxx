@@ -28,6 +28,8 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 // vtkVideoIO includes
 #include "vtkMKVReader.h"
 
+#include "igsioTrackedFrame.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkMKVReader);
 
@@ -71,6 +73,105 @@ vtkMKVReader::vtkMKVReader()
 //---------------------------------------------------------------------------
 vtkMKVReader::~vtkMKVReader()
 {
+  delete this->Internal;
+  this->Internal = NULL;
+}
+
+//----------------------------------------------------------------------------
+bool vtkMKVReader::ReadFile()
+{
+  if (!this->TrackedFrameList)
+  {
+    vtkErrorMacro("ReadFile: Tracked frame list not set");
+    return false;
+  }
+  this->TrackedFrameList->Clear();
+
+  if (!this->ReadHeader())
+  {
+    this->Close();
+    return false;
+  }
+
+  if (!this->ReadContents())
+  {
+    this->Close();
+    return false;
+  }
+
+  std::string codec;
+  vtkMKVUtil::VideoTrackMap videoTracks = this->GetVideoTracks();
+  for (vtkMKVUtil::VideoTrackMap::iterator videoTrackIt = videoTracks.begin(); videoTrackIt != videoTracks.end(); ++videoTrackIt)
+  {
+    codec = videoTrackIt->second.Encoding;
+    //this->TrackedFrameList->SetImageName(videoTrackIt->second.Name); // TODO: !!!!
+    //this->TrackedFrameList->SetCodecFourCC(codec);
+    FrameSizeType frameSize;
+    frameSize[0] = videoTrackIt->second.Width;
+    frameSize[1] = videoTrackIt->second.Height;
+    frameSize[2] = 1;
+
+    if (!vtkMKVUtil::UseCompressionFourCC(videoTrackIt->second.Encoding))
+    {
+      // this->TrackedFrameList->SetUseCompression(false); // TODO: !!!!
+    }
+    else
+    {
+      //this->TrackedFrameList->SetUseCompression(true); // TODO: !!!!
+      //this->TrackedFrameList->SetCompressedFrameSize(frameSize); // TODO: !!!!
+    }
+
+    std::vector<vtkMKVUtil::FrameInfo> frames = videoTrackIt->second.Frames;
+    for (std::vector<vtkMKVUtil::FrameInfo>::iterator frameIt = frames.begin(); frameIt != frames.end(); ++frameIt)
+    {
+      // TODO: !!!!
+      // TODO: !!!!
+      // TODO: !!!!
+    //  igsioTrackedFrame trackedFrame;
+    //  trackedFrame.SetTimestamp(frameIt->TimestampSeconds);
+
+    //  igsioVideoFrame videoFrame;
+
+    //  if (!this->TrackedFrameList->GetUseCompression())
+    //  {
+    //    videoFrame.AllocateFrame(frameSize, VTK_UNSIGNED_CHAR, 3); // TODO get from frame (greyscale vs color)
+
+    //    vtkImageData* imageData = videoFrame.GetImage();
+    //    if (imageData && imageData->GetScalarPointer())
+    //    {
+    //      unsigned long size = frameIt->Data->GetSize();
+    //      memcpy(imageData->GetScalarPointer(), frameIt->Data->GetPointer(0), size);
+    //    }
+    //  }
+    //  else
+    //  {
+    //    videoFrame.SetCompressedFrameData(frameIt->Data);
+    //    videoFrame.SetFrameType(frameIt->IsKey ? FRAME_TYPE_IFRAME : FRAME_TYPE_PFRAME); // TODO: handle additional frame types
+    //  }
+    //  trackedFrame.SetImageData(videoFrame);
+    //  this->TrackedFrameList->AddTrackedFrame(&trackedFrame);
+    }
+  }
+
+  vtkMKVUtil::MetadataTrackMap metadataTracks = this->GetMetadataTracks();
+  for (vtkMKVUtil::MetadataTrackMap::iterator metadataTrackIt = metadataTracks.begin(); metadataTrackIt != metadataTracks.end(); ++metadataTrackIt)
+  {
+    for (vtkMKVUtil::FrameInfoList::iterator frameIt = metadataTrackIt->second.Frames.begin(); frameIt != metadataTrackIt->second.Frames.end(); ++frameIt)
+    {
+      for (unsigned int i = 0; i < this->TrackedFrameList->GetNumberOfTrackedFrames(); ++i)
+      {
+        igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(i);
+        if (trackedFrame->GetTimestamp() != frameIt->TimestampSeconds)
+        {
+          continue;
+        }
+        std::string frameField = (char*)frameIt->Data->GetPointer(0);
+        trackedFrame->SetFrameField(metadataTrackIt->second.Name, frameField);
+      }
+    }
+  }
+  this->Close();
+  return true;
 }
 
 //----------------------------------------------------------------------------
@@ -242,8 +343,7 @@ bool vtkMKVReader::ReadContents()
             {
               // TODO: Not all files seem to be encoded with either timestamp or framerate
               // Timestamp hasn't changed and there is no framerate tag, assuming 25 fps
-              // Disabled for now
-              //timestampSeconds = lastTimestamp + (1. / 25.);
+              timestampSeconds = lastTimestamp + (1. / 25.);
             }
           }
 
@@ -259,10 +359,10 @@ bool vtkMKVReader::ReadContents()
         else if (trackType == mkvparser::Track::kMetadata || trackType == mkvparser::Track::kSubtitle)
         {
           vtkMKVUtil::MetadataTrackInfo* metaDataTrack = &this->Internal->MetadataTracks[trackNumber];
-          vtkMKVUtil::FrameInfo frame;
-          frame.Data = bitstream;
-          frame.TimestampSeconds = timestampSeconds;
-          metaDataTrack->Frames.push_back(frame);
+          vtkMKVUtil::FrameInfo frameInfo;
+          frameInfo.Data = bitstream;
+          frameInfo.TimestampSeconds = timestampSeconds;
+          metaDataTrack->Frames.push_back(frameInfo);
         }
       }
 
@@ -339,6 +439,24 @@ void vtkMKVReader::Close()
     this->Internal->EBMLHeader = NULL;
   }
 
+}
+
+//---------------------------------------------------------------------------
+bool vtkMKVReader::CanReadFile(std::string filename)
+{
+  std::string extension = vtksys::SystemTools::GetFilenameExtension(filename);
+  extension = vtksys::SystemTools::LowerCase(extension);
+
+  if (extension == ".mkv")
+  {
+    return true;
+  }
+  else if (extension == ".webm")
+  {
+    return true;
+  }
+
+  return false;
 }
 
 //---------------------------------------------------------------------------

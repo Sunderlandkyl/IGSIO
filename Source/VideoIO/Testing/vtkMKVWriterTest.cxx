@@ -61,7 +61,6 @@ int main(int argc, char* argv[])
     std::cerr << "Could not write header!" << std::endl;
     return EXIT_FAILURE;
   }
-
   
   int videoTrackNumber = mkvWriter->AddVideoTrack("Test", "RV24", width, height);
   if (videoTrackNumber < 1)

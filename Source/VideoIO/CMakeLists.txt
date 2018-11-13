@@ -12,17 +12,20 @@ ADD_DEFINITIONS(-DVTKVIDEOIO)
 SET(${PROJECT_NAME}_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${vtkIGSIOCommon_INCLUDES}
   CACHE INTERNAL ""
   )
 
 SET(${PROJECT_NAME}_SRCS
   vtkGenericVideoReader.cxx
   vtkGenericVideoWriter.cxx
+  #vtkVideoIOFactory.cxx
   )
 
 SET(${PROJECT_NAME}_HDRS
   vtkGenericVideoReader.h
   vtkGenericVideoWriter.h
+  #vtkVideoIOFactory.h
   )
 
 SET(${PROJECT_NAME}_LIBS
@@ -30,6 +33,7 @@ SET(${PROJECT_NAME}_LIBS
   vtkCommonDataModel
   vtksys
   vtkIOImage
+  vtkIGSIOCommon
   )
 
 IF (VTKVIDEOIO_ENABLE_MKV)

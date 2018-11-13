@@ -23,30 +23,41 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 #define SECONDS_IN_NANOSECOND 1.0/NANOSECONDS_IN_SECOND
 
 #define VTKVIDEOIO_MKV_UNCOMPRESSED_CODECID "V_UNCOMPRESSED"
+#define VTKVIDEOIO_MKV_VP8_CODECID "V_VP8"
 #define VTKVIDEOIO_MKV_VP9_CODECID "V_VP9"
 #define VTKVIDEOIO_MKV_H264_CODECID "V_H264"
 
 #define VTKVIDEOIO_RGB2_FOURCC "RGB2"
 #define VTKVIDEOIO_RV24_FOURCC "RV24"
 #define VTKVIDEOIO_RGB24_FOURCC "RGB"
+#define VTKVIDEOIO_VP8_FOURCC "VP80"
 #define VTKVIDEOIO_VP9_FOURCC "VP90"
 #define VTKVIDEOIO_H264_FOURCC "H264"
 
+#include "vtkvideoio_export.h"
 class VTKVIDEOIO_EXPORT vtkMKVUtil
 {
 public:
 
   static std::string CodecIdToFourCC(std::string codecId)
   {
-    if (codecId == VTKVIDEOIO_MKV_VP9_CODECID)
+    if (codecId == VTKVIDEOIO_MKV_UNCOMPRESSED_CODECID)
+    {
+      return VTKVIDEOIO_RV24_FOURCC;
+    }
+    else if (codecId == VTKVIDEOIO_MKV_VP9_CODECID)
     {
       return VTKVIDEOIO_VP9_FOURCC;
+    }
+    else if (codecId == VTKVIDEOIO_MKV_VP8_CODECID)
+    {
+      return VTKVIDEOIO_VP8_FOURCC;
     }
     else if (codecId == VTKVIDEOIO_MKV_H264_CODECID)
     {
       return VTKVIDEOIO_H264_FOURCC;
     }
-  
+
     return "";
   };
 
@@ -64,6 +75,10 @@ public:
     {
       return VTKVIDEOIO_MKV_UNCOMPRESSED_CODECID;
     }
+    else if (fourCC == VTKVIDEOIO_VP8_FOURCC)
+    {
+      return VTKVIDEOIO_MKV_VP8_CODECID;
+    }
     else if (fourCC == VTKVIDEOIO_VP9_FOURCC)
     {
       return VTKVIDEOIO_MKV_VP9_CODECID;
@@ -75,12 +90,29 @@ public:
 
     return "";
   };
-  
+
+  // TODO VideoIO util?
+  static bool UseCompressionFourCC(std::string fourCC)
+  {
+    return true;
+    if (fourCC == VTKVIDEOIO_VP9_FOURCC ||
+        fourCC == VTKVIDEOIO_H264_FOURCC )
+    {
+      return true;
+    }
+    return false;
+  };
+
   struct FrameInfo
   {
     vtkSmartPointer<vtkUnsignedCharArray> Data;
     double         TimestampSeconds;
     bool           IsKey;
+    FrameInfo()
+      : Data(NULL)
+      , TimestampSeconds(0.0)
+      , IsKey(false)
+    {};
   };
   typedef std::vector<FrameInfo> FrameInfoList;
   

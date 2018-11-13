@@ -40,7 +40,6 @@ OPTION(COPY_EXTERNAL_LIBS "Copy external libraries to output directory." OFF)
 #-----------------------------------------------------------------------------
 # Specify common external project properties
 #-----------------------------------------------------------------------------
-INCLUDE(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/GenerateExportHeader.cmake)
 INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/IGSIOMacros.cmake)
 
@@ -57,10 +56,22 @@ IF (COPY_EXTERNAL_LIBS)
   CopyLibrariesToDirectory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${VTK_LIBRARIES})
 ENDIF()
 
+OPTION(IGSIO_USE_SYSTEM_ZLIB "Use system zlib" OFF)
+SET(IGSIOZLIB_INCLUDE_DIR "")
+IF(IGSIO_USE_SYSTEM_ZLIB) # setting IGSIOZLib needs to come before processing subdirectories
+  SET(IGSIOZLIB_LIBRARY ${ZLIB_LIBRARY})
+  INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
+  LIST(APPEND IGSIOZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIR} CACHE INTERNAL "")
+ELSE()
+  SET(IGSIOZLIB_LIBRARY vtkzlib)
+ENDIF()
+
 OPTION(BUILD_TESTING "Enable tests" ON)
 IF(BUILD_TESTING)
   INCLUDE(CTest)
 ENDIF()
+
+ADD_SUBDIRECTORY(Source/IGSIOCommon)
 
 OPTION(BUILD_VTKVIDEOIO "Enable video reading/writing" ON)
 IF(BUILD_VTKVIDEOIO)

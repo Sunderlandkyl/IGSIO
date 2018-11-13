@@ -3,9 +3,7 @@ IF (VTKVIDEOIO_ENABLE_MKV)
 
 SET(VTKVIDEOIO_TEST_DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Data)
 
-#************************************************************************
 #*************************** vtkMKVWriterTest ***************************
-#************************************************************************
 ADD_EXECUTABLE(vtkMKVWriterTest vtkMKVWriterTest.cxx)
 SET_TARGET_PROPERTIES(vtkMKVWriterTest PROPERTIES FOLDER Tests)
 TARGET_LINK_LIBRARIES(vtkMKVWriterTest vtkVideoIO)
@@ -21,9 +19,7 @@ ADD_TEST(vtkMKVWriterTest1
   )
 SET_TESTS_PROPERTIES(vtkMKVWriterTest1 PROPERTIES FAIL_REGULAR_EXPRESSION "ERROR;WARNING")
 
-#************************************************************************
 #*************************** vtkMKVReaderTest ***************************
-#************************************************************************
 ADD_EXECUTABLE(vtkMKVReaderTest vtkMKVReaderTest.cxx)
 SET_TARGET_PROPERTIES(vtkMKVReaderTest PROPERTIES FOLDER Tests)
 TARGET_LINK_LIBRARIES(vtkMKVReaderTest vtkVideoIO)

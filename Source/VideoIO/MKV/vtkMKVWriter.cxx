@@ -26,6 +26,8 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 // vtkVideoIO includes
 #include "vtkMKVWriter.h"
 
+#include "igsioTrackedFrame.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkMKVWriter);
 
@@ -72,6 +74,82 @@ vtkMKVWriter::~vtkMKVWriter()
 }
 
 //---------------------------------------------------------------------------
+bool vtkMKVWriter::WriteFile()
+{
+  if (!this->TrackedFrameList || this->TrackedFrameList->GetNumberOfTrackedFrames() < 1)
+  {
+    return false;
+  }
+
+  if (!this->WriteHeader())
+  {
+    return false;
+    this->Close();
+  }
+
+  std::string trackName = ""; // TODO: !!!! this->TrackedFrameList->GetImageName();
+
+  FrameSizeType frameSize;
+  this->TrackedFrameList->GetFrameSize(frameSize);
+  // TODO: !!!! this->TrackedFrameList->GetCompressedFrameSize();
+
+  // TODO: !!!!
+  // TODO: !!!!
+  // TODO: !!!!
+  // TODO: !!!!
+
+  //igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(0);
+  //std::map<std::string, std::string> customFields = trackedFrame->GetCustomFields();
+
+  //int videoTrack = this->AddVideoTrack(trackName, this->TrackedFrameList->GetCodecFourCC(), frameSize[0], frameSize[1]);
+  //if (videoTrack < 1)
+  //{
+  //  this->Close();
+  //  return false;
+  //}
+  //this->Internal->MKVWriteSegment->CuesTrack(videoTrack);
+
+  //std::map<std::string, int> metaDataTracks;
+  //for (std::map<std::string, std::string>::iterator fieldIt = customFields.begin(); fieldIt != customFields.end(); ++fieldIt)
+  //{
+  //  metaDataTracks[fieldIt->first] = this->AddMetadataTrack(fieldIt->first);
+  //}
+
+  //double initialTimestamp = -1.0;
+  //for (int i = 0; i < this->TrackedFrameList->GetNumberOfTrackedFrames(); ++i)
+  //{
+  //  igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(i);
+  //  std::map<std::string, std::string> customFields = trackedFrame->GetCustomFields();
+
+  //  double timestamp = trackedFrame->GetTimestamp();
+  //  if (initialTimestamp < 0)
+  //  {
+  //    initialTimestamp = timestamp;
+  //  }
+  //  double currentTimestamp = timestamp - initialTimestamp;
+
+  //  vtkUnsignedCharArray* compressedImage = trackedFrame->GetImageData()->GetCompressedFrameData();
+  //  if (!compressedImage)
+  //  {
+  //    vtkErrorMacro("Error writing video, frame missing!");
+  //    this->Close();
+  //    return false;
+  //  }
+
+  //  unsigned long size = compressedImage->GetSize();
+  //  bool isKeyFrame = trackedFrame->GetImageData()->IsKeyFrame();
+  //  this->WriteEncodedVideoFrame((unsigned char*)compressedImage->GetPointer(0), size, isKeyFrame, videoTrack, currentTimestamp);
+  //  for (std::map<std::string, std::string>::iterator fieldIt = customFields.begin(); fieldIt != customFields.end(); ++fieldIt)
+  //  {
+  //    this->WriteMetadata(fieldIt->second, metaDataTracks[fieldIt->first], currentTimestamp);
+  //  }
+  //}
+
+  //this->Close();
+  return true;
+}
+
+//---------------------------------------------------------------------------
 bool vtkMKVWriter::WriteHeader()
 {
   this->Close();
@@ -98,7 +176,7 @@ bool vtkMKVWriter::WriteHeader()
     vtkErrorMacro("Could not initialize MKV file segment!");
     return false;
   }
-  
+
   return true;
 }
 
@@ -131,7 +209,6 @@ int vtkMKVWriter::AddVideoTrack(std::string name, std::string encodingFourCC, in
 
   this->Internal->MKVWriteSegment->CuesTrack(trackNumber);
 
-  vtkMKVUtil::VideoTrackInfo videoInfo(name, encodingFourCC, width, height, 0.0, false);
   return trackNumber;
 }
 
@@ -204,6 +281,24 @@ void vtkMKVWriter::Close()
     delete this->Internal->MKVWriteSegment;
     this->Internal->MKVWriteSegment = NULL;
   }
+}
+
+//---------------------------------------------------------------------------
+bool vtkMKVWriter::CanWriteFile(std::string filename)
+{
+  std::string extension = vtksys::SystemTools::GetFilenameExtension(filename);
+  extension = vtksys::SystemTools::LowerCase(extension);
+
+  if (extension == ".mkv")
+  {
+    return true;
+  }
+  else if (extension == ".webm")
+  {
+    return true;
+  }
+
+  return false;
 }
 
 //---------------------------------------------------------------------------

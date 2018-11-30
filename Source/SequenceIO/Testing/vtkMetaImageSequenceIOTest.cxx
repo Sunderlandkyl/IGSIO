@@ -279,11 +279,14 @@ int main(int argc, char** argv)
   writerDiffSize->UseCompressionOff();
 
   // We should get an error when trying to write a sequence with different frame sizes into file
+  std::cerr.setstate(std::ios_base::failbit);
   if (writerDiffSize->Write() == IGSIO_SUCCESS)
   {
+    std::cerr.clear();
     std::cerr << "Expect a 'Frame size mismatch' error in vtkIGSIOMetaImageSequenceIO but the operation has been reported to be successful." << std::endl;
     return EXIT_FAILURE;
   }
+  std::cerr.clear();
 
   if (numberOfFailures > 0)
   {

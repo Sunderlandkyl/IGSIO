@@ -70,11 +70,11 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
 #ifdef VTKSEQUENCEIO_ENABLE_MKV
   else if (vtkIGSIOMkvSequenceIO::CanWriteFile(filename))
   {
-//    if (frameList->SaveToMatroskaFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
-//    {
-//      vtkErrorMacro("Unable to save file: " << filename << " as MKV file.");
-//      return IGSIO_FAIL;
-//    }
+    if (frameList->SaveToMatroskaFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
+    {
+      vtkErrorMacro("Unable to save file: " << filename << " as MKV file.");
+      return IGSIO_FAIL;
+    }
   }
 #endif
 
@@ -130,11 +130,11 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
   else if (vtkPlusMkvSequenceIO::CanReadFile(filename))
   {
     // Attempt MKV read
-//    if (frameList->ReadFromMatroskaFile(filename.c_str()) != IGSIO_SUCCESS)
-//    {
-//      vtkErrorMacro("Failed to read video buffer from MKV file: " << filename);
-//      return IGSIO_FAIL;
-//    }
+    if (frameList->ReadFromMatroskaFile(filename.c_str()) != IGSIO_SUCCESS)
+    {
+      vtkErrorMacro("Failed to read video buffer from MKV file: " << filename);
+      return IGSIO_FAIL;
+    }
 
     return IGSIO_SUCCESS;
   }

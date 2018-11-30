@@ -276,11 +276,11 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformStatus(const igsioTransform
 }
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTransformRepository::GetTransform(const igsioTransformName& aTransformName, vtkMatrix4x4* matrix, ToolStatus* toolStatus /*=NULL*/)
+igsioStatus vtkIGSIOTransformRepository::GetTransform(const igsioTransformName& aTransformName, vtkMatrix4x4* matrix, ToolStatus* toolStatus /*=NULL*/) const
 {
   if (!aTransformName.IsValid())
   {
-    vtkErrorMacro("Transform name is invalid");
+    //vtkErrorMacro("Transform name is invalid");
     return IGSIO_FAIL;
   }
 
@@ -479,11 +479,11 @@ igsioStatus vtkIGSIOTransformRepository::GetTransformDate(const igsioTransformNa
 }
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTransformRepository::FindPath(const igsioTransformName& aTransformName, TransformInfoListType& transformInfoList, const char* skipCoordFrameName /*=NULL*/, bool silent /*=false*/)
+igsioStatus vtkIGSIOTransformRepository::FindPath(const igsioTransformName& aTransformName, TransformInfoListType& transformInfoList, const char* skipCoordFrameName /*=NULL*/, bool silent /*=false*/) const
 {
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("vtkIGSIOTransformRepository::FindPath failed: from and to transform names are the same - " << aTransformName.GetTransformName());
+    std::cerr << "vtkIGSIOTransformRepository::FindPath failed: from and to transform names are the same - " << aTransformName.GetTransformName() << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -539,8 +539,8 @@ igsioStatus vtkIGSIOTransformRepository::FindPath(const igsioTransformName& aTra
                               << (transformInfo->second.m_IsPersistent ? "persistent" : "non-persistent") << ")";
       }
     }
-    vtkErrorMacro("Transform path not found from " << aTransformName.From() << " to " << aTransformName.To() << " coordinate system."
-              << " Available transforms in the repository (including the inverse of these transforms): " << osAvailableTransforms.str());
+    std::cerr << "Transform path not found from " << aTransformName.From() << " to " << aTransformName.To() << " coordinate system."
+              << " Available transforms in the repository (including the inverse of these transforms): " << osAvailableTransforms.str() << std::endl;
   }
   return IGSIO_FAIL;
 }

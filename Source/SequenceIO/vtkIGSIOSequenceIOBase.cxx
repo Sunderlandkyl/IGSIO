@@ -71,11 +71,11 @@ igsioStatus vtkIGSIOSequenceIOBase::Read()
 {
   this->TrackedFrameList->Clear();
 
-  //if (this->ReadImageHeader() != IGSIO_SUCCESS)
-  //{
-  //  vtkErrorMacro("Could not load header from file: " << this->FileName);
-  //  return IGSIO_FAIL;
-  //}
+  if (this->ReadImageHeader() != IGSIO_SUCCESS)
+  {
+    vtkErrorMacro("Could not load header from file: " << this->FileName);
+    return IGSIO_FAIL;
+  }
 
   if (this->ReadImagePixels() != IGSIO_SUCCESS)
   {

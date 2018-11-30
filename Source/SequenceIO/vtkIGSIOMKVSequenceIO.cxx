@@ -52,9 +52,10 @@ typedef std::vector<FrameInfo> FrameInfoList;
 struct VideoTrackInfo
 {
   VideoTrackInfo() {}
-  VideoTrackInfo(std::string name, std::string encoding, unsigned long width, unsigned long height, double frameRate, bool isGreyScale)
+  VideoTrackInfo(std::string name, std::string encoding, std::string colourSpace, unsigned long width, unsigned long height, double frameRate, bool isGreyScale)
     : Name(name)
     , Encoding(encoding)
+    , ColourSpace(colourSpace)
     , Width(width)
     , Height(height)
     , FrameRate(frameRate)
@@ -63,11 +64,11 @@ struct VideoTrackInfo
   ~VideoTrackInfo() {}
   std::string Name;
   std::string Encoding;
+  std::string ColourSpace;
   unsigned long Width;
   unsigned long Height;
   double FrameRate;
   bool IsGreyScale;
-  FrameInfoList Frames;
 };
 typedef std::map <int, VideoTrackInfo> VideoTrackMap;
 
@@ -81,7 +82,6 @@ struct MetadataTrackInfo
   {}
   std::string Name;
   std::string Encoding;
-  FrameInfoList Frames;
 };
 typedef std::map <int, MetadataTrackInfo> MetadataTrackMap;
 
@@ -197,7 +197,9 @@ public:
   //
   virtual bool ReadHeader();
   //
-  virtual bool ReadContents();
+  virtual bool ReadVideoData();
+  //
+  virtual bool ReadMetadata();
 
   vtkIGSIOMkvSequenceIO* External;
 
@@ -259,60 +261,18 @@ igsioStatus vtkIGSIOMkvSequenceIO::ReadImageHeader()
 // Read the spacing and dimensions of the image.
 igsioStatus vtkIGSIOMkvSequenceIO::ReadImagePixels()
 {
-  if (!this->Internal->ReadContents())
+  if (!this->Internal->ReadVideoData())
   {
-    vtkErrorMacro("Could not read mkv contents!");
+    vtkErrorMacro("Could not read mkv video!");
     return IGSIO_FAIL;
   }
 
-  int totalFrameNumber = 0;
-  for (VideoTrackMap::iterator videoTrackIt = this->Internal->VideoTracks.begin(); videoTrackIt != this->Internal->VideoTracks.end(); ++videoTrackIt)
+  if (!this->Internal->ReadMetadata())
   {
-    std::string encodingFourCC = videoTrackIt->second.Encoding;
-
-    // If the codec does not require decoding, then it can just be loaded into memory
-    bool requiresDecoding = this->Internal->FourCCRequiresEncoding(encodingFourCC);
-
-    FrameSizeType frameSize = { videoTrackIt->second.Width, videoTrackIt->second.Height, 1 };
-    int frameNumber = 0;
-    for (FrameInfoList::iterator frameIt = videoTrackIt->second.Frames.begin(); frameIt != videoTrackIt->second.Frames.end(); ++frameIt)
-    {
-      this->CreateTrackedFrameIfNonExisting(totalFrameNumber);
-      igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(totalFrameNumber);
-      trackedFrame->GetImageData()->SetImageOrientation(US_IMG_ORIENT_MF); // TODO: save orientation and type
-      trackedFrame->GetImageData()->SetImageType(US_IMG_RGB_COLOR);
-      trackedFrame->SetTimestamp(frameIt->TimestampSeconds);
-      if (!requiresDecoding)
-      {
-        trackedFrame->GetImageData()->AllocateFrame(frameSize, VTK_UNSIGNED_CHAR, 3);
-        unsigned long size = frameIt->Data->GetSize() * frameIt->Data->GetElementComponentSize();
-        memcpy(trackedFrame->GetImageData()->GetImage()->GetScalarPointer(), frameIt->Data->GetPointer(0), size);
-      }
-      else
-      {
-        // TODO: handle compressed trackedframe
-      }
-      ++frameNumber;
-      ++totalFrameNumber;
-    }
+    vtkErrorMacro("Could not read mkv metadata!");
+    return IGSIO_FAIL;
   }
 
-  for (MetadataTrackMap::iterator metadataTrackIt = this->Internal->MetadataTracks.begin(); metadataTrackIt != this->Internal->MetadataTracks.end(); ++metadataTrackIt)
-  {
-    for (FrameInfoList::iterator frameIt = metadataTrackIt->second.Frames.begin(); frameIt != metadataTrackIt->second.Frames.end(); ++frameIt)
-    {
-      for (unsigned int i = 0; i < this->TrackedFrameList->GetNumberOfTrackedFrames(); ++i)
-      {
-        igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(i);
-        if (trackedFrame->GetTimestamp() != frameIt->TimestampSeconds)
-        {
-          continue;
-        }
-        std::string frameField = (char*)frameIt->Data->GetPointer(0);
-        trackedFrame->SetFrameField(metadataTrackIt->second.Name, frameField);
-      }
-    }
-  }
   return IGSIO_SUCCESS;
 }
 
@@ -824,22 +784,18 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadHeader()
         encoding = "Unknown";
       }
 
-      std::string encodingFourCC;
-      if (encoding != VTKSEQUENCEIO_MKV_UNCOMPRESSED_CODECID)
+      std::string encodingFourCC = this->CodecIdToFourCC(encoding);
+      std::string colourSpace;
+      if (videoTrack->GetColourSpace())
       {
-        encodingFourCC = this->CodecIdToFourCC(encoding);
-      }
-      else if (videoTrack->GetColourSpace())
-      {
-        encodingFourCC = videoTrack->GetColourSpace();
+        colourSpace = videoTrack->GetColourSpace();
       }
 
       unsigned long width = videoTrack->GetWidth();
       unsigned long height = videoTrack->GetHeight();
       double frameRate = videoTrack->GetFrameRate();
       bool isGreyScale = false;
-
-      VideoTrackInfo videoTrackInfo(trackName, encodingFourCC, width, height, frameRate, isGreyScale);
+      VideoTrackInfo videoTrackInfo(trackName, encodingFourCC, colourSpace, width, height, frameRate, isGreyScale);
       this->VideoTracks[trackNumber] = videoTrackInfo;
     }
     else if (trackType == mkvparser::Track::kMetadata || trackType == mkvparser::Track::kSubtitle)
@@ -863,13 +819,13 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadHeader()
 }
 
 //----------------------------------------------------------------------------
-bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadContents()
+bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadVideoData()
 {
   const mkvparser::Tracks* tracks = this->MKVReadSegment->GetTracks();
 
   double lastTimestamp = -1;
 
-  unsigned int totalFrameNumber = 0;
+  unsigned int frameNumber = 0;
   const mkvparser::Cluster* cluster = this->MKVReadSegment->GetFirst();
   while (cluster != NULL && !cluster->EOS())
   {
@@ -899,20 +855,16 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadContents()
       }
 
       const int trackType = track->GetType();
-      const int frameCount = block->GetFrameCount();
-      for (int i = 0; i < frameCount; ++i)
+      if (trackType == mkvparser::Track::kVideo)
       {
-        const mkvparser::Block::Frame& frame = block->GetFrame(i);
-        const long size = frame.len;
-        const long long offset = frame.pos;
-
-        vtkSmartPointer<vtkUnsignedCharArray> bitstream = vtkSmartPointer<vtkUnsignedCharArray>::New();
-        bitstream->Allocate(size);
-        frame.Read(this->MKVReader, bitstream->GetPointer(0));
-
-        // Handle video frame
-        if (trackType == mkvparser::Track::kVideo)
+        const int frameCount = block->GetFrameCount();
+        for (int i = 0; i < frameCount; ++i)
         {
+          const mkvparser::Block::Frame& frame = block->GetFrame(i);
+          const long size = frame.len;
+          const long long offset = frame.pos;
+
+          // Handle video frame
           VideoTrackInfo* videoTrack = &this->VideoTracks[trackNumber];
           if (lastTimestamp != -1 && lastTimestamp == timestampSeconds)
           {
@@ -927,26 +879,27 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadContents()
               timestampSeconds = lastTimestamp + (1. / 25.);
             }
           }
+          this->External->CreateTrackedFrameIfNonExisting(frameNumber);
+          igsioTrackedFrame* trackedFrame = this->External->TrackedFrameList->GetTrackedFrame(frameNumber);
+          trackedFrame->GetImageData()->SetImageOrientation(US_IMG_ORIENT_MF); // TODO: save orientation and type
+          trackedFrame->GetImageData()->SetImageType(US_IMG_RGB_COLOR);
+          trackedFrame->SetTimestamp(timestampSeconds);
+          FrameSizeType frameSize = { videoTrack->Width, videoTrack->Height, 1 };
+          if (videoTrack->Encoding.empty())
+          {
+            trackedFrame->GetImageData()->AllocateFrame(frameSize, VTK_UNSIGNED_CHAR, 3);
+            frame.Read(this->MKVReader, (unsigned char*)trackedFrame->GetImageData()->GetImage()->GetScalarPointer());
+          }
+          else
+          {
+            trackedFrame->GetImageData()->AllocateEncodedFrame(size);
+            frame.Read(this->MKVReader, trackedFrame->GetImageData()->GetEncodedFrame()->GetPointer(0));
+          }
 
-          FrameInfo frameInfo;
-          frameInfo.Data = bitstream;
-          frameInfo.TimestampSeconds = timestampSeconds;
-          frameInfo.IsKey = block->IsKey();
-          videoTrack->Frames.push_back(frameInfo);
-
+          ++frameNumber;
           lastTimestamp = timestampSeconds;
-          totalFrameNumber++;
-        }
-        else if (trackType == mkvparser::Track::kMetadata || trackType == mkvparser::Track::kSubtitle)
-        {
-          MetadataTrackInfo* metaDataTrack = &this->MetadataTracks[trackNumber];
-          FrameInfo frameInfo;
-          frameInfo.Data = bitstream;
-          frameInfo.TimestampSeconds = timestampSeconds;
-          metaDataTrack->Frames.push_back(frameInfo);
         }
       }
-
       status = cluster->GetNext(blockEntry, blockEntry);
       if (status < 0)  // error
       {
@@ -958,6 +911,80 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadContents()
     cluster = this->MKVReadSegment->GetNext(cluster);
   }
 
+  return true;
+}
+
+//----------------------------------------------------------------------------
+bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadMetadata()
+{
+  const mkvparser::Tracks* tracks = this->MKVReadSegment->GetTracks();
+
+  double lastTimestamp = -1;
+  const mkvparser::Cluster* cluster = this->MKVReadSegment->GetFirst();
+  while (cluster != NULL && !cluster->EOS())
+  {
+    const long long timeCode = cluster->GetTimeCode();
+    const long long timestampNanoSeconds = cluster->GetTime();
+    // Convert nanoseconds to seconds
+    double timestampSeconds = timestampNanoSeconds / NANOSECONDS_IN_SECOND; // Timestamp of the current cluster in seconds
+
+    const mkvparser::BlockEntry* blockEntry;
+    long status = cluster->GetFirst(blockEntry);
+    if (status < 0)
+    {
+      vtkErrorWithObjectMacro(this->External, "Could not find block!");
+      return false;
+    }
+
+    while (blockEntry != NULL && !blockEntry->EOS())
+    {
+      const mkvparser::Block* block = blockEntry->GetBlock();
+      unsigned long trackNumber = static_cast<unsigned long>(block->GetTrackNumber());
+      const mkvparser::Track* track = tracks->GetTrackByNumber(trackNumber);
+      if (!track)
+      {
+        vtkErrorWithObjectMacro(this->External, "Could not find track!");
+        return false;
+      }
+
+      const int trackType = track->GetType();
+      if (trackType == mkvparser::Track::kMetadata || trackType == mkvparser::Track::kSubtitle)
+      {
+
+
+        const int frameCount = block->GetFrameCount();
+        for (int i = 0; i < frameCount; ++i)
+        {
+          const mkvparser::Block::Frame& frame = block->GetFrame(i);
+          const long size = frame.len;
+          const long long offset = frame.pos;
+
+          MetadataTrackInfo* metaDataTrack = &this->MetadataTracks[trackNumber];
+          for (unsigned int i = 0; i < this->External->TrackedFrameList->GetNumberOfTrackedFrames(); ++i)
+          {
+            igsioTrackedFrame* trackedFrame = this->External->TrackedFrameList->GetTrackedFrame(i);
+            if (trackedFrame->GetTimestamp() != timestampSeconds)
+            {
+              continue;
+            }
+
+            std::string frameField = std::string(frame.len, ' ');
+            frame.Read(this->MKVReader, (unsigned char*)frameField.c_str());
+            trackedFrame->SetFrameField(metaDataTrack->Name, frameField);
+            break;
+          }
+        }
+      }
+      status = cluster->GetNext(blockEntry, blockEntry);
+      if (status < 0)  // error
+      {
+        this->Close();
+        vtkErrorWithObjectMacro(this->External, "Error reading MKV: " << status << "!");
+        return false;
+      }
+    }
+    cluster = this->MKVReadSegment->GetNext(cluster);
+  }
   return true;
 }
 

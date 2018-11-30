@@ -4,24 +4,21 @@
   See License.txt for details.
 =========================================================Plus=header=end*/
 
-//#include "PlusConfigure.h"
-
+// IGSIO includes
 #include "igsioMath.h"
 #include "igsioTrackedFrame.h"
+#include "vtkIGSIOTrackedFrameList.h"
+#include "vtkIGSIOTransformRepository.h"
+
+// VTK includes
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
 #include "vtkObjectFactory.h"
-#include "vtkIGSIOMetaImageSequenceIO.h"
-#include "vtkIGSIONrrdSequenceIO.h"
-#include "vtkIGSIOTrackedFrameList.h"
-#include "vtkIGSIOTransformRepository.h"
-#include "vtkXMLUtilities.h"
 #include "vtksys/SystemTools.hxx"
-#include <math.h>
+#include "vtkXMLUtilities.h"
 
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
-#include <vtkPlusMkvSequenceIO.h>
-#endif
+// std includes
+#include <math.h>
 
 //----------------------------------------------------------------------------
 // ************************* vtkIGSIOTrackedFrameList *****************************
@@ -52,7 +49,7 @@ igsioStatus vtkIGSIOTrackedFrameList::RemoveTrackedFrame(int frameNumber)
 {
   if (frameNumber < 0 || (unsigned int)frameNumber >= this->GetNumberOfTrackedFrames())
   {
-    //**LOG_WARNING("Failed to remove tracked frame from list - invalid frame number: " << frameNumber);
+    vtkWarningMacro("Failed to remove tracked frame from list - invalid frame number: " << frameNumber);
     return IGSIO_FAIL;
   }
 
@@ -67,7 +64,7 @@ igsioStatus vtkIGSIOTrackedFrameList::RemoveTrackedFrameRange(unsigned int frame
 {
   if (frameNumberTo >= this->GetNumberOfTrackedFrames() || frameNumberFrom > frameNumberTo)
   {
-    //**LOG_WARNING("Failed to remove tracked frame from list - invalid frame number range: (" << frameNumberFrom << ", " << frameNumberTo << ")");
+    vtkWarningMacro("Failed to remove tracked frame from list - invalid frame number range: (" << frameNumberFrom << ", " << frameNumberTo << ")");
     return IGSIO_FAIL;
   }
 
@@ -112,7 +109,7 @@ igsioTrackedFrame* vtkIGSIOTrackedFrameList::GetTrackedFrame(int frameNumber)
 {
   if ((unsigned int)frameNumber >= this->GetNumberOfTrackedFrames())
   {
-    //**LOG_ERROR("vtkIGSIOTrackedFrameList::GetTrackedFrame requested a non-existing frame (framenumber=" << frameNumber);
+    vtkErrorMacro("vtkIGSIOTrackedFrameList::GetTrackedFrame requested a non-existing frame (framenumber=" << frameNumber);
     return NULL;
   }
   return this->TrackedFrameList[frameNumber];
@@ -124,7 +121,7 @@ igsioTrackedFrame* vtkIGSIOTrackedFrameList::GetTrackedFrame(unsigned int frameN
 {
   if (frameNumber >= this->GetNumberOfTrackedFrames())
   {
-    //**LOG_ERROR("vtkIGSIOTrackedFrameList::GetTrackedFrame requested a non-existing frame (framenumber=" << frameNumber);
+    vtkErrorMacro("vtkIGSIOTrackedFrameList::GetTrackedFrame requested a non-existing frame (framenumber=" << frameNumber);
     return NULL;
   }
   return this->TrackedFrameList[frameNumber];
@@ -138,7 +135,7 @@ igsioStatus vtkIGSIOTrackedFrameList::AddTrackedFrameList(vtkIGSIOTrackedFrameLi
   {
     if (this->AddTrackedFrame(inTrackedFrameList->GetTrackedFrame(i), action) != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Failed to add tracked frame to the list!");
+      vtkErrorMacro("Failed to add tracked frame to the list!");
       status = IGSIO_FAIL;
       continue;
     }
@@ -161,16 +158,16 @@ igsioStatus vtkIGSIOTrackedFrameList::AddTrackedFrame(igsioTrackedFrame* tracked
     switch (action)
     {
       case ADD_INVALID_FRAME_AND_REPORT_ERROR:
-        //**LOG_ERROR("Validation failed on frame, the frame is added to the list anyway");
+        vtkErrorMacro("Validation failed on frame, the frame is added to the list anyway");
         break;
       case ADD_INVALID_FRAME:
-        //**LOG_DEBUG("Validation failed on frame, the frame is added to the list anyway");
+        vtkDebugMacro("Validation failed on frame, the frame is added to the list anyway");
         break;
       case SKIP_INVALID_FRAME_AND_REPORT_ERROR:
-        //**LOG_ERROR("Validation failed on frame, the frame is ignored");
+        vtkErrorMacro("Validation failed on frame, the frame is ignored");
         return IGSIO_FAIL;
       case SKIP_INVALID_FRAME:
-        //**LOG_DEBUG("Validation failed on frame, the frame is ignored");
+        vtkDebugMacro("Validation failed on frame, the frame is ignored");
         return IGSIO_SUCCESS;
     }
   }
@@ -194,17 +191,17 @@ igsioStatus vtkIGSIOTrackedFrameList::TakeTrackedFrame(igsioTrackedFrame* tracke
     switch (action)
     {
       case ADD_INVALID_FRAME_AND_REPORT_ERROR:
-        //**LOG_ERROR("Validation failed on frame, the frame is added to the list anyway");
+        vtkErrorMacro("Validation failed on frame, the frame is added to the list anyway");
         break;
       case ADD_INVALID_FRAME:
-        //**LOG_DEBUG("Validation failed on frame, the frame is added to the list anyway");
+        vtkDebugMacro("Validation failed on frame, the frame is added to the list anyway");
         break;
       case SKIP_INVALID_FRAME_AND_REPORT_ERROR:
-        //**LOG_ERROR("Validation failed on frame, the frame is ignored");
+        vtkErrorMacro("Validation failed on frame, the frame is ignored");
         delete trackedFrame;
         return IGSIO_FAIL;
       case SKIP_INVALID_FRAME:
-        //**LOG_DEBUG("Validation failed on frame, the frame is ignored");
+        vtkDebugMacro("Validation failed on frame, the frame is ignored");
         delete trackedFrame;
         return IGSIO_SUCCESS;
     }
@@ -229,7 +226,7 @@ bool vtkIGSIOTrackedFrameList::ValidateData(igsioTrackedFrame* trackedFrame)
   {
     if (! this->ValidateTimestamp(trackedFrame))
     {
-      //**LOG_DEBUG("Validation failed - timestamp is not unique: " << trackedFrame->GetTimestamp());
+      vtkDebugMacro("Validation failed - timestamp is not unique: " << trackedFrame->GetTimestamp());
       return false;
     }
   }
@@ -238,7 +235,7 @@ bool vtkIGSIOTrackedFrameList::ValidateData(igsioTrackedFrame* trackedFrame)
   {
     if (! this->ValidateStatus(trackedFrame))
     {
-      //**LOG_DEBUG("Validation failed - tracking status in not OK");
+      vtkDebugMacro("Validation failed - tracking status in not OK");
       return false;
     }
   }
@@ -247,7 +244,7 @@ bool vtkIGSIOTrackedFrameList::ValidateData(igsioTrackedFrame* trackedFrame)
   {
     if (! this->ValidateTransform(trackedFrame))
     {
-      //**LOG_DEBUG("Validation failed - transform is not changed");
+      vtkDebugMacro("Validation failed - transform is not changed");
       return false;
     }
   }
@@ -256,7 +253,7 @@ bool vtkIGSIOTrackedFrameList::ValidateData(igsioTrackedFrame* trackedFrame)
   {
     if (! this->ValidateEncoderPosition(trackedFrame))
     {
-      //**LOG_DEBUG("Validation failed - encoder position is not changed");
+      vtkDebugMacro("Validation failed - encoder position is not changed");
       return false;
     }
   }
@@ -266,7 +263,7 @@ bool vtkIGSIOTrackedFrameList::ValidateData(igsioTrackedFrame* trackedFrame)
   {
     if (! this->ValidateSpeed(trackedFrame))
     {
-      //**LOG_DEBUG("Validation failed - speed is higher than threshold");
+      vtkDebugMacro("Validation failed - speed is higher than threshold");
       return false;
     }
   }
@@ -305,7 +302,7 @@ bool vtkIGSIOTrackedFrameList::ValidateEncoderPosition(igsioTrackedFrame* tracke
                    this->MinRequiredTranslationDifferenceMm, this->MinRequiredAngleDifferenceDeg)) != this->TrackedFrameList.end())
   {
     // We've already inserted this frame
-    //**LOG_DEBUG("Tracked frame encoder position validation result: we've already inserted this frame to container!");
+    vtkDebugMacro("Tracked frame encoder position validation result: we've already inserted this frame to container!");
     return false;
   }
   return true;
@@ -329,7 +326,7 @@ bool vtkIGSIOTrackedFrameList::ValidateTransform(igsioTrackedFrame* trackedFrame
                    this->MinRequiredTranslationDifferenceMm, this->MinRequiredAngleDifferenceDeg)) != this->TrackedFrameList.end())
   {
     // We've already inserted this frame
-    //**LOG_DEBUG("Tracked frame transform validation result: we've already inserted this frame to container!");
+    vtkDebugMacro("Tracked frame transform validation result: we've already inserted this frame to container!");
     return false;
   }
 
@@ -344,7 +341,7 @@ bool vtkIGSIOTrackedFrameList::ValidateStatus(igsioTrackedFrame* trackedFrame)
   bool isValid(false);
   if (repo->GetTransformValid(this->FrameTransformNameForValidation, isValid) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to retrieve transform \'" << this->FrameTransformNameForValidation.GetTransformName() << "\'.");
+    vtkErrorMacro("Unable to retrieve transform \'" << this->FrameTransformNameForValidation.GetTransformName() << "\'.");
   }
   repo->Delete();
 
@@ -380,7 +377,7 @@ bool vtkIGSIOTrackedFrameList::ValidateSpeed(igsioTrackedFrame* trackedFrame)
   {
     std::string strFrameTransformName;
     this->FrameTransformNameForValidation.GetTransformName(strFrameTransformName);
-    //**LOG_ERROR("Unable to get frame transform '" << strFrameTransformName << "' from input tracked frame!");
+    vtkErrorMacro("Unable to get frame transform '" << strFrameTransformName << "' from input tracked frame!");
     return false;
   }
 
@@ -392,7 +389,7 @@ bool vtkIGSIOTrackedFrameList::ValidateSpeed(igsioTrackedFrame* trackedFrame)
   }
   else
   {
-    //**LOG_ERROR("Unable to get default frame transform for latest frame!");
+    vtkErrorMacro("Unable to get default frame transform for latest frame!");
     return false;
   }
 
@@ -403,7 +400,7 @@ bool vtkIGSIOTrackedFrameList::ValidateSpeed(igsioTrackedFrame* trackedFrame)
     double velocityPositionMmPerSec = fabs(diffPosition / diffTimeSec);
     if (velocityPositionMmPerSec > this->MaxAllowedTranslationSpeedMmPerSec)
     {
-      //**LOG_DEBUG("Tracked frame speed validation result: tracked frame position change too fast (VelocityPosition = " << velocityPositionMmPerSec << ">" << this->MaxAllowedTranslationSpeedMmPerSec << " mm/sec)");
+      vtkDebugMacro("Tracked frame speed validation result: tracked frame position change too fast (VelocityPosition = " << velocityPositionMmPerSec << ">" << this->MaxAllowedTranslationSpeedMmPerSec << " mm/sec)");
       return false;
     }
   }
@@ -415,7 +412,7 @@ bool vtkIGSIOTrackedFrameList::ValidateSpeed(igsioTrackedFrame* trackedFrame)
     double velocityOrientationDegPerSec = fabs(diffOrientationDeg / diffTimeSec);
     if (velocityOrientationDegPerSec > this->MaxAllowedRotationSpeedDegPerSec)
     {
-      //**LOG_DEBUG("Tracked frame speed validation result: tracked frame angle change too fast VelocityOrientation = " << velocityOrientationDegPerSec << ">" << this->MaxAllowedRotationSpeedDegPerSec << " deg/sec)");
+      vtkDebugMacro("Tracked frame speed validation result: tracked frame angle change too fast VelocityOrientation = " << velocityOrientationDegPerSec << ">" << this->MaxAllowedRotationSpeedDegPerSec << " deg/sec)");
       return false;
     }
   }
@@ -433,7 +430,7 @@ int vtkIGSIOTrackedFrameList::GetNumberOfBitsPerScalar()
   }
   else
   {
-    //**LOG_WARNING("Unable to get bits per scalar: there is no frame in the tracked frame list!");
+    vtkWarningMacro("Unable to get bits per scalar: there is no frame in the tracked frame list!");
   }
 
   return numberOfBitsPerScalar;
@@ -449,162 +446,10 @@ int vtkIGSIOTrackedFrameList::GetNumberOfBitsPerPixel()
   }
   else
   {
-    //**LOG_WARNING("Unable to get bits per pixel: there is no frame in the tracked frame list!");
+    vtkWarningMacro("Unable to get bits per pixel: there is no frame in the tracked frame list!");
   }
 
   return numberOfBitsPerPixel;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::SaveToSequenceMetafile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*=true*/, bool enableImageDataWrite /*=true*/)
-{
-  vtkSmartPointer<vtkIGSIOMetaImageSequenceIO> writer = vtkSmartPointer<vtkIGSIOMetaImageSequenceIO>::New();
-  writer->SetUseCompression(useCompression);
-  writer->SetFileName(filename);
-  writer->SetImageOrientationInFile(orientationInFile);
-  writer->SetTrackedFrameList(this);
-  writer->SetEnableImageDataWrite(enableImageDataWrite);
-  if (this->GetNumberOfTrackedFrames() == 1)
-  {
-    writer->IsDataTimeSeriesOff();
-  }
-  if (writer->Write() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't write sequence metafile: " <<  filename);
-    return IGSIO_FAIL;
-  }
-  return IGSIO_SUCCESS;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::ReadFromSequenceMetafile(const std::string& trackedSequenceDataFileName)
-{
-  std::string trackedSequenceDataFilePath = trackedSequenceDataFileName;
-
-  // If file is not found in the current directory then try to find it in the image directory, too
-  if (!vtksys::SystemTools::FileExists(trackedSequenceDataFilePath.c_str(), true))
-  {
-    //if (vtkPlusConfig::GetInstance()->FindImagePath(trackedSequenceDataFileName, trackedSequenceDataFilePath) == IGSIO_FAIL)
-    //{
-      //**LOG_ERROR("Cannot find sequence metafile: " << trackedSequenceDataFileName);
-      return IGSIO_FAIL;
-    //}
-  }
-
-  vtkSmartPointer<vtkIGSIOMetaImageSequenceIO> reader = vtkSmartPointer<vtkIGSIOMetaImageSequenceIO>::New();
-  reader->SetFileName(trackedSequenceDataFilePath.c_str());
-  reader->SetTrackedFrameList(this);
-  if (reader->Read() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't read sequence metafile: " <<  trackedSequenceDataFileName);
-    return IGSIO_FAIL;
-  }
-
-  return IGSIO_SUCCESS;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::SaveToNrrdFile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*= true*/, bool enableImageDataWrite /*= true*/)
-{
-  vtkSmartPointer<vtkIGSIONrrdSequenceIO> writer = vtkSmartPointer<vtkIGSIONrrdSequenceIO>::New();
-  writer->SetUseCompression(useCompression);
-  writer->SetFileName(filename);
-  writer->SetImageOrientationInFile(orientationInFile);
-  writer->SetTrackedFrameList(this);
-  writer->SetEnableImageDataWrite(enableImageDataWrite);
-  if (this->GetNumberOfTrackedFrames() == 1)
-  {
-    writer->IsDataTimeSeriesOff();
-  }
-  if (writer->Write() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't write Nrrd file: " <<  filename);
-    return IGSIO_FAIL;
-  }
-  return IGSIO_SUCCESS;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::ReadFromNrrdFile(const std::string& trackedSequenceDataFileName)
-{
-  std::string trackedSequenceDataFilePath(trackedSequenceDataFileName);
-
-  // If file is not found in the current directory then try to find it in the image directory, too
-  if (!vtksys::SystemTools::FileExists(trackedSequenceDataFilePath.c_str(), true))
-  {
-    //if (vtkPlusConfig::GetInstance()->FindImagePath(trackedSequenceDataFileName, trackedSequenceDataFilePath) == IGSIO_FAIL)
-    //{
-      //**LOG_ERROR("Cannot find Nrrd file: " << trackedSequenceDataFileName);
-      return IGSIO_FAIL;
-    //}
-  }
-
-  vtkSmartPointer<vtkIGSIONrrdSequenceIO> reader = vtkSmartPointer<vtkIGSIONrrdSequenceIO>::New();
-  reader->SetFileName(trackedSequenceDataFilePath.c_str());
-  reader->SetTrackedFrameList(this);
-  if (reader->Read() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't read Nrrd file: " <<  trackedSequenceDataFileName);
-    return IGSIO_FAIL;
-  }
-  return IGSIO_SUCCESS;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::SaveToMatroskaFile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*= true*/, bool enableImageDataWrite /*= true*/)
-{
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
-  vtkSmartPointer<vtkPlusMkvSequenceIO> writer = vtkSmartPointer<vtkPlusMkvSequenceIO>::New();
-  writer->SetUseCompression(useCompression);
-  writer->SetFileName(filename);
-  writer->SetTrackedFrameList(this);
-  if (writer->Write() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't write MKV file: " << filename);
-    return IGSIO_FAIL;
-  }
-  return IGSIO_SUCCESS;
-#else
-  //**LOG_ERROR(
-  //  "Plus has not been compiled with MKV read/write support. "
-  //  "Configure PlusBuild with PLUS_USE_VTKVIDEOIO_MKV enabled."
-  //  );
-  return IGSIO_FAIL;
-#endif
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOTrackedFrameList::ReadFromMatroskaFile(const std::string& trackedSequenceDataFileName)
-{
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
-  std::string trackedSequenceDataFilePath(trackedSequenceDataFileName);
-
-  // If file is not found in the current directory then try to find it in the image directory, too
-  if (!vtksys::SystemTools::FileExists(trackedSequenceDataFilePath.c_str(), true))
-  {
-    if (vtkPlusConfig::GetInstance()->FindImagePath(trackedSequenceDataFileName, trackedSequenceDataFilePath) == IGSIO_FAIL)
-    {
-      //**LOG_ERROR("Cannot find MKV file: " << trackedSequenceDataFileName);
-      return IGSIO_FAIL;
-    }
-  }
-
-  vtkSmartPointer<vtkPlusMkvSequenceIO> reader = vtkSmartPointer<vtkPlusMkvSequenceIO>::New();
-  reader->SetFileName(trackedSequenceDataFilePath.c_str());
-  reader->SetTrackedFrameList(this);
-  if (reader->Read() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Couldn't read MKV file: " << trackedSequenceDataFileName);
-    return IGSIO_FAIL;
-  }
-  return IGSIO_SUCCESS;
-#else
-  //**LOG_ERROR(
-  //  "Plus has not been compiled with MKV read/write support. "
-  //  "Configure PlusBuild with PLUS_USE_VTKVIDEOIO_MKV enabled."
-  //  );
-  return IGSIO_FAIL;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -612,7 +457,7 @@ igsioCommon::VTKScalarPixelType vtkIGSIOTrackedFrameList::GetPixelType()
 {
   if (this->GetNumberOfTrackedFrames() < 1)
   {
-    //**LOG_ERROR("Unable to get pixel type size: there is no frame in the tracked frame list!");
+    vtkErrorMacro("Unable to get pixel type size: there is no frame in the tracked frame list!");
     return VTK_VOID;
   }
 
@@ -624,7 +469,7 @@ igsioCommon::VTKScalarPixelType vtkIGSIOTrackedFrameList::GetPixelType()
     }
   }
 
-  //**LOG_WARNING("There are no valid images in the tracked frame list.");
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
   return VTK_VOID;
 }
 
@@ -633,7 +478,7 @@ int vtkIGSIOTrackedFrameList::GetNumberOfScalarComponents()
 {
   if (this->GetNumberOfTrackedFrames() < 1)
   {
-    //**LOG_ERROR("Unable to get number of scalar components: there is no frame in the tracked frame list!");
+    vtkErrorMacro("Unable to get number of scalar components: there is no frame in the tracked frame list!");
     return 1;
   }
 
@@ -645,7 +490,7 @@ int vtkIGSIOTrackedFrameList::GetNumberOfScalarComponents()
     }
   }
 
-  //**LOG_WARNING("There are no valid images in the tracked frame list.");
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
   return 1;
 }
 
@@ -654,7 +499,7 @@ US_IMAGE_ORIENTATION vtkIGSIOTrackedFrameList::GetImageOrientation()
 {
   if (this->GetNumberOfTrackedFrames() < 1)
   {
-    //**LOG_ERROR("Unable to get image orientation: there is no frame in the tracked frame list!");
+    vtkErrorMacro("Unable to get image orientation: there is no frame in the tracked frame list!");
     return US_IMG_ORIENT_XX;
   }
 
@@ -666,7 +511,7 @@ US_IMAGE_ORIENTATION vtkIGSIOTrackedFrameList::GetImageOrientation()
     }
   }
 
-  //**LOG_WARNING("There are no valid images in the tracked frame list.");
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
   return US_IMG_ORIENT_XX;
 }
 
@@ -675,7 +520,7 @@ US_IMAGE_TYPE vtkIGSIOTrackedFrameList::GetImageType()
 {
   if (this->GetNumberOfTrackedFrames() < 1)
   {
-    //**LOG_ERROR("Unable to get image type: there is no frame in the tracked frame list!");
+    vtkErrorMacro("Unable to get image type: there is no frame in the tracked frame list!");
     return US_IMG_TYPE_XX;
   }
 
@@ -687,7 +532,7 @@ US_IMAGE_TYPE vtkIGSIOTrackedFrameList::GetImageType()
     }
   }
 
-  //**LOG_WARNING("There are no valid images in the tracked frame list.");
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
   return US_IMG_TYPE_XX;
 }
 
@@ -697,7 +542,7 @@ igsioStatus vtkIGSIOTrackedFrameList::GetFrameSize(FrameSizeType& outFrameSize)
 {
   if (this->GetNumberOfTrackedFrames() < 1)
   {
-    //**LOG_ERROR("Unable to get image type: there are no frames in the tracked frame list!");
+    vtkErrorMacro("Unable to get image type: there are no frames in the tracked frame list!");
     return IGSIO_FAIL;
   }
 
@@ -710,7 +555,29 @@ igsioStatus vtkIGSIOTrackedFrameList::GetFrameSize(FrameSizeType& outFrameSize)
     }
   }
 
-  //**LOG_WARNING("There are no valid images in the tracked frame list.");
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
+  return IGSIO_FAIL;
+}
+
+//----------------------------------------------------------------------------
+igsioStatus vtkIGSIOTrackedFrameList::GetEncodingFourCC(std::string& encoding)
+{
+  if (this->GetNumberOfTrackedFrames() < 1)
+  {
+    vtkErrorMacro("Unable to get image type: there are no frames in the tracked frame list!");
+    return IGSIO_FAIL;
+  }
+
+  for (unsigned int i = 0; i < this->GetNumberOfTrackedFrames(); ++i)
+  {
+    if (this->GetTrackedFrame(i)->GetImageData() && this->GetTrackedFrame(i)->GetImageData()->IsImageValid())
+    {
+      encoding = this->GetTrackedFrame(i)->GetEncodingFourCC();
+      return IGSIO_SUCCESS;
+    }
+  }
+
+  vtkWarningMacro("There are no valid images in the tracked frame list.");
   return IGSIO_FAIL;
 }
 
@@ -753,13 +620,13 @@ igsioStatus vtkIGSIOTrackedFrameList::GetCustomTransform(const char* frameTransf
 {
   if (frameTransformName == NULL)
   {
-    //**LOG_ERROR("Invalid frame transform name");
+    vtkErrorMacro("Invalid frame transform name");
     return IGSIO_FAIL;
   }
   const char* customString = this->GetCustomString(frameTransformName);
   if (customString == NULL)
   {
-    //**LOG_ERROR("Cannot find frame transform " << frameTransformName);
+    vtkErrorMacro("Cannot find frame transform " << frameTransformName);
     return IGSIO_FAIL;
   }
 
@@ -807,7 +674,7 @@ igsioStatus vtkIGSIOTrackedFrameList::SetCustomString(const char* fieldName, con
 {
   if (fieldName == NULL)
   {
-    //**LOG_ERROR("Field name is invalid");
+    vtkErrorMacro("Field name is invalid");
     return IGSIO_FAIL;
   }
   if (fieldValue == NULL)
@@ -824,7 +691,7 @@ igsioStatus vtkIGSIOTrackedFrameList::SetCustomString(const std::string& fieldNa
 {
   if (fieldName.empty())
   {
-    //**LOG_ERROR("Field name is invalid");
+    vtkErrorMacro("Field name is invalid");
     return IGSIO_FAIL;
   }
   if (fieldValue.empty())
@@ -852,13 +719,13 @@ igsioStatus vtkIGSIOTrackedFrameList::GetGlobalTransform(vtkMatrix4x4* globalTra
   const char* offsetStr = GetCustomString("Offset");
   if (offsetStr == NULL)
   {
-    //**LOG_ERROR("Cannot determine global transform, Offset is undefined");
+    vtkErrorMacro("Cannot determine global transform, Offset is undefined");
     return IGSIO_FAIL;
   }
   const char* transformStr = GetCustomString("TransformMatrix");
   if (transformStr == NULL)
   {
-    //**LOG_ERROR("Cannot determine global transform, TransformMatrix is undefined");
+    vtkErrorMacro("Cannot determine global transform, TransformMatrix is undefined");
     return IGSIO_FAIL;
   }
 
@@ -874,7 +741,7 @@ igsioStatus vtkIGSIOTrackedFrameList::GetGlobalTransform(vtkMatrix4x4* globalTra
   }
   if (i < offsetLen)
   {
-    //**LOG_ERROR("Not enough elements in the Offset field (expected " << offsetLen << ", found " << i << ")");
+    vtkErrorMacro("Not enough elements in the Offset field (expected " << offsetLen << ", found " << i << ")");
     return IGSIO_FAIL;
   }
 
@@ -887,7 +754,7 @@ igsioStatus vtkIGSIOTrackedFrameList::GetGlobalTransform(vtkMatrix4x4* globalTra
   }
   if (i < transformLen)
   {
-    //**LOG_ERROR("Not enough elements in the TransformMatrix field (expected " << transformLen << ", found " << i << ")");
+    vtkErrorMacro("Not enough elements in the TransformMatrix field (expected " << transformLen << ", found " << i << ")");
     return IGSIO_FAIL;
   }
 
@@ -933,23 +800,23 @@ igsioStatus vtkIGSIOTrackedFrameList::VerifyProperties(vtkIGSIOTrackedFrameList*
 {
   if (trackedFrameList == NULL)
   {
-    //**LOG_ERROR("vtkIGSIOTrackedFrameList::VerifyProperties failed: tracked frame list is NULL!");
+    vtkErrorWithObjectMacro(trackedFrameList, "vtkIGSIOTrackedFrameList::VerifyProperties failed: tracked frame list is NULL!");
     return IGSIO_FAIL;
   }
   if (trackedFrameList->GetImageOrientation() != expectedOrientation)
   {
-    //**LOG_ERROR("vtkIGSIOTrackedFrameList::VerifyProperties failed: expected image orientation is "
-    //          << igsioVideoFrame::GetStringFromUsImageOrientation(expectedOrientation)
-    //          << ", actual orientation is "
-    //          << igsioVideoFrame::GetStringFromUsImageOrientation(trackedFrameList->GetImageOrientation()));
+    vtkErrorWithObjectMacro(trackedFrameList, "vtkIGSIOTrackedFrameList::VerifyProperties failed: expected image orientation is "
+              << igsioVideoFrame::GetStringFromUsImageOrientation(expectedOrientation)
+              << ", actual orientation is "
+              << igsioVideoFrame::GetStringFromUsImageOrientation(trackedFrameList->GetImageOrientation()));
     return IGSIO_FAIL;
   }
   if (trackedFrameList->GetImageType() != expectedType)
   {
-    //**LOG_ERROR("vtkIGSIOTrackedFrameList::VerifyProperties failed: expected image type is "
-    //          << igsioVideoFrame::GetStringFromUsImageType(expectedType)
-    //          << ", actual type is "
-    //          << igsioVideoFrame::GetStringFromUsImageType(trackedFrameList->GetImageType()));
+    vtkErrorWithObjectMacro(trackedFrameList, "vtkIGSIOTrackedFrameList::VerifyProperties failed: expected image type is "
+              << igsioVideoFrame::GetStringFromUsImageType(expectedType)
+              << ", actual type is "
+              << igsioVideoFrame::GetStringFromUsImageType(trackedFrameList->GetImageType()));
     return IGSIO_FAIL;
   }
 

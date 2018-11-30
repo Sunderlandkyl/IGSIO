@@ -20,53 +20,18 @@
 class igsioXmlUtils
 {
 public:
-  /*! Attempt to read an XML file file from the current directory or the device set configuration file directory */
-  static igsioStatus ReadDeviceSetConfigurationFromFile(vtkXMLDataElement* config, const char* filename)
-  {
-    // TODO: !!!!
-    //if (config == NULL)
-    //{
-    //  //**LOG_ERROR("Reading device set configuration file failed: invalid config input");
-    //  return IGSIO_FAIL;
-    //}
-    //if (filename == NULL)
-    //{
-    //  //**LOG_ERROR("Reading device set configuration file failed: filename is not specified");
-    //  return IGSIO_FAIL;
-    //}
-
-    //std::string filePath = filename;
-    //if (!vtksys::SystemTools::FileExists(filePath.c_str(), true))
-    //{
-    //  filePath = vtkPlusConfig::GetInstance()->GetDeviceSetConfigurationPath(filename);
-    //  if (!vtksys::SystemTools::FileExists(filePath.c_str(), true))
-    //  {
-    //    //**LOG_ERROR("Reading device set configuration file failed: " << filename << " does not exist in the current directory or in " << vtkPlusConfig::GetInstance()->GetDeviceSetConfigurationDirectory());
-    //    return IGSIO_FAIL;
-    //  }
-    //}
-
-    //vtkSmartPointer<vtkXMLDataElement> rootElement = vtkSmartPointer<vtkXMLDataElement>::Take(vtkXMLUtilities::ReadElementFromFile(filePath.c_str()));
-    //if (rootElement == NULL)
-    //{
-    //  //**LOG_ERROR("Reading device set configuration file failed: syntax error in " << filename);
-    //  return IGSIO_FAIL;
-    //}
-    //config->DeepCopy(rootElement);
-    //return PLUS_SUCCESS;
-  }
 
   /*! Get a nested XML element with the specified name. If the element does not exist then create one. */
   static vtkXMLDataElement* GetNestedElementWithName(vtkXMLDataElement* config, const char* elementName)
   {
     if (config == NULL)
     {
-      //**LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: config is invalid");
+      vtkErrorWithObjectMacro(config, "igsioXmlUtils::GetNestedElementWithName failed: config is invalid");
       return NULL;
     }
     if (elementName == NULL)
     {
-      //**LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: elementName is invalid");
+      vtkErrorWithObjectMacro(config, "igsioXmlUtils::GetNestedElementWithName failed: elementName is invalid");
       return NULL;
     }
     vtkXMLDataElement* nestedElement = config->FindNestedElementWithName(elementName);
@@ -81,7 +46,7 @@ public:
     nestedElement = config->FindNestedElementWithName(elementName);
     if (nestedElement == NULL)
     {
-      //**LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: cannot add nested element with name " << elementName);
+      vtkErrorWithObjectMacro(config, "igsioXmlUtils::GetNestedElementWithName failed: cannot add nested element with name " << elementName);
     }
     return nestedElement;
   }
@@ -90,7 +55,7 @@ public:
 #define XML_FIND_NESTED_ELEMENT_OPTIONAL(destinationXmlElementVar, rootXmlElementVar, nestedXmlElementName) \
   if (rootXmlElementVar == NULL) \
   { \
-    //**LOG_ERROR("Invalid device set configuration found while looking for optional " << nestedXmlElementName << " element"); \
+    vtkErrorMacro("Invalid device set configuration found while looking for optional " << nestedXmlElementName << " element"); \
     return IGSIO_FAIL; \
   } \
   vtkXMLDataElement* destinationXmlElementVar = rootXmlElementVar->FindNestedElementWithName(nestedXmlElementName);
@@ -98,38 +63,38 @@ public:
 #define XML_FIND_NESTED_ELEMENT_REQUIRED(destinationXmlElementVar, rootXmlElementVar, nestedXmlElementName) \
   if (rootXmlElementVar == NULL) \
   { \
-    //**LOG_ERROR("Invalid device set configuration: unable to find required " << nestedXmlElementName << " element"); \
+    vtkErrorMacro("Invalid device set configuration: unable to find required " << nestedXmlElementName << " element"); \
     return IGSIO_FAIL; \
   } \
   vtkXMLDataElement* destinationXmlElementVar = rootXmlElementVar->FindNestedElementWithName(nestedXmlElementName);  \
   if (destinationXmlElementVar == NULL)  \
   { \
-    //**LOG_ERROR("Unable to find required " << nestedXmlElementName << " element in device set configuration");  \
+    vtkErrorMacro("Unable to find required " << nestedXmlElementName << " element in device set configuration");  \
     return IGSIO_FAIL; \
   }
 
 #define XML_FIND_NESTED_ELEMENT_CREATE_IF_MISSING(destinationXmlElementVar, rootXmlElementVar, nestedXmlElementName) \
   if (rootXmlElementVar == NULL) \
   { \
-    //**LOG_ERROR("Invalid device set configuration: unable to find required " << nestedXmlElementName << " element"); \
+    vtkErrorMacro("Invalid device set configuration: unable to find required " << nestedXmlElementName << " element"); \
     return IGSIO_FAIL; \
   } \
   vtkXMLDataElement* destinationXmlElementVar = igsioXmlUtils::GetNestedElementWithName(rootXmlElementVar,nestedXmlElementName);  \
   if (destinationXmlElementVar == NULL)  \
   { \
-    //**LOG_ERROR("Unable to find or create " << nestedXmlElementName << " element in device set configuration");  \
+    vtkErrorMacro("Unable to find or create " << nestedXmlElementName << " element in device set configuration");  \
     return IGSIO_FAIL; \
   }
 
 #define XML_VERIFY_ELEMENT(xmlElementVar, expectedXmlElementName) \
   if (xmlElementVar == NULL) \
   { \
-    //**LOG_ERROR("Missing or invalid " << expectedXmlElementName << " element"); \
+    vtkErrorMacro("Missing or invalid " << expectedXmlElementName << " element"); \
     return IGSIO_FAIL; \
   } \
   if ( xmlElementVar->GetName() == NULL || !PlusCommon::IsEqualInsensitive(xmlElementVar->GetName(),expectedXmlElementName))  \
   { \
-    //**LOG_ERROR("Unable to read " << expectedXmlElementName << " element: unexpected name: " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(unspecified)")); \
+    vtkErrorMacro("Unable to read " << expectedXmlElementName << " element: unexpected name: " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(unspecified)")); \
     return IGSIO_FAIL; \
   }
 
@@ -139,7 +104,7 @@ public:
     const char* destinationXmlElementVar = xmlElementVar->GetAttribute(#memberVar);  \
     if (destinationXmlElementVar == NULL)  \
     { \
-      //**LOG_ERROR("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
     this->Set##memberVar(std::string(destinationXmlElementVar));  \
@@ -151,7 +116,7 @@ public:
     const char* destinationXmlElementVar = xmlElementVar->GetAttribute(#varName);  \
     if (destinationXmlElementVar == NULL)  \
     { \
-      //**LOG_ERROR("Unable to find required " << #varName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #varName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
     if (destinationXmlElementVar != NULL)  \
@@ -166,7 +131,7 @@ public:
     const char* destinationXmlElementVar = xmlElementVar->GetAttribute(#memberVar);  \
     if (destinationXmlElementVar == NULL)  \
     { \
-      //**LOG_ERROR("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
     this->Set##memberVar(destinationXmlElementVar);  \
@@ -183,7 +148,7 @@ public:
     } \
     else \
     { \
-      //**LOG_WARNING("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkWarningMacro("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
     } \
   }
 
@@ -220,7 +185,7 @@ public:
     } \
     else \
     { \
-      //**LOG_WARNING("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkWarningMacro("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
     } \
   }
 
@@ -254,7 +219,7 @@ public:
     } \
     else \
     { \
-      //**LOG_WARNING("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkWarningMacro("Unable to find expected " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
     } \
   }
 
@@ -268,7 +233,7 @@ public:
     } \
     else  \
     { \
-      //**LOG_ERROR("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
   }
@@ -293,7 +258,7 @@ public:
     } \
     else  \
     { \
-      //**LOG_ERROR("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
   }
@@ -350,7 +315,7 @@ public:
       } \
       else \
       { \
-        //**LOG_ERROR("Unable to parse " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
+        vtkErrorMacro("Unable to parse " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
         <<" element in device set configuration. Expected exactly " << vectorSize << " values separated by spaces, instead got this: "<< \
         xmlElementVar->GetAttribute(#attributeName));  \
         return IGSIO_FAIL; \
@@ -371,7 +336,7 @@ public:
       } \
       else \
       { \
-        //**LOG_ERROR("Unable to parse " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
+        vtkErrorMacro("Unable to parse " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
         <<" element in device set configuration. Expected exactly " << vectorSize << " values separated by spaces, instead got this: "<< \
         xmlElementVar->GetAttribute(#memberVar));  \
         return IGSIO_FAIL; \
@@ -395,7 +360,7 @@ public:
       } \
       else \
       { \
-        //**LOG_ERROR("Unable to parse " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
+        vtkErrorMacro("Unable to parse " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
         <<" element in device set configuration. Expected exactly " << vectorSize << " values separated by spaces, instead got this: "<< \
         xmlElementVar->GetAttribute(#memberVar));  \
         return IGSIO_FAIL; \
@@ -413,7 +378,7 @@ public:
     } \
     else \
     { \
-      //**LOG_WARNING("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkWarningMacro("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
     } \
   }
 
@@ -427,7 +392,7 @@ public:
     } \
     else \
     { \
-      //**LOG_ERROR("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkErrorMacro("Unable to find required " << #memberVar << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
       return IGSIO_FAIL; \
     } \
   }
@@ -452,7 +417,7 @@ public:
     } \
     else \
     { \
-      //**LOG_WARNING("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
+      vtkWarningMacro("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration");  \
     } \
   }
 
@@ -472,7 +437,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read boolean value from " << #memberVar \
+        vtkWarningMacro("Failed to read boolean value from " << #memberVar \
           <<" attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           <<": expected 'TRUE' or 'FALSE', got '" << strValue << "'"); \
       } \
@@ -495,7 +460,7 @@ public:
         } \
         else  \
         { \
-          //**LOG_WARNING("Failed to read boolean value from " << #attributeName \
+          vtkWarningMacro("Failed to read boolean value from " << #attributeName \
             <<" attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
             <<": expected 'TRUE' or 'FALSE', got '" << strValue << "'"); \
         } \
@@ -518,7 +483,7 @@ public:
         } \
         else  \
         { \
-          //**LOG_ERROR("Failed to read boolean value from " << #attributeName \
+          vtkErrorMacro("Failed to read boolean value from " << #attributeName \
             <<" attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
             <<": expected 'TRUE' or 'FALSE', got '" << strValue << "'"); \
           return IGSIO_FAIL; \
@@ -526,7 +491,7 @@ public:
       } \
       else \
       { \
-        //**LOG_ERROR("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration"); \
+        vtkErrorMacro("Unable to find required " << #attributeName << " attribute in " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") << " element in device set configuration"); \
         return IGSIO_FAIL; \
       } \
     }
@@ -542,7 +507,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read enumerated value from " << #memberVar \
+        vtkWarningMacro("Failed to read enumerated value from " << #memberVar \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "'"); \
       } \
@@ -564,7 +529,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read enumerated value from " << #memberVar \
+        vtkWarningMacro("Failed to read enumerated value from " << #memberVar \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "' or '" << enumString2 << "', got '" << strValue << "'"); \
       } \
@@ -586,7 +551,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read enumerated value from " << #varName \
+        vtkWarningMacro("Failed to read enumerated value from " << #varName \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "' or '" << enumString2 << "', got '" << strValue << "'"); \
       } \
@@ -608,7 +573,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_ERROR("Failed to read enumerated value from " << #varName \
+        vtkErrorMacro("Failed to read enumerated value from " << #varName \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "' or '" << enumString2 << "', got '" << strValue << "'"); \
         return IGSIO_FAIL; \
@@ -635,7 +600,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read enumerated value from " << #memberVar \
+        vtkWarningMacro("Failed to read enumerated value from " << #memberVar \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "', '" << enumString2 << "', or '" << enumString3 << "', got '" << strValue << "'"); \
       } \
@@ -665,7 +630,7 @@ public:
       } \
       else  \
       { \
-        //**LOG_WARNING("Failed to read enumerated value from " << #memberVar \
+        vtkWarningMacro("Failed to read enumerated value from " << #memberVar \
           << " attribute of element " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(undefined)") \
           << ": expected '" << enumString1 << "', '" << enumString2 << "', '" << enumString3 << "', or '" << enumString4 << "', got '" << strValue << "'"); \
       } \
@@ -701,7 +666,7 @@ public:
           } \
           ss << "'" << numberToStringConverter(value) << "'";  \
         } \
-        \ //**LOG_WARNING(ss.str()); \
+        \ vtkWarningMacro(ss.str()); \
       } \
     } \
   }
@@ -773,7 +738,7 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      //**LOG_WARNING("Use of " << #memberVar << " is deprecated. Use " << #newMemberVar << " instead."); \
+      vtkWarningMacro("Use of " << #memberVar << " is deprecated. Use " << #newMemberVar << " instead."); \
     } \
   }
 

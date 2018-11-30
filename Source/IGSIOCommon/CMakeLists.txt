@@ -18,11 +18,6 @@ SET(${PROJECT_NAME}_SRCS
   vtkIGSIOTrackedFrameList.cxx
   vtkIGSIOTransformRepository.cxx
   vtkIGSIORecursiveCriticalSection.cxx
-  IO/vtkIGSIOSequenceIO.cxx
-  IO/vtkIGSIOSequenceIOBase.cxx
-  IO/vtkIGSIOMetaImageSequenceIO.cxx
-  IO/vtkIGSIONrrdSequenceIO.cxx
-  #IO/vtkIGSIOMKVSequenceIO.cxx
   )
 
 SET(${PROJECT_NAME}_HDRS
@@ -36,11 +31,6 @@ SET(${PROJECT_NAME}_HDRS
   vtkIGSIOTrackedFrameList.h
   vtkIGSIOTransformRepository.h
   vtkIGSIORecursiveCriticalSection.h
-  IO/vtkIGSIOSequenceIO.h
-  IO/vtkIGSIOSequenceIOBase.h
-  IO/vtkIGSIOMetaImageSequenceIO.h
-  IO/vtkIGSIONrrdSequenceIO.h
-  #IO/vtkIGSIOMKVSequenceIO.cxx
   )
 
 SET(${PROJECT_NAME}_LIBS

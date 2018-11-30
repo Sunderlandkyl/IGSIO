@@ -114,14 +114,14 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //
 //};
 //
-//#define //**LOG_ERROR(msg) \
+//#define vtkErrorMacro(msg) \
 //  { \
 //  std::ostringstream msgStream; \
 //  msgStream << msg << std::ends; \
 //  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_ERROR, msgStream.str().c_str(), __FILE__, __LINE__); \
 //  }
 //
-//#define //**LOG_WARNING(msg) \
+//#define vtkWarningMacro(msg) \
 //  { \
 //  std::ostringstream msgStream; \
 //  msgStream << msg << std::ends; \
@@ -135,7 +135,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_INFO, msgStream.str().c_str(), __FILE__, __LINE__); \
 //  }
 //
-//#define //**LOG_DEBUG(msg) \
+//#define vtkDebugMacro(msg) \
 //  { \
 //  std::ostringstream msgStream; \
 //  msgStream << msg << std::ends; \
@@ -167,7 +167,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  bool result = condition; \
 //  if (logHelper.ShouldWeLog(result)) \
 //  { \
-//    //**LOG_ERROR(msg); \
+//    vtkErrorMacro(msg); \
 //  } \
 //  else \
 //  { \
@@ -188,7 +188,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  bool result = condition; \
 //  if (logHelper.ShouldWeLog(result)) \
 //  { \
-//    //**LOG_ERROR(msg); \
+//    vtkErrorMacro(msg); \
 //  } \
 //  else \
 //  { \
@@ -201,14 +201,14 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  } \
 //  }
 //
-//#define //**LOG_ERROR_W(msg) \
+//#define vtkErrorMacro_W(msg) \
 //  { \
 //  std::wostringstream msgStream; \
 //  msgStream << msg << std::ends; \
 //  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_ERROR, msgStream.str(), __FILE__, __LINE__); \
 //  }
 //
-//#define //**LOG_WARNING_W(msg) \
+//#define vtkWarningMacro_W(msg) \
 //  { \
 //  std::wostringstream msgStream; \
 //  msgStream << msg << std::ends; \
@@ -222,7 +222,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_INFO, msgStream.str(), __FILE__, __LINE__); \
 //  }
 //
-//#define //**LOG_DEBUG_W(msg) \
+//#define vtkDebugMacro_W(msg) \
 //  { \
 //  std::wostringstream msgStream; \
 //  msgStream << msg << std::ends; \
@@ -254,7 +254,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  bool result = condition; \
 //  if (logHelper.ShouldWeLog(result)) \
 //  { \
-//    //**LOG_ERROR_W(msg); \
+//    vtkErrorMacro_W(msg); \
 //  } \
 //  else \
 //  { \
@@ -275,7 +275,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 //  bool result = condition; \
 //  if (logHelper.ShouldWeLog(result)) \
 //  { \
-//    //**LOG_ERROR_W(msg); \
+//    vtkErrorMacro_W(msg); \
 //  } \
 //  else \
 //  { \
@@ -291,7 +291,7 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 ///////////////////////////////////////////////////////////////////
 
 /*!
-  \class PlusLockGuard
+  \class igsioLockGuard
   \brief A class for automatically unlocking objects
 
   This class is used for locking a objects (buffers, mutexes, etc.)
@@ -300,28 +300,28 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 
   Example:
   \code
-  PlusLockGuard<vtkIGSIORecursiveCriticalSection> updateMutexGuardedLock(this->UpdateMutex);
+  igsioLockGuard<vtkIGSIORecursiveCriticalSection> updateMutexGuardedLock(this->UpdateMutex);
   \endcode
 
   \ingroup PlusLibCommon
 */
 template <typename T>
-class PlusLockGuard
+class igsioLockGuard
 {
 public:
-  PlusLockGuard(T* lockableObject)
+  igsioLockGuard(T* lockableObject)
   {
     m_LockableObject = lockableObject;
     m_LockableObject->Lock();
   }
-  ~PlusLockGuard()
+  ~igsioLockGuard()
   {
     m_LockableObject->Unlock();
     m_LockableObject = NULL;
   }
 private:
-  PlusLockGuard(PlusLockGuard&);
-  void operator=(PlusLockGuard&);
+  igsioLockGuard(igsioLockGuard&);
+  void operator=(igsioLockGuard&);
 
   T* m_LockableObject;
 };
@@ -640,7 +640,7 @@ namespace igsioCommon
   igsioTransformName tnImageToProbe;
   if ( tnImageToProbe->SetTransformName("ImageToProbe") != IGSIO_SUCCESS )
   {
-    //**LOG_ERROR("Failed to set transform name!");
+    vtkErrorMacro("Failed to set transform name!");
     return IGSIO_FAIL;
   }
   \endcode
@@ -654,7 +654,7 @@ namespace igsioCommon
   std::string strImageToProbe;
   if ( tnImageToProbe->GetTransformName(strImageToProbe) != IGSIO_SUCCESS )
   {
-    //**LOG_ERROR("Failed to get transform name!");
+    vtkErrorMacro("Failed to get transform name!");
     return IGSIO_FAIL;
   }
   \endcode
@@ -735,7 +735,6 @@ private:
     } \
   }
 
-//#include "vtkIGSIOConfig.h"
 //#include "igsioXmlUtils.h"
 #include "igsioCommon.txx"
 

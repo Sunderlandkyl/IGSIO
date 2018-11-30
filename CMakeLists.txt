@@ -56,9 +56,9 @@ IF (COPY_EXTERNAL_LIBS)
   CopyLibrariesToDirectory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${VTK_LIBRARIES})
 ENDIF()
 
-OPTION(IGSIO_USE_SYSTEM_ZLIB "Use system zlib" OFF)
+OPTION(USE_SYSTEM_ZLIB "Use system zlib" OFF)
 SET(IGSIOZLIB_INCLUDE_DIR "")
-IF(IGSIO_USE_SYSTEM_ZLIB) # setting IGSIOZLib needs to come before processing subdirectories
+IF(USE_SYSTEM_ZLIB) # setting IGSIOZLib needs to come before processing subdirectories
   SET(IGSIOZLIB_LIBRARY ${ZLIB_LIBRARY})
   INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
   LIST(APPEND IGSIOZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIR} CACHE INTERNAL "")
@@ -73,9 +73,9 @@ ENDIF()
 
 ADD_SUBDIRECTORY(Source/IGSIOCommon)
 
-OPTION(BUILD_VTKVIDEOIO "Enable video reading/writing" ON)
-IF(BUILD_VTKVIDEOIO)
-  ADD_SUBDIRECTORY(Source/VideoIO)
+OPTION(BUILD_SEQUENCEIO "Build classes for reading/writing" ON)
+IF(BUILD_SEQUENCEIO)
+  ADD_SUBDIRECTORY(Source/SequenceIO)
 ENDIF()
 
 #-----------------------------------------------------------------------------

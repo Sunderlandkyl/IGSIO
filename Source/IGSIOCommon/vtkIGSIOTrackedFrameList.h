@@ -74,24 +74,6 @@ public:
   }
   virtual unsigned int Size() { return this->TrackedFrameList.size(); }
 
-  /*! Save the tracked data to sequence metafile */
-  igsioStatus SaveToSequenceMetafile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile = US_IMG_ORIENT_MF, bool useCompression = true, bool enableImageDataWrite = true);
-
-  /*! Read the tracked data from sequence metafile */
-  virtual igsioStatus ReadFromSequenceMetafile(const std::string& trackedSequenceDataFileName);
-
-  /*! Save the tracked data to Nrrd file */
-  igsioStatus SaveToNrrdFile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile = US_IMG_ORIENT_MF, bool useCompression = true, bool enableImageDataWrite = true);
-
-  /*! Read the tracked data from Nrrd file */
-  virtual igsioStatus ReadFromNrrdFile(const std::string& trackedSequenceDataFileName);
-
-  /*! Read the tracked data from matroska*/
-  virtual igsioStatus SaveToMatroskaFile(const std::string& filename, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*= true*/, bool enableImageDataWrite /*= true*/);
-
-  /*! Read the tracked data from matroska*/
-  virtual igsioStatus ReadFromMatroskaFile(const std::string& trackedSequenceDataFileName);
-
   /*! Get the tracked frame list */
   TrackedFrameListType GetTrackedFrameList()
   {
@@ -187,6 +169,9 @@ public:
 
   /*! Get tracked frame image size*/
   igsioStatus GetFrameSize(FrameSizeType& outFrameSize);
+
+  /* Get tracked frame encoding */
+  igsioStatus vtkIGSIOTrackedFrameList::GetEncodingFourCC(std::string& encoding);
 
   /*! Get the value of the custom field. If we couldn't find it, return NULL */
   virtual const char* GetCustomString(const char* fieldName);

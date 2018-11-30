@@ -92,7 +92,7 @@ igsioStatus igsioTrackedFrame::PrintToXML(vtkXMLDataElement* trackedFrame, const
 {
   if (trackedFrame == NULL)
   {
-    //**LOG_ERROR("Unable to print tracked frame to XML - input XML data is NULL");
+    std::cerr << "Unable to print tracked frame to XML - input XML data is NULL" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -106,7 +106,7 @@ igsioStatus igsioTrackedFrame::PrintToXML(vtkXMLDataElement* trackedFrame, const
     unsigned int numberOfScalarComponents(1);
     if (this->GetNumberOfScalarComponents(numberOfScalarComponents) == IGSIO_FAIL)
     {
-      //**LOG_ERROR("Unable to retrieve number of scalar components.");
+      std::cerr << "Unable to retrieve number of scalar components." << std::endl;
       return IGSIO_FAIL;
     }
     trackedFrame->SetIntAttribute("NumberOfScalarComponents", numberOfScalarComponents);
@@ -114,7 +114,7 @@ igsioStatus igsioTrackedFrame::PrintToXML(vtkXMLDataElement* trackedFrame, const
         FrameSize[1] > static_cast<unsigned int>(std::numeric_limits<int>::max()) ||
         FrameSize[2] > static_cast<unsigned int>(std::numeric_limits<int>::max()))
     {
-      //**LOG_ERROR("Unable to save frame size elements larger than: " << std::numeric_limits<int>::max());
+      std::cerr << "Unable to save frame size elements larger than: " << std::numeric_limits<int>::max() << std::endl;
       return IGSIO_FAIL;
     }
     int frameSizeSigned[3] = { static_cast<int>(FrameSize[0]), static_cast<int>(FrameSize[1]), static_cast<int>(FrameSize[2]) };
@@ -201,7 +201,7 @@ igsioStatus igsioTrackedFrame::SetTrackedFrameFromXmlData(const char* strXmlData
 {
   if (strXmlData == NULL)
   {
-    //**LOG_ERROR("Failed to set TrackedFrame from xml data - input xml data string is NULL!");
+    std::cerr << "Failed to set TrackedFrame from xml data - input xml data string is NULL!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -209,7 +209,7 @@ igsioStatus igsioTrackedFrame::SetTrackedFrameFromXmlData(const char* strXmlData
 
   if (trackedFrame == NULL)
   {
-    //**LOG_ERROR("Failed to set TrackedFrame from xml data - invalid xml data string!");
+    std::cerr << "Failed to set TrackedFrame from xml data - invalid xml data string!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -225,14 +225,14 @@ igsioStatus igsioTrackedFrame::SetTrackedFrameFromXmlData(const char* strXmlData
     const char* fieldName = nestedElement->GetAttribute("Name");
     if (fieldName == NULL)
     {
-      //**//**//**//**//**//**//**//**//**//**//**LOG_WARNING("Unable to find FrameField Name attribute");
+      //**//**//**//**//**//**//**//**//**//**vtkWarningMacro("Unable to find FrameField Name attribute");
       continue;
     }
 
     const char* fieldValue = nestedElement->GetAttribute("Value");
     if (fieldValue == NULL)
     {
-      //**//**//**//**//**//**//**//**//**//**//**LOG_WARNING("Unable to find FrameField Value attribute");
+      //**//**//**//**//**//**//**//**//**//**vtkWarningMacro("Unable to find FrameField Value attribute");
       continue;
     }
 
@@ -276,6 +276,13 @@ FrameSizeType igsioTrackedFrame::GetFrameSize()
 }
 
 //----------------------------------------------------------------------------
+std::string igsioTrackedFrame::GetEncodingFourCC()
+{
+  this->ImageData.GetEncodingFourCC(this->EncodingFourCC);
+  return this->EncodingFourCC;
+}
+
+//----------------------------------------------------------------------------
 void igsioTrackedFrame::SetImageData(const igsioVideoFrame& value)
 {
   this->ImageData = value;
@@ -308,7 +315,7 @@ int igsioTrackedFrame::GetNumberOfBitsPerPixel()
   unsigned int numberOfScalarComponents(1);
   if (this->GetNumberOfScalarComponents(numberOfScalarComponents) == IGSIO_FAIL)
   {
-    //**LOG_ERROR("Unable to retrieve number of scalar components.");
+    std::cerr << "Unable to retrieve number of scalar components." << std::endl;
     return -1;
   }
   numberOfBitsPerScalar = this->ImageData.GetNumberOfBytesPerScalar() * 8 * numberOfScalarComponents;
@@ -349,7 +356,7 @@ void igsioTrackedFrame::SetFrameField(std::string name, std::string value)
     double timestamp(0);
     if (igsioCommon::StringToDouble(value.c_str(), timestamp) != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Unable to convert Timestamp '" << value << "' to double");
+      std::cerr << "Unable to convert Timestamp '" << value << "' to double" << std::endl;
     }
     else
     {
@@ -365,7 +372,7 @@ const char* igsioTrackedFrame::GetFrameField(const char* fieldName)
 {
   if (fieldName == NULL)
   {
-    //**LOG_ERROR("Unable to get frame field: field name is NULL!");
+    std::cerr << "Unable to get frame field: field name is NULL!" << std::endl;
     return NULL;
   }
 
@@ -389,7 +396,7 @@ igsioStatus igsioTrackedFrame::DeleteFrameField(const char* fieldName)
 {
   if (fieldName == NULL)
   {
-    //**LOG_DEBUG("Failed to delete frame field - field name is NULL!");
+    std::cout << "Failed to delete frame field - field name is NULL!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -399,7 +406,7 @@ igsioStatus igsioTrackedFrame::DeleteFrameField(const char* fieldName)
     this->FrameFields.erase(field);
     return IGSIO_SUCCESS;
   }
-  //**LOG_DEBUG("Failed to delete frame field - could find field " << fieldName);
+  std::cout << "Failed to delete frame field - could find field " << fieldName << std::endl;
   return IGSIO_FAIL;
 }
 
@@ -426,7 +433,7 @@ bool igsioTrackedFrame::IsFrameFieldDefined(const char* fieldName)
 {
   if (fieldName == NULL)
   {
-    //**LOG_ERROR("Unable to find frame field: field name is NULL!");
+    std::cerr << "Unable to find frame field: field name is NULL!" << std::endl;
     return false;
   }
 
@@ -447,7 +454,7 @@ igsioStatus igsioTrackedFrame::GetFrameTransform(const igsioTransformName& frame
   std::string transformName;
   if (frameTransformName.GetTransformName(transformName) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to get custom transform, transform name is wrong!");
+    std::cerr << "Unable to get custom transform, transform name is wrong!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -460,7 +467,7 @@ igsioStatus igsioTrackedFrame::GetFrameTransform(const igsioTransformName& frame
   const char* frameTransformStr = GetFrameField(transformName.c_str());
   if (frameTransformStr == NULL)
   {
-    //**LOG_ERROR("Unable to get custom transform from name: " << transformName);
+    std::cerr << "Unable to get custom transform from name: " << transformName << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -492,7 +499,7 @@ igsioStatus igsioTrackedFrame::GetFrameTransformStatus(const igsioTransformName&
   std::string transformStatusName;
   if (frameTransformName.GetTransformName(transformStatusName) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to get custom transform status, transform name is wrong!");
+    std::cerr << "Unable to get custom transform status, transform name is wrong!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -509,7 +516,7 @@ igsioStatus igsioTrackedFrame::GetFrameTransformStatus(const igsioTransformName&
   const char* strStatus = this->GetFrameField(transformStatusName.c_str());
   if (strStatus == NULL)
   {
-    //**LOG_ERROR("Unable to get custom transform status from name: " << transformStatusName);
+    std::cerr << "Unable to get custom transform status from name: " << transformStatusName << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -524,7 +531,7 @@ igsioStatus igsioTrackedFrame::SetFrameTransformStatus(const igsioTransformName&
   std::string transformStatusName;
   if (frameTransformName.GetTransformName(transformStatusName) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to set custom transform status, transform name is wrong!");
+    std::cerr << "Unable to set custom transform status, transform name is wrong!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -557,7 +564,7 @@ igsioStatus igsioTrackedFrame::SetFrameTransform(const igsioTransformName& frame
   std::string transformName;
   if (frameTransformName.GetTransformName(transformName) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to get custom transform, transform name is wrong!");
+    std::cerr << "Unable to get custom transform, transform name is wrong!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -585,7 +592,7 @@ TrackedFrameFieldStatus igsioTrackedFrame::ConvertFieldStatusFromString(const ch
 {
   if (statusStr == NULL)
   {
-    //**LOG_ERROR("Failed to get field status from string if it's NULL!");
+    std::cerr << "Failed to get field status from string if it's NULL!" << std::endl;
     return FIELD_INVALID;
   }
 
@@ -618,7 +625,7 @@ std::string igsioTrackedFrame::ConvertFieldStatusToString(TrackedFrameFieldStatu
 igsioStatus igsioTrackedFrame::WriteToFile(const std::string& filename, vtkMatrix4x4* imageToTracker)
 {
   vtkImageData* volumeToSave = this->GetImageData()->GetImage();
-  // TODO: !!!!
+  //!!!!!! TODO!!!!!!!!!!!!
   //MET_ValueEnumType scalarType = MET_NONE;
   //switch (volumeToSave->GetScalarType())
   //{
@@ -629,7 +636,7 @@ igsioStatus igsioTrackedFrame::WriteToFile(const std::string& filename, vtkMatri
   //  scalarType = MET_FLOAT;
   //  break;
   //default:
-  //  //**LOG_ERROR("Scalar type is not supported!");
+  //  std::cerr << "Scalar type is not supported!" << std::endl;
   //  return IGSIO_FAIL;
   //}
 
@@ -656,7 +663,7 @@ igsioStatus igsioTrackedFrame::WriteToFile(const std::string& filename, vtkMatri
   //metaImage.ElementDataFileName("LOCAL");
   //if (metaImage.Write(filename.c_str()) == false)
   //{
-  //  //**LOG_ERROR("Failed to save reconstructed volume in sequence metafile!");
+  //  std::cerr << "Failed to save reconstructed volume in sequence metafile!" << std::endl;
   //  return IGSIO_FAIL;
   //}
   return IGSIO_SUCCESS;
@@ -731,7 +738,7 @@ igsioStatus igsioTrackedFrameEncoderPositionFinder::GetStepperEncoderValues(igsi
 {
   if (trackedFrame == NULL)
   {
-    //**LOG_ERROR("Unable to get stepper encoder values - input tracked frame is NULL!");
+    std::cerr << "Unable to get stepper encoder values - input tracked frame is NULL!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -739,13 +746,13 @@ igsioStatus igsioTrackedFrameEncoderPositionFinder::GetStepperEncoderValues(igsi
   const char* cProbePos = trackedFrame->GetFrameField("ProbePosition");
   if (cProbePos == NULL)
   {
-    //**LOG_ERROR("Couldn't find ProbePosition field in tracked frame!");
+    std::cerr << "Couldn't find ProbePosition field in tracked frame!" << std::endl;
     return IGSIO_FAIL;
   }
 
   if (igsioCommon::StringToDouble(cProbePos, probePosition) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Failed to convert probe position " << cProbePos << " to double!");
+    std::cerr << "Failed to convert probe position " << cProbePos << " to double!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -753,13 +760,13 @@ igsioStatus igsioTrackedFrameEncoderPositionFinder::GetStepperEncoderValues(igsi
   const char* cProbeRot = trackedFrame->GetFrameField("ProbeRotation");
   if (cProbeRot == NULL)
   {
-    //**LOG_ERROR("Couldn't find ProbeRotation field in tracked frame!");
+    std::cerr << "Couldn't find ProbeRotation field in tracked frame!" << std::endl;
     return IGSIO_FAIL;
   }
 
   if (igsioCommon::StringToDouble(cProbeRot, probeRotation) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Failed to convert probe rotation " << cProbeRot << " to double!");
+    std::cerr << "Failed to convert probe rotation " << cProbeRot << " to double!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -767,13 +774,13 @@ igsioStatus igsioTrackedFrameEncoderPositionFinder::GetStepperEncoderValues(igsi
   const char* cTemplatePos = trackedFrame->GetFrameField("TemplatePosition");
   if (cTemplatePos == NULL)
   {
-    //**LOG_ERROR("Couldn't find TemplatePosition field in tracked frame!");
+    std::cerr << "Couldn't find TemplatePosition field in tracked frame!" << std::endl;
     return IGSIO_FAIL;
   }
 
   if (igsioCommon::StringToDouble(cTemplatePos, templatePosition) != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Failed to convert template position " << cTemplatePos << " to double!");
+    std::cerr << "Failed to convert template position " << cTemplatePos << " to double!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -794,14 +801,14 @@ bool igsioTrackedFrameEncoderPositionFinder::operator()(igsioTrackedFrame* newFr
 
   if (GetStepperEncoderValues(mTrackedFrame, baseProbePos, baseProbeRot, baseTemplatePos) != IGSIO_SUCCESS)
   {
-    //**//**//**//**//**//**//**//**//**//**//**LOG_WARNING("Unable to get raw encoder values from tracked frame!");
+    //**//**//**//**//**//**//**//**//**//**vtkWarningMacro("Unable to get raw encoder values from tracked frame!");
     return false;
   }
 
   double newProbePos(0), newProbeRot(0), newTemplatePos(0);
   if (GetStepperEncoderValues(newFrame, newProbePos, newProbeRot, newTemplatePos) != IGSIO_SUCCESS)
   {
-    //**//**//**//**//**//**//**//**//**//**//**LOG_WARNING("Unable to get raw encoder values from tracked frame!");
+    //**//**//**//**//**//**//**//**//**//**vtkWarningMacro("Unable to get raw encoder values from tracked frame!");
     return false;
   }
 
@@ -853,7 +860,7 @@ bool TrackedFrameTransformFinder::operator()(igsioTrackedFrame* newFrame)
   }
   else
   {
-    //**LOG_ERROR("TrackedFramePositionFinder: Unable to find base frame transform name for tracked frame validation!");
+    std::cerr << "TrackedFramePositionFinder: Unable to find base frame transform name for tracked frame validation!" << std::endl;
     return false;
   }
 
@@ -865,7 +872,7 @@ bool TrackedFrameTransformFinder::operator()(igsioTrackedFrame* newFrame)
   }
   else
   {
-    //**LOG_ERROR("TrackedFramePositionFinder: Unable to find frame transform name for new tracked frame validation!");
+    std::cerr << "TrackedFramePositionFinder: Unable to find frame transform name for new tracked frame validation!" << std::endl;
     return false;
   }
 

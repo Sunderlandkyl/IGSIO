@@ -127,7 +127,7 @@ public:
     \param matrix the retrieved transform is copied into this matrix
     \param toolStatus if this parameter is not NULL then the transforms' status is returned at that memory address
   */
-  virtual igsioStatus GetTransform(const igsioTransformName& aTransformName, vtkMatrix4x4* matrix, ToolStatus* toolStatus = NULL) const;
+  virtual igsioStatus GetTransform(const igsioTransformName& aTransformName, vtkMatrix4x4* matrix, ToolStatus* toolStatus = NULL);
 
   /*!
     Get the valid status of a transform matrix between two coordinate frames.
@@ -209,7 +209,7 @@ protected:
     \param silent Don't log an error if path cannot be found (it's normal while searching in branches of the graph)
     \return returns IGSIO_SUCCESS if a path can be found, IGSIO_FAIL otherwise
   */
-  igsioStatus FindPath(const igsioTransformName& aTransformName, TransformInfoListType& transformInfoList, const char* skipCoordFrameName = NULL, bool silent = false) const;
+  igsioStatus FindPath(const igsioTransformName& aTransformName, TransformInfoListType& transformInfoList, const char* skipCoordFrameName = NULL, bool silent = false);
 
   mutable CoordFrameToCoordFrameToTransformMapType CoordinateFrames;
 

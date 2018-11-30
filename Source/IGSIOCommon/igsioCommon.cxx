@@ -5,9 +5,7 @@ See License.txt for details.
 =========================================================Plus=header=end*/
 
 // Local includes
-//#include "PlusConfigure.h"
 #include "igsioCommon.h"
-//#include "PlusRevision.h"
 #include "igsioTrackedFrame.h"
 #include "vtkIGSIOTrackedFrameList.h"
 
@@ -22,34 +20,6 @@ See License.txt for details.
 #ifdef _WIN32
 #include <Windows.h>
 #endif
-
-////-------------------------------------------------------
-//bool vtkPlusLogHelper::ShouldWeLog(bool errorPresent)
-//{
-//  if (errorPresent)
-//  {
-//    ++m_Count;
-//    double timeStamp = vtkPlusAccurateTimer::GetSystemTime();
-//    if (timeStamp - m_LastError > m_MinimumTimeBetweenLoggingSec
-//        || m_Count > m_MinimumCountBetweenLogging)
-//    {
-//      //log the error this time
-//      m_LastError = timeStamp;
-//      m_Count = 0;
-//      return true;
-//    }
-//    else
-//    {
-//      return false;
-//    }
-//  }
-//  else //error has just been removed, reset to initial state
-//  {
-//    m_LastError = -std::numeric_limits<double>::max() / 2;
-//    m_Count = -2;
-//    return false;
-//  }
-//}
 
 //-------------------------------------------------------
 igsioTransformName::igsioTransformName()
@@ -98,7 +68,7 @@ igsioStatus igsioTransformName::SetTransformName(const char* aTransformName)
 {
   if (aTransformName == NULL)
   {
-    //**LOG_ERROR("Failed to set transform name if it's NULL");
+    std::cerr << "Failed to set transform name if it's NULL" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -110,7 +80,7 @@ igsioStatus igsioTransformName::SetTransformName(const std::string& aTransformNa
 {
   if (aTransformName.empty())
   {
-    //**LOG_ERROR("Failed to set transform name if it's empty");
+    std::cerr << "Failed to set transform name if it's empty" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -139,25 +109,25 @@ igsioStatus igsioTransformName::SetTransformName(const std::string& aTransformNa
 
   if (numOfMatch != 1)
   {
-    //**LOG_ERROR("Unable to parse transform name, there are " << numOfMatch
-    //          << " matching 'To' phrases in the transform name '" << aTransformName << "', while exactly one allowed.");
+    std::cerr << "Unable to parse transform name, there are " << numOfMatch
+      << " matching 'To' phrases in the transform name '" << aTransformName << "', while exactly one allowed." << std::endl;
     return IGSIO_FAIL;
   }
 
   // Find <FrameFrom>To<FrameTo> matches
   if (posTo == std::string::npos)
   {
-    //**LOG_ERROR("Failed to set transform name - unable to find 'To' in '" << aTransformName << "'!");
+    std::cerr << "Failed to set transform name - unable to find 'To' in '" << aTransformName << "'!" << std::endl;
     return IGSIO_FAIL;
   }
   else if (posTo == 0)
   {
-    //**LOG_ERROR("Failed to set transform name - no coordinate frame name before 'To' in '" << aTransformName << "'!");
+    std::cerr << "Failed to set transform name - no coordinate frame name before 'To' in '" << aTransformName << "'!" << std::endl;
     return IGSIO_FAIL;
   }
   else if (posTo == aTransformName.length() - 2)
   {
-    //**LOG_ERROR("Failed to set transform name - no coordinate frame name after 'To' in '" << aTransformName << "'!");
+    std::cerr << "Failed to set transform name - no coordinate frame name after 'To' in '" << aTransformName << "'!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -183,13 +153,13 @@ igsioStatus igsioTransformName::GetTransformName(std::string& aTransformName) co
 {
   if (this->m_From.empty())
   {
-    //**LOG_ERROR("Failed to get transform name - 'From' transform name is empty");
+    std::cerr << "Failed to get transform name - 'From' transform name is empty" << std::endl;
     return IGSIO_FAIL;
   }
 
   if (this->m_To.empty())
   {
-    //**LOG_ERROR("Failed to get transform name - 'To' transform name is empty");
+    std::cerr << "Failed to get transform name - 'To' transform name is empty" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -256,7 +226,7 @@ igsioStatus igsioCommon::CreateTemporaryFilename(std::string& aString, const std
       char tempPath[MAX_PATH] = "";
       if (GetTempPath(MAX_PATH, tempPath) == 0)
       {
-        //**LOG_ERROR("Unable to retrieve temp path: " << GetLastError());
+        std::cerr << "Unable to retrieve temp path: " << GetLastError() << std::endl;
         return IGSIO_FAIL;
       }
       path = tempPath;
@@ -270,12 +240,12 @@ igsioStatus igsioCommon::CreateTemporaryFilename(std::string& aString, const std
       {
         vtksys::SystemTools::RemoveFile(candidateFilename);
       }
-      //**LOG_ERROR("Path too long to generate temporary filename (" << path << "). Consider moving output directory to shorter path.");
+      std::cerr << "Path too long to generate temporary filename (" << path << "). Consider moving output directory to shorter path." << std::endl;
       continue;
     }
     else if (uRetVal == 0)
     {
-      //**LOG_ERROR("Failed to generate temporary filename. Error code:" << GetLastError());
+      std::cerr << "Failed to generate temporary filename. Error code:" << GetLastError() << std::endl;
       continue;
     }
 
@@ -305,7 +275,7 @@ igsioStatus igsioCommon::CreateTemporaryFilename(std::string& aString, const std
     ofstream aFile(candidateFilename);
     if (!aFile.is_open())
     {
-      //**LOG_WARNING("Cannot write to temp file " << candidateFilename << " check write permissions of output directory.");
+      vtkWarningMacro("Cannot write to temp file " << candidateFilename << " check write permissions of output directory.");
       continue;
     }
 
@@ -316,7 +286,7 @@ igsioStatus igsioCommon::CreateTemporaryFilename(std::string& aString, const std
 #endif
   }
 
-  //**LOG_ERROR("igsioCommon::CreateTemporaryFilename failed to generate a temporary file name");
+  std::cerr << "igsioCommon::CreateTemporaryFilename failed to generate a temporary file name"<< std::endl;
   return IGSIO_FAIL;
 }
 
@@ -417,7 +387,7 @@ igsioStatus igsioCommon::XML::PrintXML(ostream& os, vtkIndent indent, vtkXMLData
 {
   if (elem == NULL)
   {
-    //**LOG_ERROR("igsioCommon::XML::PrintXML failed, input element is invalid");
+    std::cerr << "igsioCommon::XML::PrintXML failed, input element is invalid" << std::endl;
     return IGSIO_FAIL;
   }
   vtkIndent nextIndent = indent.GetNextIndent();
@@ -519,7 +489,7 @@ igsioStatus igsioCommon::XML::PrintXML(const std::string& fname, vtkXMLDataEleme
   ofstream of(fname);
   if (!of.is_open())
   {
-    //**LOG_ERROR("Failed to open " << fname << " for writing");
+    std::cerr << "Failed to open " << fname << " for writing" << std::endl;
     return IGSIO_FAIL;
   }
   of.imbue(std::locale::classic());
@@ -573,19 +543,19 @@ igsioStatus igsioCommon::DrawLine(vtkImageData& imageData, const std::array<floa
 
   if (!checkRange(startPixel[0], endPixel[0]))
   {
-    //**LOG_ERROR("Cannot express horizontal slope. Value exceeds int limits.");
+    std::cerr << "Cannot express horizontal slope. Value exceeds int limits." << std::endl;
     return IGSIO_FAIL;
   }
 
   if (!checkRange(startPixel[1], endPixel[1]))
   {
-    //**LOG_ERROR("Cannot express vertical slope. Value exceeds int limits.");
+    std::cerr << "Cannot express vertical slope. Value exceeds int limits." << std::endl;
     return IGSIO_FAIL;
   }
 
   if (!checkRange(startPixel[2], endPixel[2]))
   {
-    //**LOG_ERROR("Cannot express depth slope. Value exceeds int limits.");
+    std::cerr << "Cannot express depth slope. Value exceeds int limits." << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -595,7 +565,7 @@ igsioStatus igsioCommon::DrawLine(vtkImageData& imageData, const std::array<floa
   }
   else if (numberOfPoints < 2)
   {
-    //**LOG_ERROR("Unable to draw a line with less than 1 point!");
+    std::cerr << "Unable to draw a line with less than 1 point!" << std::endl;
     return IGSIO_FAIL;
   }
 
@@ -717,7 +687,7 @@ ToolStatus igsioCommon::ConvertStringToToolStatus(const std::string& status)
   }
   else
   {
-    //**LOG_ERROR("Unknown tool status string received. Defaulting to TOOL_UNKNOWN.");
+    std::cerr << "Unknown tool status string received. Defaulting to TOOL_UNKNOWN." << std::endl;
     return TOOL_UNKNOWN;
   }
 }
@@ -768,7 +738,7 @@ std::string igsioCommon::ConvertToolStatusToString(const ToolStatus& status)
   }
   else
   {
-    //**LOG_ERROR("Unknown tracker status received - set \"UNKNOWN\" by default!");
+     std::cerr << "Unknown tracker status received - set \"UNKNOWN\" by default!" << std::endl;
     flagFieldValue = "UNKNOWN";
   }
 
@@ -835,12 +805,12 @@ VTKIGSIOCOMMON_EXPORT igsioStatus igsioCommon::DrawScanLines(int* inputImageExte
 //----------------------------------------------------------------------------
 VTKIGSIOCOMMON_EXPORT igsioStatus igsioCommon::DrawScanLines(int* inputImageExtent, const std::array<float, 3>& colour, const PixelLineList& scanLineEndPoints, vtkIGSIOTrackedFrameList* trackedFrameList)
 {
-  //**LOG_DEBUG("Processing " << trackedFrameList->GetNumberOfTrackedFrames() << " frames...");
+  std::cout << "Processing " << trackedFrameList->GetNumberOfTrackedFrames() << " frames..." << std::endl;
 
   igsioStatus result(IGSIO_SUCCESS);
   for (unsigned int frameIndex = 0; frameIndex < trackedFrameList->GetNumberOfTrackedFrames(); frameIndex++)
   {
-    //**LOG_DEBUG("Processing frame " << frameIndex);
+    std::cout << "Processing frame " << frameIndex << std::endl;
     igsioTrackedFrame* frame = trackedFrameList->GetTrackedFrame(frameIndex);
     igsioCommon::DrawScanLines(inputImageExtent, colour, scanLineEndPoints, frame->GetImageData()->GetImage());
   }
@@ -867,7 +837,7 @@ VTKIGSIOCOMMON_EXPORT igsioStatus igsioCommon::DrawScanLines(int* inputImageExte
   {
     if (igsioCommon::DrawLine(*imageData, colour, igsioCommon::LINE_STYLE_SOLID, iter->first, iter->second, numOfSamplesPerScanline) != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Scaline failed. Unable to draw line.");
+      std::cerr << "Scaline failed. Unable to draw line." << std::endl;
       result = IGSIO_FAIL;
       continue;
     }
@@ -933,7 +903,7 @@ igsioStatus igsioCommon::RobustFwrite(FILE* fileHandle, void* data, size_t dataS
   writtenSize = dataSize - remainingBytes;
   if (remainingBytes > 0)
   {
-    //**LOG_ERROR("Filed to write data to file. Data size: " << dataSize << ", successfully written: " << writtenSize << " bytes");
+    std::cerr << "Filed to write data to file. Data size: " << dataSize << ", successfully written: " << writtenSize << " bytes" << std::endl;
     return IGSIO_FAIL;
   }
 

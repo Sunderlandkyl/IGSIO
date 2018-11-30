@@ -95,6 +95,9 @@ public:
   /*! Get tracked frame size in pixel. Returns: FrameSizeType.  */
   FrameSizeType GetFrameSize();
 
+  /* Get the fourCC of the encoded frame */
+  std::string GetEncodingFourCC();
+
   /*! Get tracked frame pixel size in bits (scalar size * number of scalar components) */
   int GetNumberOfBitsPerScalar();
 
@@ -155,6 +158,7 @@ protected:
   FieldMapType FrameFields;
 
   FrameSizeType FrameSize;
+  std::string   EncodingFourCC;
 
   /*! Stores segmented fiducial point pixel coordinates */
   vtkPoints* FiducialPointsCoordinatePx;

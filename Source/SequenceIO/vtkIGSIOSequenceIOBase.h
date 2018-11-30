@@ -8,7 +8,7 @@
 #define __vtkIGSIOSequenceIOBase_h
 
 #include "igsioCommon.h"
-#include "vtkigsiocommon_export.h"
+#include "VTKSEQUENCEIO_EXPORT.h"
 #include "igsioVideoFrame.h"
 #include "vtkObject.h"
 
@@ -28,7 +28,7 @@ class igsioTrackedFrame;
   \brief Class to abstract away specific sequence file read/write details
   \ingroup PlusLibCommon
 */
-class VTKIGSIOCOMMON_EXPORT vtkIGSIOSequenceIOBase : public vtkObject
+class VTKSEQUENCEIO_EXPORT vtkIGSIOSequenceIOBase : public vtkObject
 {
 public:
   virtual void PrintSelf(ostream& os, vtkIndent indent);

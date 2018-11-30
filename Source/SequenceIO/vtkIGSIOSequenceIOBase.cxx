@@ -71,11 +71,11 @@ igsioStatus vtkIGSIOSequenceIOBase::Read()
 {
   this->TrackedFrameList->Clear();
 
-  if (this->ReadImageHeader() != IGSIO_SUCCESS)
-  {
-    //**LOG_ERROR("Could not load header from file: " << this->FileName);
-    return IGSIO_FAIL;
-  }
+  //if (this->ReadImageHeader() != IGSIO_SUCCESS)
+  //{
+  //  vtkErrorMacro("Could not load header from file: " << this->FileName);
+  //  return IGSIO_FAIL;
+  //}
 
   if (this->ReadImagePixels() != IGSIO_SUCCESS)
   {
@@ -90,7 +90,7 @@ igsioStatus vtkIGSIOSequenceIOBase::DeleteFrameString(int frameNumber, const cha
   igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(frameNumber);
   if (trackedFrame == NULL)
   {
-    //**LOG_ERROR("Cannot access frame " << frameNumber);
+    vtkErrorMacro("Cannot access frame " << frameNumber);
     return IGSIO_FAIL;
   }
 
@@ -102,14 +102,14 @@ igsioStatus vtkIGSIOSequenceIOBase::SetFrameString(int frameNumber, const char* 
 {
   if (fieldName == NULL || fieldValue == NULL)
   {
-    //**LOG_ERROR("Invalid field name or value");
+    vtkErrorMacro("Invalid field name or value");
     return IGSIO_FAIL;
   }
   this->CreateTrackedFrameIfNonExisting(frameNumber);
   igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(frameNumber);
   if (trackedFrame == NULL)
   {
-    //**LOG_ERROR("Cannot access frame " << frameNumber);
+    vtkErrorMacro("Cannot access frame " << frameNumber);
     return IGSIO_FAIL;
   }
   trackedFrame->SetFrameField(fieldName, fieldValue);
@@ -121,7 +121,7 @@ bool vtkIGSIOSequenceIOBase::SetCustomString(const char* fieldName, const char* 
 {
   if (fieldName == NULL)
   {
-    //**LOG_ERROR("Invalid field name");
+    vtkErrorMacro("Invalid field name");
     return IGSIO_FAIL;
   }
   this->TrackedFrameList->SetCustomString(fieldName, fieldValue);
@@ -133,7 +133,7 @@ bool vtkIGSIOSequenceIOBase::SetCustomString(const std::string& fieldName, const
 {
   if (fieldName.empty())
   {
-    //**LOG_ERROR("Invalid field name");
+    vtkErrorMacro("Invalid field name");
     return IGSIO_FAIL;
   }
   this->TrackedFrameList->SetCustomString(fieldName, fieldValue);
@@ -145,7 +145,7 @@ bool vtkIGSIOSequenceIOBase::SetCustomString(const std::string& fieldName, int f
 {
   if (fieldName.empty())
   {
-    //**LOG_ERROR("Invalid field name");
+    vtkErrorMacro("Invalid field name");
     return IGSIO_FAIL;
   }
   std::stringstream ss;
@@ -159,7 +159,7 @@ const char* vtkIGSIOSequenceIOBase::GetCustomString(const char* fieldName)
 {
   if (fieldName == NULL)
   {
-    //**LOG_ERROR("Invalid field name or value");
+    vtkErrorMacro("Invalid field name or value");
     return NULL;
   }
   return this->TrackedFrameList->GetCustomString(fieldName);
@@ -199,7 +199,7 @@ igsioStatus vtkIGSIOSequenceIOBase::PrepareHeader()
     if (this->ImageOrientationInFile != this->TrackedFrameList->GetImageOrientation())
     {
       // Reordering of the frames is not implemented, so just save the images as they are in the memory
-      //LOG_WARNING("Saving of images is supported only in the same orientation as currently in the memory");
+      vtkWarningMacro("Saving of images is supported only in the same orientation as currently in the memory");
       this->ImageOrientationInFile = this->TrackedFrameList->GetImageOrientation();
     }
 
@@ -211,7 +211,7 @@ igsioStatus vtkIGSIOSequenceIOBase::PrepareHeader()
     if (this->ImageType != this->TrackedFrameList->GetImageType())
     {
       // Reordering of the frames is not implemented, so just save the images as they are in the memory
-      //LOG_WARNING("Saving of images is supported only in the same type as currently in the memory");
+      vtkWarningMacro("Saving of images is supported only in the same type as currently in the memory");
       this->ImageType = this->TrackedFrameList->GetImageType();
     }
   }
@@ -221,7 +221,7 @@ igsioStatus vtkIGSIOSequenceIOBase::PrepareHeader()
     std::string tempFilename;
     if (igsioCommon::CreateTemporaryFilename(tempFilename, this->OutputFilePath) != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Unable to create temporary header file. Check write access.");
+      vtkErrorMacro("Unable to create temporary header file. Check write access.");
       return IGSIO_FAIL;
     }
     this->TempHeaderFileName = tempFilename;
@@ -232,7 +232,7 @@ igsioStatus vtkIGSIOSequenceIOBase::PrepareHeader()
     std::string tempFilename;
     if (igsioCommon::CreateTemporaryFilename(tempFilename, this->OutputFilePath) != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Unable to create temporary image file. Check write access.");
+      vtkErrorMacro("Unable to create temporary image file. Check write access.");
       return IGSIO_FAIL;
     }
     this->TempImageFileName = tempFilename;
@@ -257,17 +257,17 @@ igsioStatus vtkIGSIOSequenceIOBase::Write()
 {
   if (this->PrepareHeader() != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to prepare the header.");
+    vtkErrorMacro("Unable to prepare the header.");
     return IGSIO_FAIL;
   }
   if (this->AppendImagesToHeader() != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to append images to the header.");
+    vtkErrorMacro("Unable to append images to the header.");
     return IGSIO_FAIL;
   }
   if (this->FinalizeHeader() != IGSIO_SUCCESS)
   {
-    //**LOG_ERROR("Unable to finalize the header.");
+    vtkErrorMacro("Unable to finalize the header.");
     return IGSIO_FAIL;
   }
 
@@ -286,11 +286,10 @@ igsioStatus vtkIGSIOSequenceIOBase::Close()
 {
   std::string headerFullPath = igsioCommon::GetAbsolutePath(this->OutputFilePath, this->FileName);
 
-
   // Rename header to final filename
   MoveFileInternal(this->TempHeaderFileName.c_str(), headerFullPath.c_str());
 
-  //**LOG_DEBUG("Moved file from: " << this->TempHeaderFileName << " to " << headerFullPath);
+  vtkDebugMacro("Moved file from: " << this->TempHeaderFileName << " to " << headerFullPath);
 
   if (this->PixelDataFileName.empty())
   {
@@ -328,7 +327,7 @@ igsioStatus vtkIGSIOSequenceIOBase::WriteImages()
   if (this->EnableImageDataWrite && this->TrackedFrameList->IsContainingValidImageData() && this->ImageOrientationInFile != this->TrackedFrameList->GetImageOrientation())
   {
     // Reordering of the frames is not implemented, so return with an error
-    //**LOG_ERROR("Saving of images is supported only in the same orientation as currently in the memory");
+    vtkErrorMacro("Saving of images is supported only in the same orientation as currently in the memory");
     return IGSIO_FAIL;
   }
 
@@ -350,7 +349,7 @@ igsioStatus vtkIGSIOSequenceIOBase::WriteImages()
       FrameSizeType frameSize = { this->Dimensions[0], this->Dimensions[1], this->Dimensions[2] };
       if (blankFrame.AllocateFrame(frameSize, this->PixelType, this->NumberOfScalarComponents) != IGSIO_SUCCESS)
       {
-        //**LOG_ERROR("Failed to allocate space for blank image.");
+        vtkErrorMacro("Failed to allocate space for blank image.");
         return IGSIO_FAIL;
       }
       blankFrame.FillBlank();
@@ -371,8 +370,8 @@ igsioStatus vtkIGSIOSequenceIOBase::WriteImages()
                             videoFrame->GetFrameSizeInBytes(), writtenSize);
         if (status == IGSIO_FAIL)
         {
-          //**LOG_ERROR("Unable to write entire frame to file. Frame size: " << videoFrame->GetFrameSizeInBytes()
-          //          << ", successfully written: " << writtenSize << " bytes");
+          vtkErrorMacro("Unable to write entire frame to file. Frame size: " << videoFrame->GetFrameSizeInBytes()
+                    << ", successfully written: " << writtenSize << " bytes");
         }
         this->TotalBytesWritten += writtenSize;
       }
@@ -570,11 +569,11 @@ igsioStatus vtkIGSIOSequenceIOBase::AppendFile(const std::string& sourceFilename
     char outErrStr[3000];
     strerror_s(inErrStr, inErr);
     strerror_s(outErrStr, outErr);
-    //**LOG_ERROR("An error occurred while appending data from " << sourceFilename << " to " << destFilename << ": " << inErrStr << "::" << outErrStr) ;
+    vtkErrorMacro("An error occurred while appending data from " << sourceFilename << " to " << destFilename << ": " << inErrStr << "::" << outErrStr) ;
 #else
   if (in == NULL || out == NULL)
   {
-    //**LOG_ERROR("An error occurred while appending data from " << sourceFilename << " to " << destFilename) ;
+    vtkErrorMacro("An error occurred while appending data from " << sourceFilename << " to " << destFilename) ;
 #endif
     return IGSIO_FAIL;
   }
@@ -592,7 +591,7 @@ igsioStatus vtkIGSIOSequenceIOBase::AppendFile(const std::string& sourceFilename
     fclose(out);
     if (!vtksys::SystemTools::RemoveFile(sourceFilename.c_str()))
     {
-      //LOG_WARNING("Unable to remove the file " << sourceFilename << " after append is completed");
+      vtkWarningMacro("Unable to remove the file " << sourceFilename << " after append is completed");
     }
     delete[] buffer;
   }

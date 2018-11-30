@@ -4,10 +4,10 @@
   See License.txt for details.
 =========================================================Plus=header=end*/
 
-#ifndef __vtkIGSIOMKVSequenceIO_h
-#define __vtkIGSIOMKVSequenceIO_h
+#ifndef __vtkIGSIOMkvSequenceIO_h
+#define __vtkIGSIOMkvSequenceIO_h
 
-#include "vtkigsiocommon_export.h"
+#include "vtksequenceio_export.h"
 
 // PlusLib includes
 #include "vtkIGSIOSequenceIOBase.h"
@@ -15,15 +15,15 @@
 //class vtkIGSIOTrackedFrameList;
 
 /*!
-  \class vtkIGSIOMKVSequenceIO
+  \class vtkIGSIOMkvSequenceIO
   \brief Read and write a matroska file with a sequence of frames, with additional information for each frame, stored in subtitle tracks
   \ingroup PlusLibCommon
 */
-class VTKIGSIOCOMMON_EXPORT vtkIGSIOMKVSequenceIO : public vtkIGSIOSequenceIOBase
+class VTKSEQUENCEIO_EXPORT vtkIGSIOMkvSequenceIO : public vtkIGSIOSequenceIOBase
 {
 public:
-  static vtkIGSIOMKVSequenceIO* New();
-  vtkTypeMacro(vtkIGSIOMKVSequenceIO, vtkIGSIOSequenceIOBase);
+  static vtkIGSIOMkvSequenceIO* New();
+  vtkTypeMacro(vtkIGSIOMkvSequenceIO, vtkIGSIOSequenceIOBase);
   virtual void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
 
   /*!
@@ -68,8 +68,8 @@ public:
   virtual igsioStatus SetFileName(const std::string& aFilename);
 
 protected:
-  vtkIGSIOMKVSequenceIO();
-  virtual ~vtkIGSIOMKVSequenceIO();
+  vtkIGSIOMkvSequenceIO();
+  virtual ~vtkIGSIOMkvSequenceIO();
 
   /*! Read all the fields in the metaimage file header */
   virtual igsioStatus ReadImageHeader();
@@ -95,16 +95,12 @@ protected:
   */
   virtual igsioStatus WriteCompressedImagePixelsToFile(int& compressedDataSize);
 
-public:
-  void SetEncodingFourCC(std::string encodingFourCC);
-  std::string GetEncodingFourCC();
-
 protected:
-  vtkIGSIOMKVSequenceIO(const vtkIGSIOMKVSequenceIO&); //purposely not implemented
-  void operator=(const vtkIGSIOMKVSequenceIO&); //purposely not implemented
+  vtkIGSIOMkvSequenceIO(const vtkIGSIOMkvSequenceIO&); //purposely not implemented
+  void operator=(const vtkIGSIOMkvSequenceIO&); //purposely not implemented
 
   class vtkInternal;
   vtkInternal* Internal;
 };
 
-#endif // __vtkIGSIOMKVSequenceIO_h 
+#endif // __vtkIGSIOMkvSequenceIO_h 

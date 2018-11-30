@@ -9,7 +9,7 @@
 
 //#include "igsioCommon.h"
 #include "igsioVideoFrame.h"
-#include "vtkigsiocommon_export.h"
+#include "VTKSEQUENCEIO_EXPORT.h"
 #include "vtkIGSIOSequenceIOBase.h"
 
 //class vtkIGSIOTrackedFrameList;
@@ -19,7 +19,7 @@
   \brief Class to abstract away specific sequence file read/write details
   \ingroup PlusLibCommon
 */
-class VTKIGSIOCOMMON_EXPORT vtkIGSIOSequenceIO : public vtkObject
+class VTKSEQUENCEIO_EXPORT vtkIGSIOSequenceIO : public vtkObject
 {
 public:
   /*! Write object contents into file */

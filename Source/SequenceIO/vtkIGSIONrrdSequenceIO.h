@@ -7,7 +7,7 @@
 #ifndef __vtkIGSIONrrdSequenceIO_h
 #define __vtkIGSIONrrdSequenceIO_h
 
-#include "vtkigsiocommon_export.h"
+#include "VTKSEQUENCEIO_EXPORT.h"
 
 #ifdef _MSC_VER
 #pragma warning ( disable : 4786 )
@@ -23,7 +23,7 @@
   \brief Read and write Nrrd file with a sequence of frames, with additional information for each frame. File definition can be found at http://teem.sourceforge.net/nrrd/format.html
   \ingroup PlusLibCommon
 */
-class VTKIGSIOCOMMON_EXPORT vtkIGSIONrrdSequenceIO : public vtkIGSIOSequenceIOBase
+class VTKSEQUENCEIO_EXPORT vtkIGSIONrrdSequenceIO : public vtkIGSIOSequenceIOBase
 {
   enum NrrdEncoding
   {

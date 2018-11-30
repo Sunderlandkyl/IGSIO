@@ -23,7 +23,7 @@ This file was originally developed by Kyle Sunderland, PerkLab, Queen's Universi
 #include <vtkNew.h>
 #include <vtksys/CommandLineArguments.hxx>
 
-// vtkVideoIO includes
+// vtkSequenceIO includes
 #include "vtkMKVWriter.h"
 
 //----------------------------------------------------------------------------

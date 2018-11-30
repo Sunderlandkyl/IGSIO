@@ -7,7 +7,7 @@
 #ifndef __vtkIGSIOMetaImageSequenceIO_h
 #define __vtkIGSIOMetaImageSequenceIO_h
 
-#include "vtkigsiocommon_export.h"
+#include "VTKSEQUENCEIO_EXPORT.h"
 
 #ifdef _MSC_VER
 #pragma warning ( disable : 4786 )
@@ -21,7 +21,7 @@
   \brief Read and write MetaImage file with a sequence of frames, with additional information for each frame
   \ingroup PlusLibCommon
 */
-class VTKIGSIOCOMMON_EXPORT vtkIGSIOMetaImageSequenceIO : public vtkIGSIOSequenceIOBase
+class VTKSEQUENCEIO_EXPORT vtkIGSIOMetaImageSequenceIO : public vtkIGSIOSequenceIOBase
 {
 public:
   static vtkIGSIOMetaImageSequenceIO* New();

@@ -1,11 +1,9 @@
-PROJECT(vtkVideoIO)
+PROJECT(vtkSequenceIO)
 
-OPTION(VTKVIDEOIO_ENABLE_MKV "Enable mkv reading/writing" ON)
-IF (VTKVIDEOIO_ENABLE_MKV)
+OPTION(VTKSEQUENCEIO_ENABLE_MKV "Enable MKV reading/writing" ON)
+IF (VTKSEQUENCEIO_ENABLE_MKV)
   FIND_PACKAGE(libwebm REQUIRED)
 ENDIF()
-
-ADD_DEFINITIONS(-DVTKVIDEOIO)
 
 # --------------------------------------------------------------------------
 # Configure library
@@ -17,15 +15,17 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
   )
 
 SET(${PROJECT_NAME}_SRCS
-  vtkGenericVideoReader.cxx
-  vtkGenericVideoWriter.cxx
-  #vtkVideoIOFactory.cxx
+  vtkIGSIOSequenceIO.cxx
+  vtkIGSIOSequenceIOBase.cxx
+  vtkIGSIOMetaImageSequenceIO.cxx
+  vtkIGSIONrrdSequenceIO.cxx
   )
 
 SET(${PROJECT_NAME}_HDRS
-  vtkGenericVideoReader.h
-  vtkGenericVideoWriter.h
-  #vtkVideoIOFactory.h
+  vtkIGSIOSequenceIO.h
+  vtkIGSIOSequenceIOBase.h
+  vtkIGSIOMetaImageSequenceIO.h
+  vtkIGSIONrrdSequenceIO.h
   )
 
 SET(${PROJECT_NAME}_LIBS
@@ -36,21 +36,17 @@ SET(${PROJECT_NAME}_LIBS
   vtkIGSIOCommon
   )
 
-IF (VTKVIDEOIO_ENABLE_MKV)
-  ADD_DEFINITIONS(-DVTKVIDEOIO_USE_MKV)
+IF (VTKSEQUENCEIO_ENABLE_MKV)
+  ADD_DEFINITIONS(-DVTKSEQUENCEIO_USE_MKV)
   SET(MKV_SRCS
-    MKV/vtkMKVReader.cxx
-    MKV/vtkMKVWriter.cxx
+    vtkIGSIOMkvSequenceIO.cxx
     )
   SET(MKV_HDRS
-    MKV/vtkMKVReader.h
-    MKV/vtkMKVWriter.h
-    MKV/vtkMKVUtil.h
+    vtkIGSIOMkvSequenceIO.h
     )
 
   LIST(APPEND ${PROJECT_NAME}_INCLUDE_DIRS
     ${LIBWEBM_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/MKV
     )
   LIST(APPEND ${PROJECT_NAME}_SRCS
     ${MKV_SRCS}
@@ -69,7 +65,7 @@ ELSE()
   ADD_LIBRARY(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})
 ENDIF()
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_LIBS})
-IF (VTKVIDEOIO_ENABLE_MKV)
+IF (VTKSEQUENCEIO_ENABLE_MKV)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${LIBWEBM_LIBRARIES})
 ENDIF()
 

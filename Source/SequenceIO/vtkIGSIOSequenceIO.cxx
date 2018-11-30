@@ -14,8 +14,8 @@
 /// VTK includes
 #include <vtkNew.h>
 
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
-  #include "vtkPlusMkvSequenceIO.h"
+#ifdef ENABLE_MKV_IO
+  #include "vtkIGSIOMkvSequenceIO.h"
 #endif
 
 //----------------------------------------------------------------------------
@@ -28,38 +28,57 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
     vtksys::SystemTools::RemoveFile(filename.c_str());
   }
 
-   // Parse sequence filename to determine if it's metafile or NRRD
-   if (vtkIGSIOMetaImageSequenceIO::CanWriteFile(filename))
-   {
-     if (frameList->SaveToSequenceMetafile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
-     {
-       //**LOG_ERROR("Unable to save file: " << filename << " as sequence metafile.");
-       return IGSIO_FAIL;
-     }
-     return IGSIO_SUCCESS;
-   }
-  else if (vtkIGSIONrrdSequenceIO::CanWriteFile(filename))
+  // Parse sequence filename to determine if it's metafile or NRRD
+  if (vtkIGSIOMetaImageSequenceIO::CanWriteFile(filename))
   {
-    if (frameList->SaveToNrrdFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
+    vtkNew<vtkIGSIOMetaImageSequenceIO> writer;
+    writer->SetUseCompression(useCompression);
+    writer->SetFileName(filename);
+    writer->SetImageOrientationInFile(orientationInFile);
+    writer->SetTrackedFrameList(frameList);
+    writer->SetEnableImageDataWrite(enableImageDataWrite);
+    if (frameList->GetNumberOfTrackedFrames() == 1)
     {
-      //**LOG_ERROR("Unable to save file: " << filename << " as Nrrd file.");
+      writer->IsDataTimeSeriesOff();
+    }
+    if (writer->Write() != IGSIO_SUCCESS)
+    {
+      vtkErrorWithObjectMacro(frameList, "Couldn't write sequence metafile: " <<  filename);
       return IGSIO_FAIL;
     }
-
     return IGSIO_SUCCESS;
   }
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
-  else if (vtkPlusMkvSequenceIO::CanWriteFile(filename))
+  else if (vtkIGSIONrrdSequenceIO::CanWriteFile(filename))
   {
-    if (frameList->SaveToMatroskaFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
+    vtkNew<vtkIGSIONrrdSequenceIO> writer;
+    writer->SetUseCompression(useCompression);
+    writer->SetFileName(filename);
+    writer->SetImageOrientationInFile(orientationInFile);
+    writer->SetTrackedFrameList(frameList);
+    writer->SetEnableImageDataWrite(enableImageDataWrite);
+    if (frameList->GetNumberOfTrackedFrames() == 1)
     {
-      //**LOG_ERROR("Unable to save file: " << filename << " as MKV file.");
+      writer->IsDataTimeSeriesOff();
+    }
+    if (writer->Write() != IGSIO_SUCCESS)
+    {
+      vtkErrorWithObjectMacro(frameList, "Couldn't write Nrrd file: " <<  filename);
       return IGSIO_FAIL;
     }
+    return IGSIO_SUCCESS;
+  }
+#ifdef VTKSEQUENCEIO_ENABLE_MKV
+  else if (vtkIGSIOMkvSequenceIO::CanWriteFile(filename))
+  {
+//    if (frameList->SaveToMatroskaFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
+//    {
+//      vtkErrorMacro("Unable to save file: " << filename << " as MKV file.");
+//      return IGSIO_FAIL;
+//    }
   }
 #endif
 
-  //**LOG_ERROR("No writer for file: " << filename);
+  vtkErrorWithObjectMacro(frameList, "No writer for file: " << filename);
   return IGSIO_FAIL;
 }
 
@@ -76,16 +95,19 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
 {
   if (!vtksys::SystemTools::FileExists(filename.c_str()))
   {
-    //**LOG_ERROR("File: " << filename << " does not exist.");
+    vtkErrorWithObjectMacro(frameList, "File: " << filename << " does not exist.");
     return IGSIO_FAIL;
   }
 
   if (vtkIGSIOMetaImageSequenceIO::CanReadFile(filename))
   {
     // Attempt metafile read
-    if (frameList->ReadFromSequenceMetafile(filename) != IGSIO_SUCCESS)
+    vtkNew<vtkIGSIOMetaImageSequenceIO> reader;
+    reader->SetFileName(filename);
+    reader->SetTrackedFrameList(frameList);
+    if (reader->Read() != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Failed to read video buffer from sequence metafile: " << filename);
+      vtkErrorWithObjectMacro(frameList, "Couldn't read sequence metafile: " << filename);
       return IGSIO_FAIL;
     }
     return IGSIO_SUCCESS;
@@ -93,30 +115,32 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
   // Parse sequence filename to determine if it's metafile or NRRD
   else if (vtkIGSIONrrdSequenceIO::CanReadFile(filename))
   {
-    // Attempt Nrrd read
-    if (frameList->ReadFromNrrdFile(filename.c_str()) != IGSIO_SUCCESS)
+    vtkNew<vtkIGSIONrrdSequenceIO> reader;
+    reader->SetFileName(filename);
+    reader->SetTrackedFrameList(frameList);
+    if (reader->Read() != IGSIO_SUCCESS)
     {
-      //**LOG_ERROR("Failed to read video buffer from Nrrd file: " << filename);
+      vtkErrorWithObjectMacro(frameList, "Couldn't read Nrrd file: " << filename);
       return IGSIO_FAIL;
     }
 
     return IGSIO_SUCCESS;
   }
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
+#ifdef VTKSEQUENCEIO_ENABLE_MKV
   else if (vtkPlusMkvSequenceIO::CanReadFile(filename))
   {
     // Attempt MKV read
-    if (frameList->ReadFromMatroskaFile(filename.c_str()) != IGSIO_SUCCESS)
-    {
-      //**LOG_ERROR("Failed to read video buffer from MKV file: " << filename);
-      return IGSIO_FAIL;
-    }
+//    if (frameList->ReadFromMatroskaFile(filename.c_str()) != IGSIO_SUCCESS)
+//    {
+//      vtkErrorMacro("Failed to read video buffer from MKV file: " << filename);
+//      return IGSIO_FAIL;
+//    }
 
     return IGSIO_SUCCESS;
   }
 #endif
 
-  //**LOG_ERROR("No reader for file: " << filename);
+  vtkErrorWithObjectMacro(frameList, "No reader for file: " << filename);
   return IGSIO_FAIL;
 }
 
@@ -132,13 +156,13 @@ vtkIGSIOSequenceIOBase* vtkIGSIOSequenceIO::CreateSequenceHandlerForFile(const s
   {
     return vtkIGSIONrrdSequenceIO::New();
   }
-#ifdef PLUS_USE_VTKVIDEOIO_MKV
+#ifdef PLUS_USE_VTKSEQUENCEIO_MKV
   else if (vtkPlusMkvSequenceIO::CanReadFile(filename))
   {
     return vtkPlusMkvSequenceIO::New();
   }
 #endif
 
-  //**LOG_ERROR("No writer for file: " << filename);
+  std::cerr << "No writer for file: " << filename << std::endl;
   return NULL;
 }

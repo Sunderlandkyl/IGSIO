@@ -150,14 +150,14 @@ igsioStatus vtkIGSIOTransformRepository::SetTransforms(igsioTrackedFrame& tracke
 
     if (it->From() == it->To())
     {
-      vtkErrorMacro("Setting a transform to itself is not allowed: " << trName);
+      LOG_ERROR("Setting a transform to itself is not allowed: " << trName);
       continue;
     }
 
     vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
     if (trackedFrame.GetFrameTransform(*it, matrix) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Failed to get frame transform from tracked frame: " << trName);
+      LOG_ERROR("Failed to get frame transform from tracked frame: " << trName);
       numberOfErrors++;
       continue;
     }
@@ -165,14 +165,14 @@ igsioStatus vtkIGSIOTransformRepository::SetTransforms(igsioTrackedFrame& tracke
     ToolStatus status = TOOL_INVALID;
     if (trackedFrame.GetFrameTransformStatus(*it, status) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Failed to get frame transform from tracked frame: " << trName);
+      LOG_ERROR("Failed to get frame transform from tracked frame: " << trName);
       numberOfErrors++;
       continue;
     }
 
     if (this->SetTransform(*it, matrix, status) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Failed to set transform to repository: " << trName);
+      LOG_ERROR("Failed to set transform to repository: " << trName);
       numberOfErrors++;
       continue;
     }
@@ -186,13 +186,13 @@ igsioStatus vtkIGSIOTransformRepository::SetTransform(const igsioTransformName& 
 {
   if (!aTransformName.IsValid())
   {
-    vtkErrorMacro("Transform name is invalid");
+    LOG_ERROR("Transform name is invalid");
     return IGSIO_FAIL;
   }
 
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
@@ -206,7 +206,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransform(const igsioTransformName& 
     if (fromToTransformInfo->m_IsComputed)
     {
       // The transform already exists and it is computed (not original), so reject the transformation update
-      vtkErrorMacro("The " << aTransformName.From() << "To" << aTransformName.To() <<
+      LOG_ERROR("The " << aTransformName.From() << "To" << aTransformName.To() <<
                 " transform cannot be set, as the inverse (" << aTransformName.To() << "To" <<
                 aTransformName.From() << ") transform already exists");
       return IGSIO_FAIL;
@@ -226,7 +226,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransform(const igsioTransformName& 
     TransformInfo* toFromTransformInfo = GetOriginalTransform(toFromTransformName);
     if (toFromTransformInfo == NULL)
     {
-      vtkErrorMacro("The computed " << aTransformName.To() << "To" << aTransformName.From()
+      LOG_ERROR("The computed " << aTransformName.To() << "To" << aTransformName.From()
                 << " transform is missing. Cannot set its status");
       return IGSIO_FAIL;
     }
@@ -240,7 +240,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransform(const igsioTransformName& 
   {
     // a path already exist between the two coordinate frames
     // adding a new transform between these would result in a circle
-    vtkErrorMacro("A transform path already exists between " << aTransformName.From() <<
+    LOG_ERROR("A transform path already exists between " << aTransformName.From() <<
               " and " << aTransformName.To());
     return IGSIO_FAIL;
   }
@@ -269,7 +269,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformStatus(const igsioTransform
 {
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
   return SetTransform(aTransformName, NULL, toolStatus);
@@ -280,7 +280,7 @@ igsioStatus vtkIGSIOTransformRepository::GetTransform(const igsioTransformName& 
 {
   if (!aTransformName.IsValid())
   {
-    //vtkErrorMacro("Transform name is invalid");
+    LOG_ERROR("Transform name is invalid");
     return IGSIO_FAIL;
   }
 
@@ -346,7 +346,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformPersistent(const igsioTrans
 
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
@@ -356,7 +356,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformPersistent(const igsioTrans
     fromToTransformInfo->m_IsPersistent = isPersistent;
     return IGSIO_SUCCESS;
   }
-  vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() <<
+  LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() <<
             " transform is missing. Cannot set its persistent status");
   return IGSIO_FAIL;
 }
@@ -378,7 +378,7 @@ igsioStatus vtkIGSIOTransformRepository::GetTransformPersistent(const igsioTrans
     isPersistent = fromToTransformInfo->m_IsPersistent;
     return IGSIO_SUCCESS;
   }
-  vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() <<
+  LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() <<
             " transform is missing. Cannot get its persistent status");
   return IGSIO_FAIL;
 }
@@ -390,7 +390,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformError(const igsioTransformN
 
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
@@ -400,7 +400,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformError(const igsioTransformN
     fromToTransformInfo->m_Error = aError;
     return IGSIO_SUCCESS;
   }
-  vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot set computation error value.");
+  LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot set computation error value.");
   return IGSIO_FAIL;
 }
 
@@ -422,7 +422,7 @@ igsioStatus vtkIGSIOTransformRepository::GetTransformError(const igsioTransformN
   }
   if (!quiet)
   {
-    vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot get computation error value.");
+    LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot get computation error value.");
   }
   return IGSIO_FAIL;
 }
@@ -432,13 +432,13 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformDate(const igsioTransformNa
 {
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself is not allowed: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
   if (aDate.empty())
   {
-    vtkErrorMacro("Cannot set computation date if it's empty.");
+    LOG_ERROR("Cannot set computation date if it's empty.");
     return IGSIO_FAIL;
   }
 
@@ -450,7 +450,7 @@ igsioStatus vtkIGSIOTransformRepository::SetTransformDate(const igsioTransformNa
     fromToTransformInfo->m_Date = aDate;
     return IGSIO_SUCCESS;
   }
-  vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot set computation date.");
+  LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot set computation date.");
   return IGSIO_FAIL;
 }
 
@@ -473,7 +473,7 @@ igsioStatus vtkIGSIOTransformRepository::GetTransformDate(const igsioTransformNa
   }
   if (!quiet)
   {
-    vtkErrorMacro("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot get computation date.");
+    LOG_ERROR("The original " << aTransformName.From() << "To" << aTransformName.To() << " transform is missing. Cannot get computation date.");
   }
   return IGSIO_FAIL;
 }
@@ -483,7 +483,7 @@ igsioStatus vtkIGSIOTransformRepository::FindPath(const igsioTransformName& aTra
 {
   if (aTransformName.From() == aTransformName.To())
   {
-    std::cerr << "vtkIGSIOTransformRepository::FindPath failed: from and to transform names are the same - " << aTransformName.GetTransformName() << std::endl;
+    LOG_ERROR("vtkIGSIOTransformRepository::FindPath failed: from and to transform names are the same - " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
@@ -539,8 +539,8 @@ igsioStatus vtkIGSIOTransformRepository::FindPath(const igsioTransformName& aTra
                               << (transformInfo->second.m_IsPersistent ? "persistent" : "non-persistent") << ")";
       }
     }
-    std::cerr << "Transform path not found from " << aTransformName.From() << " to " << aTransformName.To() << " coordinate system."
-              << " Available transforms in the repository (including the inverse of these transforms): " << osAvailableTransforms.str() << std::endl;
+    LOG_ERROR("Transform path not found from " << aTransformName.From() << " to " << aTransformName.To() << " coordinate system."
+              << " Available transforms in the repository (including the inverse of these transforms): " << osAvailableTransforms.str());
   }
   return IGSIO_FAIL;
 }
@@ -562,7 +562,7 @@ igsioStatus vtkIGSIOTransformRepository::DeleteTransform(const igsioTransformNam
 {
   if (aTransformName.From() == aTransformName.To())
   {
-    vtkErrorMacro("Setting a transform to itself cannot be deleted: " << aTransformName.GetTransformName());
+    LOG_ERROR("Setting a transform to itself cannot be deleted: " << aTransformName.GetTransformName());
     return IGSIO_FAIL;
   }
 
@@ -577,7 +577,7 @@ igsioStatus vtkIGSIOTransformRepository::DeleteTransform(const igsioTransformNam
     if (fromToTransformInfoIt->second.m_IsComputed)
     {
       // this is not an original transform (has not been set by the user)
-      vtkErrorMacro("The " << aTransformName.From() << " to " << aTransformName.To()
+      LOG_ERROR("The " << aTransformName.From() << " to " << aTransformName.To()
                 << " transform cannot be deleted, only the inverse of the transform has been set in the repository ("
                 << aTransformName.From() << " to " << aTransformName.To() << ")");
       return IGSIO_FAIL;
@@ -586,7 +586,7 @@ igsioStatus vtkIGSIOTransformRepository::DeleteTransform(const igsioTransformNam
   }
   else
   {
-    vtkErrorMacro("Delete transform failed: could not find the " << aTransformName.From() << " to " << aTransformName.To() << " transform");
+    LOG_ERROR("Delete transform failed: could not find the " << aTransformName.From() << " to " << aTransformName.To() << " transform");
     // don't return yet, try to delete the inverse
     return IGSIO_FAIL;
   }
@@ -600,7 +600,7 @@ igsioStatus vtkIGSIOTransformRepository::DeleteTransform(const igsioTransformNam
   }
   else
   {
-    vtkErrorMacro("Delete transform failed: could not find the " << aTransformName.To() << " to " << aTransformName.From() << " transform");
+    LOG_ERROR("Delete transform failed: could not find the " << aTransformName.To() << " to " << aTransformName.From() << " transform");
     return IGSIO_FAIL;
   }
   return IGSIO_SUCCESS;
@@ -625,7 +625,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
 
   //if (coordinateDefinitions == NULL)
   //{
-  //  vtkDebugMacro("vtkIGSIOTransformRepository::ReadConfiguration: no CoordinateDefinitions element was found");
+  //  LOG_DEBUG("vtkIGSIOTransformRepository::ReadConfiguration: no CoordinateDefinitions element was found");
   //  return IGSIO_SUCCESS;
   //}
 
@@ -644,7 +644,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
 
   //  if (!fromAttribute || !toAttribute)
   //  {
-  //    vtkErrorMacro("Failed to read transform of CoordinateDefinitions (nested element index: " << nestedElementIndex << ") - check 'From' and 'To' attributes in the configuration file!");
+  //    LOG_ERROR("Failed to read transform of CoordinateDefinitions (nested element index: " << nestedElementIndex << ") - check 'From' and 'To' attributes in the configuration file!");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -652,7 +652,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  igsioTransformName transformName(fromAttribute, toAttribute);
   //  if (!transformName.IsValid())
   //  {
-  //    vtkErrorMacro("Invalid transform name (From: '" <<  fromAttribute << "'  To: '" << toAttribute << "')");
+  //    LOG_ERROR("Invalid transform name (From: '" <<  fromAttribute << "'  To: '" << toAttribute << "')");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -665,14 +665,14 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  }
   //  else
   //  {
-  //    vtkErrorMacro("Unable to find 'Matrix' attribute of '" << fromAttribute << "' to '" << toAttribute << "' transform among the CoordinateDefinitions in the configuration file");
+  //    LOG_ERROR("Unable to find 'Matrix' attribute of '" << fromAttribute << "' to '" << toAttribute << "' transform among the CoordinateDefinitions in the configuration file");
   //    numberOfErrors++;
   //    continue;
   //  }
 
   //  if (this->SetTransform(transformName, transformMatrix) != IGSIO_SUCCESS)
   //  {
-  //    vtkErrorMacro("Unable to set transform: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+  //    LOG_ERROR("Unable to set transform: '" << fromAttribute << "' to '" << toAttribute << "' transform");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -681,7 +681,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  igsioCommon::XML::SafeCheckAttributeValueInsensitive(*nestedElement, "Persistent", "FALSE", isPersistent);
   //  if (this->SetTransformPersistent(transformName, isPersistent) != IGSIO_SUCCESS)
   //  {
-  //    vtkErrorMacro("Unable to set transform to " << isPersistent << ": " << fromAttribute << "' to '" << toAttribute << "' transform");
+  //    LOG_ERROR("Unable to set transform to " << isPersistent << ": " << fromAttribute << "' to '" << toAttribute << "' transform");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -692,7 +692,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  {
   //    if (this->SetTransformStatus(transformName, igsioCommon::ConvertStringToToolStatus(toolStatusStr)) != IGSIO_SUCCESS)
   //    {
-  //      vtkErrorMacro("Unable to set transform to " << toolStatusStr << " : " << fromAttribute << "' to '" << toAttribute << "' transform");
+  //      LOG_ERROR("Unable to set transform to " << toolStatusStr << " : " << fromAttribute << "' to '" << toAttribute << "' transform");
   //      numberOfErrors++;
   //      continue;
   //    }
@@ -702,7 +702,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  if (igsioCommon::XML::SafeGetAttributeValueInsensitive<double>(*nestedElement, "Error", error) == IGSIO_SUCCESS &&
   //      this->SetTransformError(transformName, error) != IGSIO_SUCCESS)
   //  {
-  //    vtkErrorMacro("Unable to set transform error: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+  //    LOG_ERROR("Unable to set transform error: '" << fromAttribute << "' to '" << toAttribute << "' transform");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -711,7 +711,7 @@ igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* co
   //  if (igsioCommon::XML::SafeGetAttributeValueInsensitive(*nestedElement, "Date", date) == IGSIO_SUCCESS &&
   //      this->SetTransformDate(transformName, date) != IGSIO_SUCCESS)
   //  {
-  //    vtkErrorMacro("Unable to set transform date: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+  //    LOG_ERROR("Unable to set transform date: '" << fromAttribute << "' to '" << toAttribute << "' transform");
   //    numberOfErrors++;
   //    continue;
   //  }
@@ -727,7 +727,7 @@ igsioStatus vtkIGSIOTransformRepository::WriteConfigurationGeneric(vtkXMLDataEle
 {
   if (configRootElement == NULL)
   {
-    vtkErrorMacro("Failed to write transforms to CoordinateDefinitions - config root element is NULL");
+    LOG_ERROR("Failed to write transforms to CoordinateDefinitions - config root element is NULL");
     return IGSIO_FAIL;
   }
 
@@ -758,14 +758,14 @@ igsioStatus vtkIGSIOTransformRepository::WriteConfigurationGeneric(vtkXMLDataEle
 
         if (transformInfo->second.m_Transform == NULL)
         {
-          vtkErrorMacro("Transformation matrix is NULL between '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frames.");
+          LOG_ERROR("Transformation matrix is NULL between '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frames.");
           numberOfErrors++;
           continue;
         }
 
         if (!transformInfo->second.IsValid())
         {
-          //**//**//**//**//**//**//**//**//**//**vtkWarningMacro("Invalid transform saved to CoordinateDefinitions from  '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frame.");
+          //**//**//**//**//**//**//**//**//**//**LOG_WARNING("Invalid transform saved to CoordinateDefinitions from  '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frame.");
         }
 
         double vectorMatrix[16] = {0};

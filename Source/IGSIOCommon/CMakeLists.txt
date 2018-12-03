@@ -11,7 +11,9 @@ SET(${PROJECT_NAME}_INCLUDE_DIRS
 
 SET(${PROJECT_NAME}_SRCS
   igsioCommon.cxx
+  vtkIGSIOLogger.cxx
   igsioMath.cxx
+  vtkIGSIOAccurateTimer.cxx
   igsioVideoFrame.cxx
   igsioTrackedFrame.cxx
   vtkIGSIOTrackedFrameList.cxx
@@ -23,7 +25,10 @@ SET(${PROJECT_NAME}_HDRS
   igsioCommon.h
   igsioCommon.txx
   igsioXMLUtils.h
+  vtkIGSIOLogger.h
   igsioMath.h
+  vtkIGSIOAccurateTimer.h
+  WindowsAccurateTimer.h
   igsioVideoFrame.h
   igsioVideoFrame.txx
   igsioTrackedFrame.h
@@ -38,8 +43,13 @@ SET(${PROJECT_NAME}_LIBS
   vtkIOImage
   vtkIOXMLParser
   vtkImagingCore
+  vtkCommonSystem
   ${IGSIOZLIB_LIBRARY}
   )
+  
+IF(WIN32)
+  LIST(APPEND ${PROJECT_NAME}_LIBS Winmm)
+ENDIF(WIN32)
 
 #-----------------------------------------------------------------------------
 # Create the library

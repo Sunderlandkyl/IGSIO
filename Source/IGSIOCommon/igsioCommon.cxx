@@ -275,7 +275,7 @@ igsioStatus igsioCommon::CreateTemporaryFilename(std::string& aString, const std
     ofstream aFile(candidateFilename);
     if (!aFile.is_open())
     {
-      vtkWarningMacro("Cannot write to temp file " << candidateFilename << " check write permissions of output directory.");
+      LOG_WARNING("Cannot write to temp file " << candidateFilename << " check write permissions of output directory.");
       continue;
     }
 
@@ -489,7 +489,7 @@ igsioStatus igsioCommon::XML::PrintXML(const std::string& fname, vtkXMLDataEleme
   ofstream of(fname);
   if (!of.is_open())
   {
-    std::cerr << "Failed to open " << fname << " for writing" << std::endl;
+    LOG_ERROR("Failed to open " << fname << " for writing");
     return IGSIO_FAIL;
   }
   of.imbue(std::locale::classic());

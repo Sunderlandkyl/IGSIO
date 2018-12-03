@@ -9,10 +9,7 @@
 
 // PLUS includes
 #include "vtkigsiocommon_export.h"
-//#include "itkImageIOBase.h"
-//#include "vtkPlusLogger.h"
-//#include "vtkPlusMacro.h"
-//#include "vtkIGSIORecursiveCriticalSection.h"
+#include "vtkIGSIOLogger.h"
 
 // VTK includes
 #include <vtkImageData.h>
@@ -89,204 +86,204 @@ typedef std::array<unsigned int, 3> FrameSizeType;
 ///////////////////////////////////////////////////////////////////
 // Logging
 //
-//class VTKIGSIOCOMMON_EXPORT vtkPlusLogHelper
-//{
-//public:
-//  double m_MinimumTimeBetweenLoggingSec;
-//  unsigned long m_MinimumCountBetweenLogging;
-//  vtkPlusLogger::LogLevelType m_LogLevel;
-//
-//  // the parameters provide the maximum frequency of logging
-//  vtkPlusLogHelper(double minimumTimeBetweenLoggingSec = 60.0,
-//                   unsigned long minimumCountBetweenLogging = 5000,
-//                   vtkPlusLogger::LogLevelType logLevel = vtkPlusLogger::LOG_LEVEL_ERROR)
-//    : m_MinimumTimeBetweenLoggingSec(minimumTimeBetweenLoggingSec),
-//      m_MinimumCountBetweenLogging(minimumCountBetweenLogging),
-//      m_LogLevel(logLevel)
-//  {
-//    m_LastError = -std::numeric_limits<double>::max() / 2;
-//    m_Count = -2;
-//  }
-//  bool ShouldWeLog(bool errorPresent); //should the error be logged this time?
-//private:
-//  double m_LastError; //last time an error was logged
-//  unsigned long m_Count; //how many times the error was encountered
-//
-//};
-//
-//#define vtkErrorMacro(msg) \
-//  { \
-//  std::ostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_ERROR, msgStream.str().c_str(), __FILE__, __LINE__); \
-//  }
-//
-//#define vtkWarningMacro(msg) \
-//  { \
-//  std::ostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_WARNING, msgStream.str().c_str(), __FILE__, __LINE__); \
-//  }
-//
-//#define //LOG_INFO(msg) \
-//  { \
-//  std::ostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_INFO, msgStream.str().c_str(), __FILE__, __LINE__); \
-//  }
-//
-//#define vtkDebugMacro(msg) \
-//  { \
-//  std::ostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_DEBUG, msgStream.str().c_str(), __FILE__, __LINE__); \
-//  }
-//
-//#define //LOG_TRACE(msg) \
-//  { \
-//    if (vtkPlusLogger::Instance()->GetLogLevel()>=vtkPlusLogger::LOG_LEVEL_TRACE) \
-//    { \
-//      std::ostringstream msgStream; \
-//      msgStream << msg << std::ends; \
-//      vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_TRACE, msgStream.str().c_str(), __FILE__, __LINE__); \
-//    } \
-//  }
-//
-//#define //LOG_DYNAMIC(msg, logLevel) \
-//{ \
-//  std::ostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(logLevel, msgStream.str().c_str(), __FILE__, __LINE__); \
-//  }
-//
-//// If condition is satisfied, logs error periodically
-//// and returns IGSIO_FAIL each time
-//#define RETURN_WITH_FAIL_IF(condition, msg) \
-//  { \
-//  static vtkPlusLogHelper logHelper; \
-//  bool result = condition; \
-//  if (logHelper.ShouldWeLog(result)) \
-//  { \
-//    vtkErrorMacro(msg); \
-//  } \
-//  else \
-//  { \
-//    //LOG_TRACE(msg); \
-//  } \
-//  \
-//  if (result) \
-//  { \
-//    return IGSIO_FAIL; \
-//  } \
-//  }
-//
-//// If condition is satisfied, logs error periodically
-//// and returns IGSIO_FAIL each time. Uses a vtkPlusLogHelper logHelper,
-//// which needs to be available in current scope.
-//#define CUSTOM_RETURN_WITH_FAIL_IF(condition, msg) \
-//  { \
-//  bool result = condition; \
-//  if (logHelper.ShouldWeLog(result)) \
-//  { \
-//    vtkErrorMacro(msg); \
-//  } \
-//  else \
-//  { \
-//    //LOG_TRACE(msg); \
-//  } \
-//  \
-//  if (result) \
-//  { \
-//    return IGSIO_FAIL; \
-//  } \
-//  }
-//
-//#define vtkErrorMacro_W(msg) \
-//  { \
-//  std::wostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_ERROR, msgStream.str(), __FILE__, __LINE__); \
-//  }
-//
-//#define vtkWarningMacro_W(msg) \
-//  { \
-//  std::wostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_WARNING, msgStream.str(), __FILE__, __LINE__); \
-//  }
-//
-//#define //LOG_INFO_W(msg) \
-//  { \
-//  std::wostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_INFO, msgStream.str(), __FILE__, __LINE__); \
-//  }
-//
-//#define vtkDebugMacro_W(msg) \
-//  { \
-//  std::wostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_DEBUG, msgStream.str(), __FILE__, __LINE__); \
-//  }
-//
-//#define //LOG_TRACE_W(msg) \
-//  { \
-//    if (vtkPlusLogger::Instance()->GetLogLevel()>=vtkPlusLogger::LOG_LEVEL_TRACE) \
-//    { \
-//      std::wostringstream msgStream; \
-//      msgStream << msg << std::ends; \
-//      vtkPlusLogger::Instance()->LogMessage(vtkPlusLogger::LOG_LEVEL_TRACE, msgStream.str(), __FILE__, __LINE__); \
-//    } \
-//  }
-//
-//#define //LOG_DYNAMIC_W(msg, logLevel) \
-//{ \
-//  std::wostringstream msgStream; \
-//  msgStream << msg << std::ends; \
-//  vtkPlusLogger::Instance()->LogMessage(logLevel, msgStream.str(), __FILE__, __LINE__); \
-//  }
-//
-//// If condition is satisfied, logs error periodically
-//// and returns IGSIO_FAIL each time
-//#define RETURN_WITH_FAIL_IF_W(condition, msg) \
-//  { \
-//  static vtkPlusLogHelper logHelper; \
-//  bool result = condition; \
-//  if (logHelper.ShouldWeLog(result)) \
-//  { \
-//    vtkErrorMacro_W(msg); \
-//  } \
-//  else \
-//  { \
-//    //LOG_TRACE_W(msg); \
-//  } \
-//  \
-//  if (result) \
-//  { \
-//    return IGSIO_FAIL; \
-//  } \
-//  }
-//
-//// If condition is satisfied, logs error periodically
-//// and returns IGSIO_FAIL each time. Uses a vtkPlusLogHelper logHelper,
-//// which needs to be available in current scope.
-//#define CUSTOM_RETURN_WITH_FAIL_IF_W(condition, msg) \
-//  { \
-//  bool result = condition; \
-//  if (logHelper.ShouldWeLog(result)) \
-//  { \
-//    vtkErrorMacro_W(msg); \
-//  } \
-//  else \
-//  { \
-//    //LOG_TRACE_W(msg); \
-//  } \
-//  \
-//  if (result) \
-//  { \
-//    return IGSIO_FAIL; \
-//  } \
-//  }
+class VTKIGSIOCOMMON_EXPORT vtkIGSIOLogHelper
+{
+public:
+  double m_MinimumTimeBetweenLoggingSec;
+  unsigned long m_MinimumCountBetweenLogging;
+  vtkIGSIOLogger::LogLevelType m_LogLevel;
+
+  // the parameters provide the maximum frequency of logging
+  vtkIGSIOLogHelper(double minimumTimeBetweenLoggingSec = 60.0,
+                   unsigned long minimumCountBetweenLogging = 5000,
+                   vtkIGSIOLogger::LogLevelType logLevel = vtkIGSIOLogger::LOG_LEVEL_ERROR)
+    : m_MinimumTimeBetweenLoggingSec(minimumTimeBetweenLoggingSec),
+      m_MinimumCountBetweenLogging(minimumCountBetweenLogging),
+      m_LogLevel(logLevel)
+  {
+    m_LastError = -(std::numeric_limits<double>::max)() / 2;
+    m_Count = -2;
+  }
+  bool ShouldWeLog(bool errorPresent); //should the error be logged this time?
+private:
+  double m_LastError; //last time an error was logged
+  unsigned long m_Count; //how many times the error was encountered
+
+};
+
+#define LOG_ERROR(msg) \
+  { \
+  std::ostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_ERROR, msgStream.str().c_str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_WARNING(msg) \
+  { \
+  std::ostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_WARNING, msgStream.str().c_str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_INFO(msg) \
+  { \
+  std::ostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_INFO, msgStream.str().c_str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_DEBUG(msg) \
+  { \
+  std::ostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_DEBUG, msgStream.str().c_str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_TRACE(msg) \
+  { \
+    if (vtkIGSIOLogger::Instance()->GetLogLevel()>=vtkIGSIOLogger::LOG_LEVEL_TRACE) \
+    { \
+      std::ostringstream msgStream; \
+      msgStream << msg << std::ends; \
+      vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_TRACE, msgStream.str().c_str(), __FILE__, __LINE__); \
+    } \
+  }
+
+#define LOG_DYNAMIC(msg, logLevel) \
+{ \
+  std::ostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(logLevel, msgStream.str().c_str(), __FILE__, __LINE__); \
+  }
+
+// If condition is satisfied, logs error periodically
+// and returns IGSIO_FAIL each time
+#define RETURN_WITH_FAIL_IF(condition, msg) \
+  { \
+  static vtkIGSIOLogHelper logHelper; \
+  bool result = condition; \
+  if (logHelper.ShouldWeLog(result)) \
+  { \
+    LOG_ERROR(msg); \
+  } \
+  else \
+  { \
+    LOG_TRACE(msg); \
+  } \
+  \
+  if (result) \
+  { \
+    return IGSIO_FAIL; \
+  } \
+  }
+
+// If condition is satisfied, logs error periodically
+// and returns IGSIO_FAIL each time. Uses a vtkIGSIOLogHelper logHelper,
+// which needs to be available in current scope.
+#define CUSTOM_RETURN_WITH_FAIL_IF(condition, msg) \
+  { \
+  bool result = condition; \
+  if (logHelper.ShouldWeLog(result)) \
+  { \
+    LOG_ERROR(msg); \
+  } \
+  else \
+  { \
+    LOG_TRACE(msg); \
+  } \
+  \
+  if (result) \
+  { \
+    return IGSIO_FAIL; \
+  } \
+  }
+
+#define LOG_ERROR_W(msg) \
+  { \
+  std::wostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_ERROR, msgStream.str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_WARNING_W(msg) \
+  { \
+  std::wostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_WARNING, msgStream.str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_INFO_W(msg) \
+  { \
+  std::wostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_INFO, msgStream.str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_DEBUG_W(msg) \
+  { \
+  std::wostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_DEBUG, msgStream.str(), __FILE__, __LINE__); \
+  }
+
+#define LOG_TRACE_W(msg) \
+  { \
+    if (vtkIGSIOLogger::Instance()->GetLogLevel()>=vtkIGSIOLogger::LOG_LEVEL_TRACE) \
+    { \
+      std::wostringstream msgStream; \
+      msgStream << msg << std::ends; \
+      vtkIGSIOLogger::Instance()->LogMessage(vtkIGSIOLogger::LOG_LEVEL_TRACE, msgStream.str(), __FILE__, __LINE__); \
+    } \
+  }
+
+#define LOG_DYNAMIC_W(msg, logLevel) \
+{ \
+  std::wostringstream msgStream; \
+  msgStream << msg << std::ends; \
+  vtkIGSIOLogger::Instance()->LogMessage(logLevel, msgStream.str(), __FILE__, __LINE__); \
+  }
+
+// If condition is satisfied, logs error periodically
+// and returns IGSIO_FAIL each time
+#define RETURN_WITH_FAIL_IF_W(condition, msg) \
+  { \
+  static vtkIGSIOLogHelper logHelper; \
+  bool result = condition; \
+  if (logHelper.ShouldWeLog(result)) \
+  { \
+    LOG_ERROR_W(msg); \
+  } \
+  else \
+  { \
+    LOG_TRACE_W(msg); \
+  } \
+  \
+  if (result) \
+  { \
+    return IGSIO_FAIL; \
+  } \
+  }
+
+// If condition is satisfied, logs error periodically
+// and returns IGSIO_FAIL each time. Uses a vtkIGSIOLogHelper logHelper,
+// which needs to be available in current scope.
+#define CUSTOM_RETURN_WITH_FAIL_IF_W(condition, msg) \
+  { \
+  bool result = condition; \
+  if (logHelper.ShouldWeLog(result)) \
+  { \
+    LOG_ERROR_W(msg); \
+  } \
+  else \
+  { \
+    LOG_TRACE_W(msg); \
+  } \
+  \
+  if (result) \
+  { \
+    return IGSIO_FAIL; \
+  } \
+  }
 
 ///////////////////////////////////////////////////////////////////
 
@@ -640,7 +637,7 @@ namespace igsioCommon
   igsioTransformName tnImageToProbe;
   if ( tnImageToProbe->SetTransformName("ImageToProbe") != IGSIO_SUCCESS )
   {
-    vtkErrorMacro("Failed to set transform name!");
+    LOG_ERROR("Failed to set transform name!");
     return IGSIO_FAIL;
   }
   \endcode
@@ -654,7 +651,7 @@ namespace igsioCommon
   std::string strImageToProbe;
   if ( tnImageToProbe->GetTransformName(strImageToProbe) != IGSIO_SUCCESS )
   {
-    vtkErrorMacro("Failed to get transform name!");
+    LOG_ERROR("Failed to get transform name!");
     return IGSIO_FAIL;
   }
   \endcode

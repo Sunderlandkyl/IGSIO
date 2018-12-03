@@ -67,7 +67,7 @@ namespace
     {
       if (inputHeight % 2 != 0)
       {
-        std::cerr << "Cannot flip image with pairs of rows kept together, as number of rows is odd (" << inputHeight << ")" << std::endl;
+        LOG_ERROR("Cannot flip image with pairs of rows kept together, as number of rows is odd (" << inputHeight << ")");
         return IGSIO_FAIL;
       }
       // TODO : I don't think this is correct if transposition is happening... double check
@@ -87,7 +87,7 @@ namespace
     {
       if (inputWidth % 2 != 0)
       {
-        std::cerr << "Cannot flip image with pairs of columns kept together, as number of columns is odd (" << inputWidth << ")" << std::endl;
+        LOG_ERROR("Cannot flip image with pairs of columns kept together, as number of columns is odd (" << inputWidth << ")");
         return IGSIO_FAIL;
       }
     }
@@ -325,12 +325,12 @@ namespace
     }
     else
     {
-      std::cerr << "Operation not permitted. " << std::endl << "flipInfo.hFlip: " << (flipInfo.hFlip ? "TRUE" : "FALSE") << std::endl <<
+      LOG_ERROR("Operation not permitted. " << std::endl << "flipInfo.hFlip: " << (flipInfo.hFlip ? "TRUE" : "FALSE") << std::endl <<
                 "flipInfo.vFlip: " << (flipInfo.vFlip ? "TRUE" : "FALSE") << std::endl <<
                 "flipInfo.eFlip: " << (flipInfo.eFlip ? "TRUE" : "FALSE") << std::endl <<
                 "flipInfo.tranpose: " << igsioVideoFrame::TransposeToString(flipInfo.tranpose) << std::endl <<
                 "flipInfo.doubleColumn: " << (flipInfo.doubleColumn ? "TRUE" : "FALSE") << std::endl <<
-                "flipInfo.doubleRow: " << (flipInfo.doubleRow ? "TRUE" : "FALSE") << std::endl;
+                "flipInfo.doubleRow: " << (flipInfo.doubleRow ? "TRUE" : "FALSE"));
     }
 
     return IGSIO_SUCCESS;
@@ -386,11 +386,11 @@ igsioVideoFrame& igsioVideoFrame::operator=(igsioVideoFrame const& videoItem)
     unsigned int numberOfScalarComponents(1);
     if (videoItem.GetNumberOfScalarComponents(numberOfScalarComponents) == IGSIO_FAIL)
     {
-      std::cerr << "Unable to retrieve number of scalar components." << std::endl;
+      LOG_ERROR("Unable to retrieve number of scalar components.");
     }
     if (this->AllocateFrame(frameSize, videoItem.GetVTKScalarPixelType(), numberOfScalarComponents) != IGSIO_SUCCESS)
     {
-      std::cerr << "Failed to allocate memory for the new frame in the buffer!" << std::endl;
+      LOG_ERROR("Failed to allocate memory for the new frame in the buffer!");
     }
     else
     {
@@ -406,7 +406,7 @@ igsioStatus igsioVideoFrame::DeepCopy(igsioVideoFrame* videoItem)
 {
   if (videoItem == NULL)
   {
-    std::cerr << "Failed to deep copy video buffer item - buffer item NULL!" << std::endl;
+    LOG_ERROR("Failed to deep copy video buffer item - buffer item NULL!");
     return IGSIO_FAIL;
   }
 
@@ -420,7 +420,7 @@ igsioStatus igsioVideoFrame::FillBlank()
 {
   if (!this->IsImageValid())
   {
-    std::cerr << "Unable to fill image to blank, image data is NULL." << std::endl;
+    LOG_ERROR("Unable to fill image to blank, image data is NULL.");
     return IGSIO_FAIL;
   }
 
@@ -434,7 +434,7 @@ igsioStatus igsioVideoFrame::AllocateFrame(vtkImageData* image, const FrameSizeT
 {
   if (imageSize[0] > 0 && imageSize[1] > 0 && imageSize[2] == 0)
   {
-    std::cout << "Single slice images should have a dimension of z=1" << std::endl;
+    LOG_WARNING("Single slice images should have a dimension of z=1");
   }
 
   if (image != NULL)
@@ -509,12 +509,12 @@ unsigned long igsioVideoFrame::GetFrameSizeInBytes() const
   int bytesPerScalar = GetNumberOfBytesPerScalar();
   if (bytesPerScalar != 1 && bytesPerScalar != 2 && bytesPerScalar != 4 && bytesPerScalar != 8)
   {
-    std::cerr << "Unsupported scalar size: " << bytesPerScalar << " bytes/scalar component" << std::endl;
+    LOG_ERROR("Unsupported scalar size: " << bytesPerScalar << " bytes/scalar component");
   }
   unsigned int numberOfScalarComponents(1);
   if (this->GetNumberOfScalarComponents(numberOfScalarComponents) == IGSIO_FAIL)
   {
-    std::cerr << "Unable to retrieve number of scalar components." << std::endl;
+    LOG_ERROR("Unable to retrieve number of scalar components.");
     return 0;
   }
   unsigned long frameSizeInBytes = frameSize[0] * frameSize[1] * frameSize[2] * bytesPerScalar * numberOfScalarComponents;
@@ -526,21 +526,21 @@ igsioStatus igsioVideoFrame::DeepCopyFrom(vtkImageData* frame)
 {
   if (frame == NULL)
   {
-    std::cerr << "Failed to deep copy from vtk image data - input frame is NULL!" << std::endl;
+    LOG_ERROR("Failed to deep copy from vtk image data - input frame is NULL!");
     return IGSIO_FAIL;
   }
 
   int* frameExtent = frame->GetExtent();
   if ((frameExtent[1] - frameExtent[0] + 1) < 0 || (frameExtent[3] - frameExtent[2] + 1) < 0 || (frameExtent[5] - frameExtent[4] + 1) < 0)
   {
-    std::cerr << "Negative frame extents. Cannot DeepCopy frame." << std::endl;
+    LOG_ERROR("Negative frame extents. Cannot DeepCopy frame.");
     return IGSIO_FAIL;
   }
   FrameSizeType frameSize = {static_cast<unsigned int>(frameExtent[1] - frameExtent[0] + 1), static_cast<unsigned int>(frameExtent[3] - frameExtent[2] + 1), static_cast<unsigned int>(frameExtent[5] - frameExtent[4] + 1) };
 
   if (this->AllocateFrame(frameSize, frame->GetScalarType(), frame->GetNumberOfScalarComponents()) != IGSIO_SUCCESS)
   {
-    std::cerr << "Failed to allocate memory for plus video frame!" << std::endl;
+    LOG_ERROR("Failed to allocate memory for plus video frame!");
     return IGSIO_FAIL;
   }
 
@@ -554,7 +554,7 @@ igsioStatus igsioVideoFrame::ShallowCopyFrom(vtkImageData* frame)
 {
   if (frame == NULL)
   {
-    std::cerr << "Failed to shallow copy from vtk image data - input frame is NULL!" << std::endl;
+    LOG_ERROR("Failed to shallow copy from vtk image data - input frame is NULL!");
     return IGSIO_FAIL;
   }
   this->Image->ShallowCopy(frame);
@@ -573,7 +573,7 @@ int igsioVideoFrame::GetNumberOfBytesPerPixel() const
   unsigned int numberOfScalarComponents(1);
   if (this->GetNumberOfScalarComponents(numberOfScalarComponents) == IGSIO_FAIL)
   {
-    std::cerr << "Unable to retrieve number of scalar components." << std::endl;
+    LOG_ERROR("Unable to retrieve number of scalar components.");
     return -1;
   }
   return this->GetNumberOfBytesPerScalar() * numberOfScalarComponents;
@@ -620,7 +620,7 @@ void* igsioVideoFrame::GetScalarPointer() const
 {
   if (!this->IsImageValid())
   {
-    std::cerr << "Cannot get buffer pointer, the buffer hasn't been created yet" << std::endl;
+    LOG_ERROR("Cannot get buffer pointer, the buffer hasn't been created yet");
     return NULL;
   }
 
@@ -905,7 +905,7 @@ igsioStatus igsioVideoFrame::GetFlipAxes(US_IMAGE_ORIENTATION usImageOrientation
     }
     else
     {
-      std::cerr << "RF scanlines are expected to be in image rows" << std::endl;
+      LOG_ERROR("RF scanlines are expected to be in image rows");
       return IGSIO_FAIL;
     }
   }
@@ -921,7 +921,7 @@ igsioStatus igsioVideoFrame::GetFlipAxes(US_IMAGE_ORIENTATION usImageOrientation
     }
     else
     {
-      std::cerr << "RF scanlines are expected to be in image rows" << std::endl;
+      LOG_ERROR("RF scanlines are expected to be in image rows");
       return IGSIO_FAIL;
     }
   }
@@ -932,13 +932,13 @@ igsioStatus igsioVideoFrame::GetFlipAxes(US_IMAGE_ORIENTATION usImageOrientation
   flipInfo.tranpose = TRANSPOSE_NONE; // no transpose
   if (usImageOrientation1 == US_IMG_ORIENT_XX)
   {
-    std::cerr << "Failed to determine the necessary image flip - unknown input image orientation 1" << std::endl;
+    LOG_ERROR("Failed to determine the necessary image flip - unknown input image orientation 1");
     return IGSIO_FAIL;
   }
 
   if (usImageOrientation2 == US_IMG_ORIENT_XX)
   {
-    std::cerr << "Failed to determine the necessary image flip - unknown input image orientation 2" << std::endl;
+    LOG_ERROR("Failed to determine the necessary image flip - unknown input image orientation 2");
     return IGSIO_SUCCESS;
   }
   if (usImageOrientation1 == usImageOrientation2)
@@ -1049,9 +1049,9 @@ igsioStatus igsioVideoFrame::GetFlipAxes(US_IMAGE_ORIENTATION usImageOrientation
   }
 
   // assert(0); !!!TODO"
-  std::cerr << "Image orientation conversion between orientations " << igsioVideoFrame::GetStringFromUsImageOrientation(usImageOrientation1)
+  LOG_ERROR("Image orientation conversion between orientations " << igsioVideoFrame::GetStringFromUsImageOrientation(usImageOrientation1)
             << " and " << igsioVideoFrame::GetStringFromUsImageOrientation(usImageOrientation2)
-            << " is not supported. Only reordering of rows, columns and slices." << std::endl;
+            << " is not supported. Only reordering of rows, columns and slices.");
   return IGSIO_FAIL;
 }
 
@@ -1065,13 +1065,13 @@ igsioStatus igsioVideoFrame::GetOrientedClippedImage(vtkImageData* inUsImage,
 {
   if (inUsImage == NULL)
   {
-    std::cerr << "Failed to convert image data to the requested orientation - input image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to the requested orientation - input image is null!");
     return IGSIO_FAIL;
   }
 
   if (outUsOrientedImage == NULL)
   {
-    std::cerr << "Failed to convert image data to the requested orientation - output image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to the requested orientation - output image is null!");
     return IGSIO_FAIL;
   }
 
@@ -1115,13 +1115,13 @@ igsioStatus igsioVideoFrame::GetOrientedClippedImage(unsigned char* imageDataPtr
 {
   if (imageDataPtr == NULL)
   {
-    std::cerr << "Failed to convert image data to MF orientation - input image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to MF orientation - input image is null!");
     return IGSIO_FAIL;
   }
 
   if (outUsOrientedImage == NULL)
   {
-    std::cerr << "Failed to convert image data to MF orientation - output image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to MF orientation - output image is null!");
     return IGSIO_FAIL;
   }
 
@@ -1159,13 +1159,13 @@ igsioStatus igsioVideoFrame::FlipClipImage(vtkImageData* inUsImage,
 {
   if (inUsImage == NULL)
   {
-    std::cerr << "Failed to convert image data to the requested orientation - input image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to the requested orientation - input image is null!");
     return IGSIO_FAIL;
   }
 
   if (outUsOrientedImage == NULL)
   {
-    std::cerr << "Failed to convert image data to the requested orientation - output image is null!" << std::endl;
+    LOG_ERROR("Failed to convert image data to the requested orientation - output image is null!");
     return IGSIO_FAIL;
   }
 
@@ -1209,8 +1209,8 @@ igsioStatus igsioVideoFrame::FlipClipImage(vtkImageData* inUsImage,
 
     if (!igsioCommon::IsClippingWithinExtents(clipRectangleOrigin, clipRectangleSize, inExtents))
     {
-      std::cout << "Clipping information cannot fit within the original image. No clipping will be performed. Origin=[" << clipRectangleOrigin[0] << "," << clipRectangleOrigin[1] << "," << clipRectangleOrigin[2] <<
-                  "]. Size=[" << clipRectangleSize[0] << "," << clipRectangleSize[1] << "," << clipRectangleSize[2] << "]." << std::endl;
+      LOG_WARNING("Clipping information cannot fit within the original image. No clipping will be performed. Origin=[" << clipRectangleOrigin[0] << "," << clipRectangleOrigin[1] << "," << clipRectangleOrigin[2] <<
+                  "]. Size=[" << clipRectangleSize[0] << "," << clipRectangleSize[1] << "," << clipRectangleSize[2] << "].");
 
       finalClipOrigin[0] = 0;
       finalClipOrigin[1] = 0;
@@ -1278,7 +1278,7 @@ igsioStatus igsioVideoFrame::FlipClipImage(vtkImageData* inUsImage,
       status = FlipClipImageGeneric<vtkTypeUInt64>(inUsImage, flipInfo, finalClipOrigin, finalClipSize, outUsOrientedImage);
       break;
     default:
-      std::cerr << "Unsupported bit depth: " << numberOfBytesPerScalar << " bytes per scalar" << std::endl;
+      LOG_ERROR("Unsupported bit depth: " << numberOfBytesPerScalar << " bytes per scalar");
       break;
   }
   return status;
@@ -1362,7 +1362,7 @@ int igsioVideoFrame::GetNumberOfBytesPerScalar(igsioCommon::VTKScalarPixelType p
     case VTK_DOUBLE:
       return sizeof(vtkTypeFloat64);
     default:
-      std::cerr << "GetNumberOfBytesPerPixel: unknown pixel type " << pixelType << std::endl;
+      LOG_ERROR("GetNumberOfBytesPerPixel: unknown pixel type " << pixelType);
       return VTK_VOID;
   }
 }

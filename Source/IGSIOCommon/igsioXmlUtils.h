@@ -7,8 +7,8 @@
 #ifndef __igsioXmlUtils_h
 #define __igsioXmlUtils_h
 
+#include <vtkSmartPointer.h>
 #include "vtkXMLUtilities.h"
-
 #include "vtkXMLDataElement.h"
 
 /*!

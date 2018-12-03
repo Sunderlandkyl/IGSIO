@@ -1000,7 +1000,7 @@ std::string igsioCommon::GetAbsolutePath(const std::string& path, const std::str
   if (path.empty())
   {
     // empty
-    return path;
+    return filename;
   }
   if (vtksys::SystemTools::FileIsFullPath(filename.c_str()))
   {

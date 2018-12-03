@@ -21,22 +21,26 @@ int main(int argc, char** argv)
 {
   // Parse command-line arguments
   bool printHelp(false);
+  int verboseLevel(vtkIGSIOLogger::LOG_LEVEL_UNDEFINED);
   vtksys::CommandLineArguments args;
   args.Initialize(argc, argv);
   args.AddArgument("--help", vtksys::CommandLineArguments::NO_ARGUMENT, &printHelp, "Print this help.");
+  args.AddArgument("--verbose", vtksys::CommandLineArguments::EQUAL_ARGUMENT, &verboseLevel, "Verbose level (1=error only, 2=warning, 3=info, 4=debug, 5=trace)");
   if (!args.Parse())
   {
-    LOG_ERROR("Problem parsing arguments");
-    std::cout << "Help: " << args.GetHelp());
+    std::cerr << "Problem parsing arguments" << std::endl;
+    std::cout << "Help: " << args.GetHelp() << std::endl;
     exit(EXIT_FAILURE);
   }
 
   if (printHelp)
   {
-    std::cout << args.GetHelp());
+    std::cout << args.GetHelp() << std::endl;
     exit(EXIT_SUCCESS);
 
   }
+
+  vtkIGSIOLogger::Instance()->SetLogLevel(verboseLevel);
 
   /////////////////////////////////////////////////////////////////////////////
   // Set up coordinate transforms
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
   trackedFrame.SetFrameTransform(igsioTransformName("StylusTip", "Stylus"), mxStylusTipToStylus);
   trackedFrame.SetFrameTransformStatus(igsioTransformName("StylusTip", "Stylus"), TOOL_OK);
 
-  if (transformRepository->SetTransforms(trackedFrame) != PLUS_SUCCESS)
+  if (transformRepository->SetTransforms(trackedFrame) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Failed to set transforms from tracked frame!");
     return EXIT_FAILURE;
@@ -221,7 +225,7 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////
   // Check if invalid transform flag is correctly propagated
   bool isValid;
-  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "Stylus"), isValid) != PLUS_SUCCESS)
+  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "Stylus"), isValid) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Cannot get ProbeToStylus transform valid status");
     return EXIT_FAILURE;
@@ -232,7 +236,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  if (transformRepository->GetTransformValid(igsioTransformName("Stylus", "Probe"), isValid) != PLUS_SUCCESS)
+  if (transformRepository->GetTransformValid(igsioTransformName("Stylus", "Probe"), isValid) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Cannot get StylusToProbe transform valid status");
     return EXIT_FAILURE;
@@ -245,32 +249,32 @@ int main(int argc, char** argv)
 
   transformRepository->SetTransform(tnProbeToTracker, mxProbeToTracker, TOOL_OK);
 
-  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "Stylus"), isValid) != PLUS_SUCCESS)
+  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "Stylus"), isValid) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Cannot get ProbeToStylus transform valid status");
     return EXIT_FAILURE;
   }
   if (!isValid)
   {
-    /LOG_ERROR("The ProbeToStylus transform should be valid");
+    LOG_ERROR("The ProbeToStylus transform should be valid");
     return EXIT_FAILURE;
   }
 
-  if (transformRepository->GetTransformValid(igsioTransformName("Stylus", "Probe"), isValid) != PLUS_SUCCESS)
+  if (transformRepository->GetTransformValid(igsioTransformName("Stylus", "Probe"), isValid) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Cannot get StylusToProbe transform valid status");
     return EXIT_FAILURE;
   }
   if (!isValid)
   {
-    /LOG_ERROR("The StylusToProbe transform should be valid");
+    LOG_ERROR("The StylusToProbe transform should be valid");
     return EXIT_FAILURE;
   }
 
 
   /////////////////////////////////////////////////////////////////////////////
   // Check if non-existing transforms are handled properly
-  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "StylusNonExisting"), isValid) == PLUS_SUCCESS)
+  if (transformRepository->GetTransformValid(igsioTransformName("Probe", "StylusNonExisting"), isValid) == IGSIO_SUCCESS)
   {
     LOG_ERROR("A non-existing transform has been reported to be found");
     return EXIT_FAILURE;
@@ -279,13 +283,13 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////
   // Check circle detection
   vtkSmartPointer<vtkMatrix4x4> mxProbeToPhantom = vtkSmartPointer<vtkMatrix4x4>::New();
-  if (transformRepository->SetTransform(igsioTransformName("Probe", "Phantom"), mxProbeToPhantom) == PLUS_SUCCESS)
+  if (transformRepository->SetTransform(igsioTransformName("Probe", "Phantom"), mxProbeToPhantom) == IGSIO_SUCCESS)
   {
     LOG_ERROR("Circular reference between transforms is not detected");
     return EXIT_FAILURE;
   }
 
-  if (transformRepository->SetTransform(igsioTransformName("Probe", "Probe"), mxProbeToProbe) == PLUS_SUCCESS)
+  if (transformRepository->SetTransform(igsioTransformName("Probe", "Probe"), mxProbeToProbe) == IGSIO_SUCCESS)
   {
     LOG_ERROR("Circular reference between transforms (transform to self) is not detected");
     return EXIT_FAILURE;
@@ -297,7 +301,7 @@ int main(int argc, char** argv)
   vtkSmartPointer<vtkXMLDataElement> xmlData = vtkSmartPointer<vtkXMLDataElement>::New();
   xmlData->SetName("PlusConfiguration");
   xmlData->SetAttribute("version", "1.0");
-  if (transformRepository->WriteConfiguration(xmlData) != PLUS_SUCCESS)
+  if (transformRepository->WriteConfiguration(xmlData) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Failed to write persistent transforms to CoordinateDefinitions");
     return EXIT_FAILURE;
@@ -307,13 +311,13 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////
   // Check read configuration
   std::string inputConfigFileName = "CoordinateDefinitions.xml";
-  vtkSmartPointer<vtkXMLDataElement> configRootElement = vtkSmartPointer<vtkXMLDataElement>::New();
-  if (igsioXmlUtils::ReadDeviceSetConfigurationFromFile(configRootElement, inputConfigFileName.c_str()) == PLUS_FAIL)
+  vtkSmartPointer<vtkXMLDataElement> configRootElement = vtkSmartPointer<vtkXMLDataElement>::Take(vtkXMLUtilities::ReadElementFromFile(inputConfigFileName.c_str()));
+  if (!configRootElement)
   {
     LOG_ERROR("Unable to read configuration from file " << inputConfigFileName.c_str());
     return EXIT_FAILURE;
   }
-  if (transformRepository->ReadConfiguration(configRootElement) != PLUS_SUCCESS)
+  if (transformRepository->ReadConfiguration(configRootElement) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Failed to read persistent transforms from CoordinateDefinitions");
     return EXIT_FAILURE;
@@ -353,12 +357,12 @@ int main(int argc, char** argv)
 
   /////////////////////////////////////////////////////////////////////////////
   // Check delete
-  if (transformRepository->DeleteTransform(igsioTransformName("Tracker", "Probe")) == PLUS_SUCCESS)
+  if (transformRepository->DeleteTransform(igsioTransformName("Tracker", "Probe")) == IGSIO_SUCCESS)
   {
     LOG_ERROR("Only the inverse of the transform has been set, delete should not have been allowed");
     return EXIT_FAILURE;
   }
-  if (transformRepository->DeleteTransform(igsioTransformName("Probe", "Tracker")) != PLUS_SUCCESS)
+  if (transformRepository->DeleteTransform(igsioTransformName("Probe", "Tracker")) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Transform delete failed");
     return EXIT_FAILURE;
@@ -366,7 +370,7 @@ int main(int argc, char** argv)
 
   /////////////////////////////////////////////////////////////////////////////
   // Check circle detection - after delete
-  if (transformRepository->SetTransform(igsioTransformName("Probe", "Phantom"), mxProbeToPhantom) != PLUS_SUCCESS)
+  if (transformRepository->SetTransform(igsioTransformName("Probe", "Phantom"), mxProbeToPhantom) != IGSIO_SUCCESS)
   {
     LOG_ERROR("Set transform should have been succeeded");
     return EXIT_FAILURE;
@@ -375,7 +379,7 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////
   // Check clear
   transformRepository->Clear();
-  if (transformRepository->GetTransform(igsioTransformName("StylusTip", "Tracker"), mxStylusTipToTracker, &toolStatus) == PLUS_SUCCESS)
+  if (transformRepository->GetTransform(igsioTransformName("StylusTip", "Tracker"), mxStylusTipToTracker, &toolStatus) == IGSIO_SUCCESS)
   {
     LOG_ERROR("GetTransform should have failed after clearing the transform repository");
     return EXIT_FAILURE;

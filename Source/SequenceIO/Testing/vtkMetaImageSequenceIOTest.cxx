@@ -60,6 +60,7 @@ int main(int argc, char** argv)
     LOG_ERROR("Couldn't read sequence metafile: " <<  inputImageSequenceFileName);
     return EXIT_FAILURE;
   }
+
   vtkIGSIOTrackedFrameList* trackedFrameList = reader->GetTrackedFrameList();
 
   if (trackedFrameList == NULL)
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  //vtkDebugLogMacro("Test GetCustomString method ...");
+  LOG_DEBUG("Test GetCustomString method ...");
   const char* imgOrientation = trackedFrameList->GetCustomString("UltrasoundImageOrientation");
   if (imgOrientation == NULL)
   {
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
     numberOfFailures++;
   }
 
-  //vtkDebugLogMacro("Test GetCustomTransform method ...");
+  LOG_DEBUG("Test GetCustomTransform method ...");
   double tImageToTool[16];
   if (!trackedFrameList->GetCustomTransform("ImageToToolTransform", tImageToTool))
   {
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
   }
 
   igsioTransformName tnToolToTracker("Tool", "Tracker");
-  //vtkDebugLogMacro("Test GetFrameTransform method ...");
+  LOG_DEBUG("Test GetFrameTransform method ...");
   for (int i = 0; i < numberOfFrames; i++)
   {
     vtkSmartPointer<vtkMatrix4x4> writerMatrix = vtkSmartPointer<vtkMatrix4x4>::New();

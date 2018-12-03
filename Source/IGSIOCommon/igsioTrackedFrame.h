@@ -113,9 +113,6 @@ public:
   /*! Get Segmented fiducial point pixel coordinates */
   vtkPoints* GetFiducialPointsCoordinatePx() { return this->FiducialPointsCoordinatePx; };
 
-  /*! Write image with image to tracker transform to file */
-  igsioStatus WriteToFile(const std::string& filename, vtkMatrix4x4* imageToTracker);
-
   /*! Print tracked frame human readable serialization data to XML data
       If requestedTransforms is empty, all stored FrameFields are sent
   */

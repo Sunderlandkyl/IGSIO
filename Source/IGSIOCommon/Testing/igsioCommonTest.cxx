@@ -6,6 +6,8 @@ See License.txt for details.
 
 // Local includes
 #include "vtkIGSIORecursiveCriticalSection.h"
+#include "igsioCommon.h"
+#include "igsioXmlUtils.h"
 
 // VTK includes
 #include <vtkSmartPointer.h>
@@ -178,7 +180,7 @@ namespace
 int main(int argc, char** argv)
 {
   bool printHelp(false);
-  int verboseLevel = vtkPlusLogger::LOG_LEVEL_UNDEFINED;
+  int verboseLevel = vtkIGSIOLogger::LOG_LEVEL_UNDEFINED;
 
   vtksys::CommandLineArguments args;
   args.Initialize(argc, argv);
@@ -188,19 +190,19 @@ int main(int argc, char** argv)
 
   if (!args.Parse())
   {
-    LOG_ERROR("Problem parsing arguments");
-    std::cout << "Help: " << args.GetHelp());
+    std::cerr << "Problem parsing arguments" << std::endl;
+    std::cout << "Help: " << args.GetHelp() << std::endl;
     exit(EXIT_FAILURE);
   }
 
   if (printHelp)
   {
-    std::cout << args.GetHelp());
+    std::cout << args.GetHelp() << std::endl;
     exit(EXIT_SUCCESS);
 
   }
 
-  vtkPlusLogger::Instance()->SetLogLevel(verboseLevel);
+  vtkIGSIOLogger::Instance()->SetLogLevel(verboseLevel);
 
   // ***********************************************
   // Test string to number conversion

@@ -1048,7 +1048,7 @@ igsioStatus igsioVideoFrame::GetFlipAxes(US_IMAGE_ORIENTATION usImageOrientation
     return IGSIO_SUCCESS;
   }
 
-  // assert(0); !!!TODO"
+  assert(0);
   LOG_ERROR("Image orientation conversion between orientations " << igsioVideoFrame::GetStringFromUsImageOrientation(usImageOrientation1)
             << " and " << igsioVideoFrame::GetStringFromUsImageOrientation(usImageOrientation2)
             << " is not supported. Only reordering of rows, columns and slices.");

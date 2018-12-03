@@ -615,108 +615,106 @@ void vtkIGSIOTransformRepository::Clear()
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOTransformRepository::ReadConfiguration(vtkXMLDataElement* configRootElement)
 {
-  // TODO: !!!!
-  //XML_FIND_NESTED_ELEMENT_OPTIONAL(coordinateDefinitions, configRootElement, "CoordinateDefinitions");
+  XML_FIND_NESTED_ELEMENT_OPTIONAL(coordinateDefinitions, configRootElement, "CoordinateDefinitions");
 
-  //igsioLockGuard<vtkIGSIORecursiveCriticalSection> accessGuard(this->CriticalSection);
+  igsioLockGuard<vtkIGSIORecursiveCriticalSection> accessGuard(this->CriticalSection);
 
-  //// Clear the transforms
-  //this->Clear();
+  // Clear the transforms
+  this->Clear();
 
-  //if (coordinateDefinitions == NULL)
-  //{
-  //  LOG_DEBUG("vtkIGSIOTransformRepository::ReadConfiguration: no CoordinateDefinitions element was found");
-  //  return IGSIO_SUCCESS;
-  //}
+  if (coordinateDefinitions == NULL)
+  {
+    LOG_DEBUG("vtkIGSIOTransformRepository::ReadConfiguration: no CoordinateDefinitions element was found");
+    return IGSIO_SUCCESS;
+  }
 
-  //int numberOfErrors(0);
-  //for (int nestedElementIndex = 0; nestedElementIndex < coordinateDefinitions->GetNumberOfNestedElements(); ++nestedElementIndex)
-  //{
-  //  vtkXMLDataElement* nestedElement = coordinateDefinitions->GetNestedElement(nestedElementIndex);
-  //  if (!igsioCommon::IsEqualInsensitive(nestedElement->GetName(), "Transform"))
-  //  {
-  //    // Not a transform element, skip it
-  //    continue;
-  //  }
+  int numberOfErrors(0);
+  for (int nestedElementIndex = 0; nestedElementIndex < coordinateDefinitions->GetNumberOfNestedElements(); ++nestedElementIndex)
+  {
+    vtkXMLDataElement* nestedElement = coordinateDefinitions->GetNestedElement(nestedElementIndex);
+    if (!igsioCommon::IsEqualInsensitive(nestedElement->GetName(), "Transform"))
+    {
+      // Not a transform element, skip it
+      continue;
+    }
 
-  //  const char* fromAttribute = nestedElement->GetAttribute("From");
-  //  const char* toAttribute = nestedElement->GetAttribute("To");
+    const char* fromAttribute = nestedElement->GetAttribute("From");
+    const char* toAttribute = nestedElement->GetAttribute("To");
 
-  //  if (!fromAttribute || !toAttribute)
-  //  {
-  //    LOG_ERROR("Failed to read transform of CoordinateDefinitions (nested element index: " << nestedElementIndex << ") - check 'From' and 'To' attributes in the configuration file!");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    if (!fromAttribute || !toAttribute)
+    {
+      LOG_ERROR("Failed to read transform of CoordinateDefinitions (nested element index: " << nestedElementIndex << ") - check 'From' and 'To' attributes in the configuration file!");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  igsioTransformName transformName(fromAttribute, toAttribute);
-  //  if (!transformName.IsValid())
-  //  {
-  //    LOG_ERROR("Invalid transform name (From: '" <<  fromAttribute << "'  To: '" << toAttribute << "')");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    igsioTransformName transformName(fromAttribute, toAttribute);
+    if (!transformName.IsValid())
+    {
+      LOG_ERROR("Invalid transform name (From: '" <<  fromAttribute << "'  To: '" << toAttribute << "')");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  vtkSmartPointer<vtkMatrix4x4> transformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-  //  double vectorMatrix[16] = {0};
-  //  if (nestedElement->GetVectorAttribute("Matrix", 16, vectorMatrix))
-  //  {
-  //    transformMatrix->DeepCopy(vectorMatrix);
-  //  }
-  //  else
-  //  {
-  //    LOG_ERROR("Unable to find 'Matrix' attribute of '" << fromAttribute << "' to '" << toAttribute << "' transform among the CoordinateDefinitions in the configuration file");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    vtkSmartPointer<vtkMatrix4x4> transformMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+    double vectorMatrix[16] = {0};
+    if (nestedElement->GetVectorAttribute("Matrix", 16, vectorMatrix))
+    {
+      transformMatrix->DeepCopy(vectorMatrix);
+    }
+    else
+    {
+      LOG_ERROR("Unable to find 'Matrix' attribute of '" << fromAttribute << "' to '" << toAttribute << "' transform among the CoordinateDefinitions in the configuration file");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  if (this->SetTransform(transformName, transformMatrix) != IGSIO_SUCCESS)
-  //  {
-  //    LOG_ERROR("Unable to set transform: '" << fromAttribute << "' to '" << toAttribute << "' transform");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    if (this->SetTransform(transformName, transformMatrix) != IGSIO_SUCCESS)
+    {
+      LOG_ERROR("Unable to set transform: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  bool isPersistent = true;
-  //  igsioCommon::XML::SafeCheckAttributeValueInsensitive(*nestedElement, "Persistent", "FALSE", isPersistent);
-  //  if (this->SetTransformPersistent(transformName, isPersistent) != IGSIO_SUCCESS)
-  //  {
-  //    LOG_ERROR("Unable to set transform to " << isPersistent << ": " << fromAttribute << "' to '" << toAttribute << "' transform");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    bool isPersistent = true;
+    igsioCommon::XML::SafeCheckAttributeValueInsensitive(*nestedElement, "Persistent", "FALSE", isPersistent);
+    if (this->SetTransformPersistent(transformName, isPersistent) != IGSIO_SUCCESS)
+    {
+      LOG_ERROR("Unable to set transform to " << isPersistent << ": " << fromAttribute << "' to '" << toAttribute << "' transform");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  ToolStatus toolStatus = TOOL_OK;
-  //  std::string toolStatusStr;
-  //  if (igsioCommon::XML::SafeGetAttributeValueInsensitive(*nestedElement, "Status", toolStatusStr) == IGSIO_SUCCESS)
-  //  {
-  //    if (this->SetTransformStatus(transformName, igsioCommon::ConvertStringToToolStatus(toolStatusStr)) != IGSIO_SUCCESS)
-  //    {
-  //      LOG_ERROR("Unable to set transform to " << toolStatusStr << " : " << fromAttribute << "' to '" << toAttribute << "' transform");
-  //      numberOfErrors++;
-  //      continue;
-  //    }
-  //  }
+    ToolStatus toolStatus = TOOL_OK;
+    std::string toolStatusStr;
+    if (igsioCommon::XML::SafeGetAttributeValueInsensitive(*nestedElement, "Status", toolStatusStr) == IGSIO_SUCCESS)
+    {
+      if (this->SetTransformStatus(transformName, igsioCommon::ConvertStringToToolStatus(toolStatusStr)) != IGSIO_SUCCESS)
+      {
+        LOG_ERROR("Unable to set transform to " << toolStatusStr << " : " << fromAttribute << "' to '" << toAttribute << "' transform");
+        numberOfErrors++;
+        continue;
+      }
+    }
 
-  //  double error(0);
-  //  if (igsioCommon::XML::SafeGetAttributeValueInsensitive<double>(*nestedElement, "Error", error) == IGSIO_SUCCESS &&
-  //      this->SetTransformError(transformName, error) != IGSIO_SUCCESS)
-  //  {
-  //    LOG_ERROR("Unable to set transform error: '" << fromAttribute << "' to '" << toAttribute << "' transform");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
+    double error(0);
+    if (igsioCommon::XML::SafeGetAttributeValueInsensitive<double>(*nestedElement, "Error", error) == IGSIO_SUCCESS &&
+        this->SetTransformError(transformName, error) != IGSIO_SUCCESS)
+    {
+      LOG_ERROR("Unable to set transform error: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+      numberOfErrors++;
+      continue;
+    }
 
-  //  std::string date("");
-  //  if (igsioCommon::XML::SafeGetAttributeValueInsensitive(*nestedElement, "Date", date) == IGSIO_SUCCESS &&
-  //      this->SetTransformDate(transformName, date) != IGSIO_SUCCESS)
-  //  {
-  //    LOG_ERROR("Unable to set transform date: '" << fromAttribute << "' to '" << toAttribute << "' transform");
-  //    numberOfErrors++;
-  //    continue;
-  //  }
-  //}
-  int numberOfErrors = 0;// TODO: !!!!
+    std::string date("");
+    if (igsioCommon::XML::SafeGetAttributeValueInsensitive(*nestedElement, "Date", date) == IGSIO_SUCCESS &&
+        this->SetTransformDate(transformName, date) != IGSIO_SUCCESS)
+    {
+      LOG_ERROR("Unable to set transform date: '" << fromAttribute << "' to '" << toAttribute << "' transform");
+      numberOfErrors++;
+      continue;
+    }
+  }
   return (numberOfErrors == 0 ? IGSIO_SUCCESS : IGSIO_FAIL);
 }
 
@@ -765,7 +763,7 @@ igsioStatus vtkIGSIOTransformRepository::WriteConfigurationGeneric(vtkXMLDataEle
 
         if (!transformInfo->second.IsValid())
         {
-          //**//**//**//**//**//**//**//**//**//**LOG_WARNING("Invalid transform saved to CoordinateDefinitions from  '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frame.");
+          LOG_WARNING("Invalid transform saved to CoordinateDefinitions from  '" << fromCoordinateFrame << "' to '" << toCoordinateFrame << "' coordinate frame.");
         }
 
         double vectorMatrix[16] = {0};

@@ -57,14 +57,14 @@ int main(int argc, char** argv)
   reader->SetFileName(inputImageSequenceFileName.c_str());
   if (reader->Read() != IGSIO_SUCCESS)
   {
-    std::cerr << "Couldn't read sequence metafile: " <<  inputImageSequenceFileName << std::endl;
+    LOG_ERROR("Couldn't read sequence metafile: " <<  inputImageSequenceFileName);
     return EXIT_FAILURE;
   }
   vtkIGSIOTrackedFrameList* trackedFrameList = reader->GetTrackedFrameList();
 
   if (trackedFrameList == NULL)
   {
-    std::cerr << "Unable to get trackedFrameList!" << std::endl;
+    LOG_ERROR("Unable to get trackedFrameList!");
     return EXIT_FAILURE;
   }
 
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   const char* imgOrientation = trackedFrameList->GetCustomString("UltrasoundImageOrientation");
   if (imgOrientation == NULL)
   {
-    std::cerr << "Unable to get custom string!" << std::endl;
+    LOG_ERROR("Unable to get custom string!");
     numberOfFailures++;
   }
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   double tImageToTool[16];
   if (!trackedFrameList->GetCustomTransform("ImageToToolTransform", tImageToTool))
   {
-    std::cerr << "Unable to get custom transform!" << std::endl;
+    LOG_ERROR("Unable to get custom transform!");
     numberOfFailures++;
   }
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
   writer->SetFileName(outputImageSequenceFileName.c_str());
   writer->SetTrackedFrameList(trackedFrameList);
 
-  //LOG_DEBUG("Test SetFrameTransform method ...");
+  LOG_DEBUG("Test SetFrameTransform method ...");
   // Add the transformation matrix to metafile
   int numberOfFrames = trackedFrameList->GetNumberOfTrackedFrames();
   for (int i = 0 ; i < numberOfFrames; i++)
@@ -132,14 +132,14 @@ int main(int argc, char** argv)
     writer->GetTrackedFrame(i)->SetTimestamp(double(i) + highPrecTimeOffset);
   }
 
-  //LOG_DEBUG("Test SetCustomTransform method ...");
+  LOG_DEBUG("Test SetCustomTransform method ...");
   vtkSmartPointer<vtkMatrix4x4> calibMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
   calibMatrix->Identity();
   writer->GetTrackedFrameList()->SetCustomTransform("ImageToToolTransform", calibMatrix);
 
   if (writer->Write() != IGSIO_SUCCESS)
   {
-    std::cerr << "Couldn't write sequence metafile: " << outputImageSequenceFileName << std::endl;
+    LOG_ERROR("Couldn't write sequence metafile: " << outputImageSequenceFileName);
     return EXIT_FAILURE;
   }
 
@@ -152,13 +152,13 @@ int main(int argc, char** argv)
 
     if (!reader->GetTrackedFrameList()->GetTrackedFrame(i)->GetFrameTransform(tnToolToTracker, readerMatrix))
     {
-      std::cerr << "Unable to get ToolToTracker frame transform to frame #" << i << std::endl;
+      LOG_ERROR("Unable to get ToolToTracker frame transform to frame #" << i);
       numberOfFailures++;
     }
 
     if (!writer->GetTrackedFrame(i)->GetFrameTransform(tnToolToTracker, writerMatrix))
     {
-      std::cerr << "Unable to get ToolToTracker frame transform to frame #" << i << std::endl;
+      LOG_ERROR("Unable to get ToolToTracker frame transform to frame #" << i);
       numberOfFailures++;
     }
 
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
       {
         if (readerMatrix->GetElement(row, col) != writerMatrix->GetElement(row, col))
         {
-          std::cerr << "The input and output matrices are not the same at element: (" << row << ", " << col << "). " << std::endl;
+          LOG_ERROR("The input and output matrices are not the same at element: (" << row << ", " << col << "). ");
           numberOfFailures++;
         }
       }
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 
     if (!reader->GetTrackedFrameList()->GetTrackedFrame(i)->GetFrameTransform(highPrecTransformName, readerMatrix))
     {
-      std::cerr << "Unable to get high precision frame transform for frame #" << i << std::endl;
+      LOG_ERROR("Unable to get high precision frame transform for frame #" << i);
       numberOfFailures++;
     }
     const double FLOAT_COMPARISON_TOLERANCE = 1e-12;
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
         if (fabs(readerMatrix->GetElement(row, col) - highPrecMatrix->GetElement(row, col)) > FLOAT_COMPARISON_TOLERANCE)
         {
-          std::cerr << "The input and output matrices are not the same at element: (" << row << ", " << col << "). " << std::endl;
+          LOG_ERROR("The input and output matrices are not the same at element: (" << row << ", " << col << "). ");
           numberOfFailures++;
         }
       }
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
     double expectedTimestamp = double(i) + highPrecTimeOffset;
     if (fabs(expectedTimestamp - readerTimestamp) > FLOAT_COMPARISON_TOLERANCE)
     {
-      std::cerr << "The timestamp is not precise enough at frame " << i << std::endl;
+      LOG_ERROR("The timestamp is not precise enough at frame " << i);
       numberOfFailures++;
     }
 
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 
   if (writerImageStatus->Write() != IGSIO_SUCCESS)
   {
-    std::cerr << "Couldn't write sequence metafile: " << outputImageSequenceFileName << std::endl;
+    LOG_ERROR("Couldn't write sequence metafile: " << outputImageSequenceFileName);
     return EXIT_FAILURE;
   }
 
@@ -246,20 +246,20 @@ int main(int argc, char** argv)
   readerImageStatus->SetFileName(outputImageSequenceFileName.c_str());
   if (readerImageStatus->Read() != IGSIO_SUCCESS)
   {
-    std::cerr << "Couldn't read sequence metafile: " <<  outputImageSequenceFileName << std::endl;
+    LOG_ERROR("Couldn't read sequence metafile: " <<  outputImageSequenceFileName);
     return EXIT_FAILURE;
   }
   vtkIGSIOTrackedFrameList* trackedFrameListImageStatus = readerImageStatus->GetTrackedFrameList();
   if (trackedFrameListImageStatus == NULL)
   {
-    std::cerr << "Unable to get trackedFrameList!" << std::endl;
+    LOG_ERROR("Unable to get trackedFrameList!");
     return EXIT_FAILURE;
   }
 
   if (trackedFrameListImageStatus->GetNumberOfTrackedFrames() != 3
       && !trackedFrameListImageStatus->GetTrackedFrame(1)->GetImageData()->IsImageValid())
   {
-    std::cerr << "Image status read/write failed!" << std::endl;
+    LOG_ERROR("Image status read/write failed!");
     return EXIT_FAILURE;
   }
 
@@ -279,22 +279,23 @@ int main(int argc, char** argv)
   writerDiffSize->UseCompressionOff();
 
   // We should get an error when trying to write a sequence with different frame sizes into file
-  std::cerr.setstate(std::ios_base::failbit);
+  int oldVerboseLevel = vtkIGSIOLogger::Instance()->GetLogLevel();
+  vtkIGSIOLogger::Instance()->SetLogLevel(vtkIGSIOLogger::LOG_LEVEL_ERROR - 1); // temporarily disable error logging (as we are expecting an error)
   if (writerDiffSize->Write() == IGSIO_SUCCESS)
   {
-    std::cerr.clear();
-    std::cerr << "Expect a 'Frame size mismatch' error in vtkIGSIOMetaImageSequenceIO but the operation has been reported to be successful." << std::endl;
+    vtkIGSIOLogger::Instance()->SetLogLevel(oldVerboseLevel);
+    LOG_ERROR("Expect a 'Frame size mismatch' error in vtkPlusMetaImageSequenceIO but the operation has been reported to be successful.");
     return EXIT_FAILURE;
   }
-  std::cerr.clear();
+  vtkIGSIOLogger::Instance()->SetLogLevel(oldVerboseLevel);
 
   if (numberOfFailures > 0)
   {
-    std::cerr << "Total number of failures: " << numberOfFailures << std::endl;
-    std::cerr << "vtkIGSIOMetaImageSequenceIOTest1 failed!" << std::endl;
+    LOG_ERROR("Total number of failures: " << numberOfFailures);
+    LOG_ERROR("vtkIGSIOMetaImageSequenceIOTest1 failed!");
     return EXIT_FAILURE;
   }
 
-  std::cout << "vtkIGSIOMetaImageSequenceIOTest1 completed successfully!" << std::endl;
+  LOG_INFO("vtkIGSIOMetaImageSequenceIOTest1 completed successfully!");
   return EXIT_SUCCESS;
 }

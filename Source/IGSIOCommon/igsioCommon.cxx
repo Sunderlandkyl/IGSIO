@@ -8,6 +8,7 @@ See License.txt for details.
 #include "igsioCommon.h"
 #include "igsioTrackedFrame.h"
 #include "vtkIGSIOTrackedFrameList.h"
+#include "vtkIGSIOAccurateTimer.h"
 
 // VTK includes
 #include <vtkXMLDataElement.h>
@@ -20,6 +21,34 @@ See License.txt for details.
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+
+//-------------------------------------------------------
+bool vtkIGSIOLogHelper::ShouldWeLog(bool errorPresent)
+{
+  if (errorPresent)
+  {
+    ++m_Count;
+    double timeStamp = vtkIGSIOAccurateTimer::GetSystemTime();
+    if (timeStamp - m_LastError > m_MinimumTimeBetweenLoggingSec
+      || m_Count > m_MinimumCountBetweenLogging)
+    {
+      //log the error this time
+      m_LastError = timeStamp;
+      m_Count = 0;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+  else //error has just been removed, reset to initial state
+  {
+    m_LastError = -std::numeric_limits<double>::max() / 2;
+    m_Count = -2;
+    return false;
+  }
+}
 
 //-------------------------------------------------------
 igsioTransformName::igsioTransformName()
@@ -342,6 +371,17 @@ std::string igsioCommon::GetSequenceFilenameExtension(std::string name)
   }
   return "";
 }
+
+//----------------------------------------------------------------------------
+std::string igsioCommon::Tail(const std::string& source, const std::string::size_type length)
+{
+  if (length >= source.size())
+  {
+    return source;
+  }
+  return source.substr(source.size() - length);
+}
+
 
 //-------------------------------------------------------
 std::string& igsioCommon::Trim(std::string& str)
@@ -955,20 +995,19 @@ VTKIGSIOCOMMON_EXPORT igsioStatus igsioCommon::XML::SafeCheckAttributeValueInsen
 }
 
 //-----------------------------------------------------------------------------
-std::string igsioCommon::GetAbsolutePath(const std::string& aPath, const std::string& aBasePath)
+std::string igsioCommon::GetAbsolutePath(const std::string& path, const std::string& filename)
 {
-  if (aPath.empty())
+  if (path.empty())
   {
     // empty
-    return aBasePath;
+    return path;
   }
-  if (vtksys::SystemTools::FileIsFullPath(aPath.c_str()))
+  if (vtksys::SystemTools::FileIsFullPath(filename.c_str()))
   {
     // already absolute
-    return aPath;
+    return filename;
   }
-
+  
   // relative to the ProgramDirectory
-  std::string absolutePath = vtksys::SystemTools::CollapseFullPath(aPath.c_str(), aBasePath.c_str());
-  return absolutePath;
+  return  vtksys::SystemTools::CollapseFullPath(filename.c_str(), path.c_str());
 }

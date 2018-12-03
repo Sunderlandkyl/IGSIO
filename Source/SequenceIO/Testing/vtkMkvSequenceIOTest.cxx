@@ -34,14 +34,14 @@ int main(int argc, char** argv)
 
   if (!args.Parse())
   {
-    std::cerr << "Problem parsing arguments" << std::endl;
-    std::cout << "Help: " << args.GetHelp() << std::endl;
+    LOG_ERROR("Problem parsing arguments");
+    std::cout << "Help: " << args.GetHelp());
     exit(EXIT_FAILURE);
   }
 
   if (inputImageSequenceFileName.empty() && outputImageSequenceFileName.empty())
   {
-    std::cerr << "--input-filename or --output-filename is required" << std::endl;
+    LOG_ERROR("--input-filename or --output-filename is required");
     exit(EXIT_FAILURE);
   }
 
@@ -54,20 +54,20 @@ int main(int argc, char** argv)
     reader->SetFileName(inputImageSequenceFileName.c_str());
     if (reader->Read() != IGSIO_SUCCESS)
     {
-      std::cerr << "Couldn't read sequence MKV: " << inputImageSequenceFileName << std::endl;
+      LOG_ERROR("Couldn't read sequence MKV: " << inputImageSequenceFileName);
       return EXIT_FAILURE;
     }
     vtkIGSIOTrackedFrameList* trackedFrameList = reader->GetTrackedFrameList();
 
     if (trackedFrameList == NULL)
     {
-      std::cerr << "Unable to get trackedFrameList!" << std::endl;
+      LOG_ERROR("Unable to get trackedFrameList!");
       return EXIT_FAILURE;
     }
 
     if (trackedFrameList->GetNumberOfTrackedFrames() < 0)
     {
-      std::cerr << "No frames in trackedFrameList!" << std::endl;
+      LOG_ERROR("No frames in trackedFrameList!");
       return EXIT_FAILURE;
     }
   }
@@ -125,12 +125,12 @@ int main(int argc, char** argv)
     writer->SetTrackedFrameList(outputTrackedFrameList.GetPointer());
     if (!writer->Write())
     {
-      std::cerr << "Could not write trackedFrameList!" << std::endl;
+      LOG_ERROR("Could not write trackedFrameList!");
       return EXIT_FAILURE;
     }
     writer->Close();
   }
 
-  std::cout << "vtkIGSIOMkvSequenceIOTest completed successfully!" << std::endl;
+  std::cout << "vtkIGSIOMkvSequenceIOTest completed successfully!");
   return EXIT_SUCCESS;
 }

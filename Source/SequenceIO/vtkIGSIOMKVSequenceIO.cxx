@@ -250,7 +250,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::ReadImageHeader()
 {
   if (!this->Internal->ReadHeader())
   {
-    vtkErrorMacro("Could not read mkv header!")
+    LOG_ERROR("Could not read mkv header!")
     return IGSIO_FAIL;
   }
 
@@ -263,13 +263,13 @@ igsioStatus vtkIGSIOMkvSequenceIO::ReadImagePixels()
 {
   if (!this->Internal->ReadVideoData())
   {
-    vtkErrorMacro("Could not read mkv video!");
+    LOG_ERROR("Could not read mkv video!");
     return IGSIO_FAIL;
   }
 
   if (!this->Internal->ReadMetadata())
   {
-    vtkErrorMacro("Could not read mkv metadata!");
+    LOG_ERROR("Could not read mkv metadata!");
     return IGSIO_FAIL;
   }
 
@@ -319,7 +319,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
 {
   if (this->TrackedFrameList->Size() == 0)
   {
-    vtkErrorMacro("Could not write MKV header, no tracked frames");
+    LOG_ERROR("Could not write MKV header, no tracked frames");
     return IGSIO_FAIL;
   }
 
@@ -328,14 +328,14 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
   igsioTrackedFrame* frame = this->TrackedFrameList->GetTrackedFrame(0);
   if (!frame)
   {
-    vtkErrorMacro("Could not write MKV header, frame is missing");
+    LOG_ERROR("Could not write MKV header, frame is missing");
     return IGSIO_FAIL;
   }
 
   igsioVideoFrame* videoFrame = frame->GetImageData();
   if (!videoFrame)
   {
-    vtkErrorMacro("Could not write MKV header, video frame is missing");
+    LOG_ERROR("Could not write MKV header, video frame is missing");
     return IGSIO_FAIL;
   }
 
@@ -343,7 +343,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
   vtkUnsignedCharArray* encodedFrame = videoFrame->GetEncodedFrame();
   if (!encodedFrame && !image)
   {
-    vtkErrorMacro("Could not write MKV header, image is missing");
+    LOG_ERROR("Could not write MKV header, image is missing");
     return IGSIO_FAIL;
   }
 
@@ -353,7 +353,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
   {
     if (image->GetScalarType() != VTK_UNSIGNED_CHAR && image->GetScalarType() != VTK_CHAR)
     {
-      vtkErrorMacro("Only supported image type is unsigned char");
+      LOG_ERROR("Only supported image type is unsigned char");
       return IGSIO_FAIL;
     }
 
@@ -370,7 +370,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
     }
     else
     {
-      vtkErrorMacro("Number of components in image must be 1 or 2");
+      LOG_ERROR("Number of components in image must be 1 or 2");
     }
   }
   else if (encodedFrame)
@@ -381,7 +381,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteInitialImageHeader()
   this->Internal->VideoTrackNumber = this->Internal->AddVideoTrack("Video", encodingFourCC, frameSize[0], frameSize[1]);
   if (this->Internal->VideoTrackNumber < 1)
   {
-    vtkErrorMacro("Could not create video track!");
+    LOG_ERROR("Could not create video track!");
     return IGSIO_FAIL;
   }
 
@@ -439,14 +439,14 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteImages()
       trackedFrame = this->TrackedFrameList->GetTrackedFrame(frameNumber);
       if (!trackedFrame)
       {
-        vtkErrorMacro("Cannot access frame " << frameNumber << " while trying to writing compress data into file");
+        LOG_ERROR("Cannot access frame " << frameNumber << " while trying to writing compress data into file");
         continue;
       }
 
       videoFrame = trackedFrame->GetImageData();
       if (!videoFrame)
       {
-        vtkErrorMacro("Cannot find image in frame " << frameNumber << " while trying to writing compress data into file");
+        LOG_ERROR("Cannot find image in frame " << frameNumber << " while trying to writing compress data into file");
         continue;
       }
 
@@ -472,13 +472,13 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteImages()
         int frameType = videoFrame->GetFrameType();
         if (!this->Internal->WriteFrame(encodedFrame->GetPointer(0), size, frameType == FRAME_KEY, this->Internal->VideoTrackNumber, timestamp))
         {
-          vtkErrorMacro("Could not write frame to file: " << this->FileName);
+          LOG_ERROR("Could not write frame to file: " << this->FileName);
           return IGSIO_FAIL;
         }
       }
       else
       {
-        vtkErrorMacro("Cannot find image in frame " << frameNumber << " while trying to writing compress data into file");
+        LOG_ERROR("Cannot find image in frame " << frameNumber << " while trying to writing compress data into file");
         continue;
       }
 
@@ -488,7 +488,7 @@ igsioStatus vtkIGSIOMkvSequenceIO::WriteImages()
         uint64_t trackID = this->Internal->FrameFieldTracks[customFieldIt->first];
         if (trackID == 0)
         {
-          vtkErrorMacro("Could not find metadata track for: " << customFieldIt->first);
+          LOG_ERROR("Could not find metadata track for: " << customFieldIt->first);
           continue;
         }
 
@@ -583,7 +583,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::WriteFile()
   //  vtkUnsignedCharArray* compressedImage = trackedFrame->GetImageData()->GetCompressedFrameData();
   //  if (!compressedImage)
   //  {
-  //    vtkErrorMacro("Error writing video, frame missing!");
+  //    LOG_ERROR("Error writing video, frame missing!");
   //    this->Close();
   //    return false;
   //  }
@@ -609,7 +609,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::WriteHeader()
   this->MKVWriter = new mkvmuxer::MkvWriter();
   if (!this->MKVWriter->Open(this->External->FileName.c_str()))
   {
-    vtkErrorWithObjectMacro(this->External, "Could not open file " << this->External->FileName << "!");
+    LOG_ERROR(this->External, "Could not open file " << this->External->FileName << "!");
     return false;
   }
 
@@ -625,7 +625,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::WriteHeader()
 
   if (!this->MKVWriteSegment->Init(this->MKVWriter))
   {
-    vtkErrorWithObjectMacro(this->External, "Could not initialize MKV file segment!");
+    LOG_ERROR(this->External, "Could not initialize MKV file segment!");
     return false;
   }
 
@@ -638,14 +638,14 @@ int vtkIGSIOMkvSequenceIO::vtkInternal::AddVideoTrack(std::string name, std::str
   int trackNumber = this->MKVWriteSegment->AddVideoTrack(width, height, 0);
   if (trackNumber <= 0)
   {
-    vtkErrorWithObjectMacro(this->External, "Could not create video track!");
+    LOG_ERROR(this->External, "Could not create video track!");
     return false;
   }
 
   mkvmuxer::VideoTrack* videoTrack = (mkvmuxer::VideoTrack*)this->MKVWriteSegment->GetTrackByNumber(trackNumber);
   if (!videoTrack)
   {
-    vtkErrorWithObjectMacro(this->External, "Could not find video track: " << trackNumber << "!");
+    LOG_ERROR(this->External, "Could not find video track: " << trackNumber << "!");
     return false;
   }
 
@@ -670,7 +670,7 @@ int vtkIGSIOMkvSequenceIO::vtkInternal::AddMetadataTrack(std::string name, std::
   mkvmuxer::Track* const track = this->MKVWriteSegment->AddTrack(0);
   if (!track)
   {
-    vtkErrorWithObjectMacro(this->External, "Could not create metadata track!");
+    LOG_ERROR(this->External, "Could not create metadata track!");
     return false;
   }
 
@@ -686,14 +686,14 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::WriteFrame(unsigned char* frameData, ui
 {
   if (!this->MKVWriter)
   {
-    vtkErrorWithObjectMacro(this->External, "MKV writer not initialized.");
+    LOG_ERROR(this->External, "MKV writer not initialized.");
     return false;
   }
 
   uint64_t timestampNanoSeconds = std::floor(NANOSECONDS_IN_SECOND * timestampSeconds);
   if (!this->MKVWriteSegment->AddFrame(frameData, size, trackNumber, timestampNanoSeconds, isKeyFrame))
   {
-    vtkErrorWithObjectMacro(this->External, "Error writing frame to file!");
+    LOG_ERROR(this->External, "Error writing frame to file!");
     return false;
   }
   this->MKVWriteSegment->AddCuePoint(timestampNanoSeconds, trackNumber);
@@ -707,7 +707,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::WriteMetadata(std::string metadata, int
   uint64_t durationNanoSeconds = std::floor(NANOSECONDS_IN_SECOND * durationSeconds);
   if (!this->MKVWriteSegment->AddMetadata((uint8_t*)metadata.c_str(), sizeof(char) * (metadata.length() + 1), trackNumber, timestampNanoSeconds, durationNanoSeconds))
   {
-    vtkErrorWithObjectMacro(this->External, "Error writing metadata to file!");
+    LOG_ERROR(this->External, "Error writing metadata to file!");
     return false;
   }
   return true;
@@ -731,7 +731,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadHeader()
   mkvparser::Segment::CreateInstance(this->MKVReader, readerPosition, this->MKVReadSegment);
   if (!this->MKVReadSegment)
   {
-    vtkErrorWithObjectMacro(this->External, "Could not read mkv segment!");
+    LOG_ERROR(this->External, "Could not read mkv segment!");
     this->Close();
     return false;
   }
@@ -742,7 +742,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadHeader()
   const mkvparser::Tracks* tracks = this->MKVReadSegment->GetTracks();
   if (!tracks)
   {
-    vtkErrorWithObjectMacro(this->External, "Could not retrieve tracks!");
+    LOG_ERROR(this->External, "Could not retrieve tracks!");
     this->Close();
     return false;
   }
@@ -838,7 +838,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadVideoData()
     long status = cluster->GetFirst(blockEntry);
     if (status < 0)
     {
-      vtkErrorWithObjectMacro(this->External, "Could not find block!");
+      LOG_ERROR(this->External, "Could not find block!");
       return false;
     }
 
@@ -850,7 +850,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadVideoData()
 
       if (!track)
       {
-        vtkErrorWithObjectMacro(this->External, "Could not find track!");
+        LOG_ERROR(this->External, "Could not find track!");
         return false;
       }
 
@@ -904,7 +904,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadVideoData()
       if (status < 0)  // error
       {
         this->Close();
-        vtkErrorWithObjectMacro(this->External, "Error reading MKV: " << status << "!");
+        LOG_ERROR(this->External, "Error reading MKV: " << status << "!");
         return false;
       }
     }
@@ -932,7 +932,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadMetadata()
     long status = cluster->GetFirst(blockEntry);
     if (status < 0)
     {
-      vtkErrorWithObjectMacro(this->External, "Could not find block!");
+      LOG_ERROR(this->External, "Could not find block!");
       return false;
     }
 
@@ -943,7 +943,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadMetadata()
       const mkvparser::Track* track = tracks->GetTrackByNumber(trackNumber);
       if (!track)
       {
-        vtkErrorWithObjectMacro(this->External, "Could not find track!");
+        LOG_ERROR(this->External, "Could not find track!");
         return false;
       }
 
@@ -979,7 +979,7 @@ bool vtkIGSIOMkvSequenceIO::vtkInternal::ReadMetadata()
       if (status < 0)  // error
       {
         this->Close();
-        vtkErrorWithObjectMacro(this->External, "Error reading MKV: " << status << "!");
+        LOG_ERROR(this->External, "Error reading MKV: " << status << "!");
         return false;
       }
     }

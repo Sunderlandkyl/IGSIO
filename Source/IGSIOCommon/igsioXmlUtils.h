@@ -26,12 +26,12 @@ public:
   {
     if (config == NULL)
     {
-      LOG_ERROR(config, "igsioXmlUtils::GetNestedElementWithName failed: config is invalid");
+      LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: config is invalid");
       return NULL;
     }
     if (elementName == NULL)
     {
-      LOG_ERROR(config, "igsioXmlUtils::GetNestedElementWithName failed: elementName is invalid");
+      LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: elementName is invalid");
       return NULL;
     }
     vtkXMLDataElement* nestedElement = config->FindNestedElementWithName(elementName);
@@ -46,7 +46,7 @@ public:
     nestedElement = config->FindNestedElementWithName(elementName);
     if (nestedElement == NULL)
     {
-      LOG_ERROR(config, "igsioXmlUtils::GetNestedElementWithName failed: cannot add nested element with name " << elementName);
+      LOG_ERROR("igsioXmlUtils::GetNestedElementWithName failed: cannot add nested element with name " << elementName);
     }
     return nestedElement;
   }
@@ -92,7 +92,7 @@ public:
     LOG_ERROR("Missing or invalid " << expectedXmlElementName << " element"); \
     return IGSIO_FAIL; \
   } \
-  if ( xmlElementVar->GetName() == NULL || !PlusCommon::IsEqualInsensitive(xmlElementVar->GetName(),expectedXmlElementName))  \
+  if ( xmlElementVar->GetName() == NULL || !igsioCommon::IsEqualInsensitive(xmlElementVar->GetName(),expectedXmlElementName))  \
   { \
     LOG_ERROR("Unable to read " << expectedXmlElementName << " element: unexpected name: " << (xmlElementVar->GetName() ? xmlElementVar->GetName() : "(unspecified)")); \
     return IGSIO_FAIL; \
@@ -427,11 +427,11 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, "TRUE"))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, "TRUE"))  \
       { \
         this->Set##memberVar(true); \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, "FALSE"))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, "FALSE"))  \
       { \
         this->Set##memberVar(false);  \
       } \
@@ -450,11 +450,11 @@ public:
       const char* strValue = xmlElementVar->GetAttribute(#attributeName); \
       if (strValue != NULL) \
       { \
-        if (PlusCommon::IsEqualInsensitive(strValue, "TRUE"))  \
+        if (igsioCommon::IsEqualInsensitive(strValue, "TRUE"))  \
         { \
           var = true; \
         } \
-        else if (PlusCommon::IsEqualInsensitive(strValue, "FALSE"))  \
+        else if (igsioCommon::IsEqualInsensitive(strValue, "FALSE"))  \
         { \
           var = false; \
         } \
@@ -473,11 +473,11 @@ public:
       const char* strValue = xmlElementVar->GetAttribute(#attributeName); \
       if (strValue != NULL) \
       { \
-        if (PlusCommon::IsEqualInsensitive(strValue, "TRUE"))  \
+        if (igsioCommon::IsEqualInsensitive(strValue, "TRUE"))  \
         { \
           var = true; \
         } \
-        else if (PlusCommon::IsEqualInsensitive(strValue, "FALSE"))  \
+        else if (igsioCommon::IsEqualInsensitive(strValue, "FALSE"))  \
         { \
           var = false; \
         } \
@@ -501,7 +501,7 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         this->Set##memberVar(enumValue1); \
       } \
@@ -519,11 +519,11 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         this->Set##memberVar(enumValue1); \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString2))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString2))  \
       { \
         this->Set##memberVar(enumValue2);  \
       } \
@@ -541,11 +541,11 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#varName); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         var = enumValue1; \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString2))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString2))  \
       { \
         var = enumValue2;  \
       } \
@@ -563,11 +563,11 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#varName); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         var = enumValue1; \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString2))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString2))  \
       { \
         var = enumValue2;  \
       } \
@@ -586,15 +586,15 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         this->Set##memberVar(enumValue1); \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString2))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString2))  \
       { \
         this->Set##memberVar(enumValue2);  \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString3))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString3))  \
       { \
         this->Set##memberVar(enumValue3);  \
       } \
@@ -612,19 +612,19 @@ public:
     const char* strValue = xmlElementVar->GetAttribute(#memberVar); \
     if (strValue != NULL) \
     { \
-      if (PlusCommon::IsEqualInsensitive(strValue, enumString1))  \
+      if (igsioCommon::IsEqualInsensitive(strValue, enumString1))  \
       { \
         this->Set##memberVar(enumValue1); \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString2))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString2))  \
       { \
         this->Set##memberVar(enumValue2);  \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString3))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString3))  \
       { \
         this->Set##memberVar(enumValue3);  \
       } \
-      else if (PlusCommon::IsEqualInsensitive(strValue, enumString4))  \
+      else if (igsioCommon::IsEqualInsensitive(strValue, enumString4))  \
       { \
         this->Set##memberVar(enumValue4);  \
       } \
@@ -645,7 +645,7 @@ public:
       bool strValueValid = false; \
       for (int value = startValue; value < startValue+numberOfValues; value++) \
       { \
-        if (PlusCommon::IsEqualInsensitive(strValue, numberToStringConverter(value)))  \
+        if (igsioCommon::IsEqualInsensitive(strValue, numberToStringConverter(value)))  \
         { \
           this->Set##memberVar(value); \
           strValueValid = true; \

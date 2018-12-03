@@ -96,7 +96,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
   // open in binary mode because we determine the start of the image buffer also during this read
   if (FileOpen(&stream, this->FileName.c_str(), "rb") != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("The file " << this->FileName << " could not be opened for reading");
+    LOG_ERROR("The file " << this->FileName << " could not be opened for reading");
     return IGSIO_FAIL;
   }
 
@@ -131,7 +131,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
     separatorFound = lineStr.find_first_of(":");
     if (!separatorFound)
     {
-      vtkWarningMacro("Parsing line failed, colon is missing (" << lineStr << ")");
+      LOG_WARNING("Parsing line failed, colon is missing (" << lineStr << ")");
       continue;
     }
     std::string name = lineStr.substr(0, separatorFound);
@@ -170,7 +170,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
       underscoreFound = name.find_first_of("_");
       if (underscoreFound == std::string::npos)
       {
-        vtkWarningMacro("Parsing line failed, underscore is missing from frame field name (" << lineStr << ")");
+        LOG_WARNING("Parsing line failed, underscore is missing from frame field name (" << lineStr << ")");
         continue;
       }
       std::string frameNumberStr = name.substr(0, underscoreFound);   // 0000
@@ -179,14 +179,14 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
       int frameNumber = 0;
       if (igsioCommon::StringToInt(frameNumberStr.c_str(), frameNumber) != IGSIO_SUCCESS)
       {
-        vtkWarningMacro("Parsing line failed, cannot get frame number from frame field (" << lineStr << ")");
+        LOG_WARNING("Parsing line failed, cannot get frame number from frame field (" << lineStr << ")");
         continue;
       }
       SetFrameString(frameNumber, frameFieldName.c_str(), value.c_str());
 
       if (ferror(stream))
       {
-        vtkErrorMacro("Error reading the file " << this->FileName);
+        LOG_ERROR("Error reading the file " << this->FileName);
         break;
       }
       if (feof(stream))
@@ -203,7 +203,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
   {
     if (nDims != 2 && nDims != 3 && nDims != 4)
     {
-      vtkErrorMacro("Invalid dimension (shall be 2 or 3 or 4): " << nDims);
+      LOG_ERROR("Invalid dimension (shall be 2 or 3 or 4): " << nDims);
       return IGSIO_FAIL;
     }
   }
@@ -216,7 +216,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
   }
   else
   {
-    vtkErrorMacro(<< SEQUENCE_FIELD_KINDS << " not found in file: " << this->FileName << ". Unable to read.");
+    LOG_ERROR(SEQUENCE_FIELD_KINDS << " not found in file: " << this->FileName << ". Unable to read.");
     return IGSIO_FAIL;
   }
 
@@ -231,7 +231,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
     {
       if (spatialDomainCount == 3 && dimSize > 1)  // 0-indexed, this is the 4th spatial domain
       {
-        vtkErrorMacro("PLUS supports up to 3 spatial domains. File: " << this->FileName << " contains more than 3.");
+        LOG_ERROR("PLUS supports up to 3 spatial domains. File: " << this->FileName << " contains more than 3.");
         return IGSIO_FAIL;
       }
       this->Dimensions[spatialDomainCount] = dimSize;
@@ -259,12 +259,12 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
     const char* elementType = this->TrackedFrameList->GetCustomString("type");
     if (elementType == NULL)
     {
-      vtkErrorMacro("Field type not found in file: " << this->FileName << ". Unable to read.");
+      LOG_ERROR("Field type not found in file: " << this->FileName << ". Unable to read.");
       return IGSIO_FAIL;
     }
     else if (ConvertNrrdTypeToVtkPixelType(elementType, this->PixelType) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Unknown component type: " << elementType);
+      LOG_ERROR("Unknown component type: " << elementType);
       return IGSIO_FAIL;
     }
 
@@ -276,7 +276,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
     else
     {
       imgOrientStr = igsioVideoFrame::GetStringFromUsImageOrientation(US_IMG_ORIENT_MF);
-      vtkWarningMacro(<< SEQUENCE_FIELD_US_IMG_ORIENT << " field not found in header. Defaulting to " << imgOrientStr << ".");
+      LOG_WARNING(SEQUENCE_FIELD_US_IMG_ORIENT << " field not found in header. Defaulting to " << imgOrientStr << ".");
     }
     this->ImageOrientationInFile = igsioVideoFrame::GetUsImageOrientationFromString(imgOrientStr.c_str());
 
@@ -288,7 +288,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
     {
       // if the image type is not defined then assume that it is B-mode image
       this->ImageType = US_IMG_BRIGHTNESS;
-      vtkWarningMacro(<< SEQUENCE_FIELD_US_IMG_TYPE << " field not found in header. Defaulting to US_IMG_BRIGHTNESS.");
+      LOG_WARNING(SEQUENCE_FIELD_US_IMG_TYPE << " field not found in header. Defaulting to US_IMG_BRIGHTNESS.");
     }
     else
     {
@@ -314,11 +314,11 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
         default:
           if (this->Dimensions[0] == 0 && this->Dimensions[1] == 0 && this->Dimensions[2] == 0)
           {
-            vtkDebugMacro("Only tracking data is available in the file");
+            LOG_DEBUG("Only tracking data is available in the file");
           }
           else
           {
-            vtkWarningMacro("Cannot determine image orientation automatically, unknown image type " <<
+            LOG_WARNING("Cannot determine image orientation automatically, unknown image type " <<
                         (imgTypeStr ? imgTypeStr : "(undefined)") << ", use the same orientation in memory as in the file");
           }
           this->SetImageOrientationInMemory(this->ImageOrientationInFile);
@@ -337,13 +337,13 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImageHeader()
       if (this->Encoding >= NRRD_ENCODING_BZ2)
       {
         // TODO : enable bzip2 encoding
-        vtkErrorMacro("bzip2 encoding is currently not supported. Please re-encode NRRD using gzip encoding and re-run. Apologies for the inconvenience.");
+        LOG_ERROR("bzip2 encoding is currently not supported. Please re-encode NRRD using gzip encoding and re-run. Apologies for the inconvenience.");
         return IGSIO_FAIL;
       }
     }
     else
     {
-      vtkErrorMacro("Field encoding not found in file: " << this->FileName << ". Unable to read.");
+      LOG_ERROR("Field encoding not found in file: " << this->FileName << ". Unable to read.");
       return IGSIO_FAIL;
     }
   }
@@ -364,7 +364,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
 
   if (frameSizeInBytes == 0)
   {
-    vtkDebugMacro("No image data in the file");
+    LOG_DEBUG("No image data in the file");
     return IGSIO_SUCCESS;
   }
 
@@ -377,7 +377,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
   {
     if (FileOpen(&stream, this->GetPixelDataFilePath().c_str(), "rb") != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("The file " << this->GetPixelDataFilePath() << " could not be opened for reading");
+      LOG_ERROR("The file " << this->GetPixelDataFilePath() << " could not be opened for reading");
       fclose(stream);
       return IGSIO_FAIL;
     }
@@ -396,7 +396,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
 
     if (gzStream == NULL)
     {
-      vtkErrorMacro("Unable to open gz stream.");
+      LOG_ERROR("Unable to open gz stream.");
       fclose(stream);
       return IGSIO_FAIL;
     }
@@ -405,7 +405,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
   {
     if (FileOpen(&stream, this->GetPixelDataFilePath().c_str(), "rb") != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("The file " << this->GetPixelDataFilePath() << " could not be opened for reading");
+      LOG_ERROR("The file " << this->GetPixelDataFilePath() << " could not be opened for reading");
       return IGSIO_FAIL;
     }
   }
@@ -422,7 +422,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
 
     if (gzread(gzStream, (void*)gzAllFramesPixelBuffer, allFramesPixelBufferSize) != allFramesPixelBufferSize)
     {
-      vtkErrorMacro("Could not uncompress " << allFramesCompressedPixelBufferSize << " bytes to " << allFramesPixelBufferSize << " bytes from " << GetPixelDataFilePath());
+      LOG_ERROR("Could not uncompress " << allFramesCompressedPixelBufferSize << " bytes to " << allFramesPixelBufferSize << " bytes from " << GetPixelDataFilePath());
       gzclose(gzStream);
       return IGSIO_FAIL;
     }
@@ -449,7 +449,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
 
       if (!igsioCommon::IsEqualInsensitive(strImgStatus, "OK"))     // Image status _not_ OK
       {
-        vtkDebugMacro("Frame #" << frameNumber << " image data is invalid, no need to allocate data in the tracked frame list.");
+        LOG_DEBUG("Frame #" << frameNumber << " image data is invalid, no need to allocate data in the tracked frame list.");
         // TODO : is this right? don't we lose tool info from these dropped frames?
         continue;
       }
@@ -461,7 +461,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
     FrameSizeType frameSize = { this->Dimensions[0], this->Dimensions[1], this->Dimensions[2] };
     if (trackedFrame->GetImageData()->AllocateFrame(frameSize, this->PixelType, this->NumberOfScalarComponents) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Cannot allocate memory for frame " << frameNumber);
+      LOG_ERROR("Cannot allocate memory for frame " << frameNumber);
       numberOfErrors++;
       continue;
     }
@@ -472,7 +472,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
     igsioVideoFrame::FlipInfoType flipInfo;
     if (igsioVideoFrame::GetFlipAxes(this->ImageOrientationInFile, this->ImageType, this->ImageOrientationInMemory, flipInfo) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Failed to convert image data to the requested orientation, from " << igsioVideoFrame::GetStringFromUsImageOrientation(this->ImageOrientationInFile) <<
+      LOG_ERROR("Failed to convert image data to the requested orientation, from " << igsioVideoFrame::GetStringFromUsImageOrientation(this->ImageOrientationInFile) <<
                 " to " << igsioVideoFrame::GetStringFromUsImageOrientation(this->ImageOrientationInMemory));
       return IGSIO_FAIL;
     }
@@ -483,13 +483,13 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
       FSEEK(stream, offset, SEEK_SET);
       if (fread(&(pixelBuffer[0]), 1, frameSizeInBytes, stream) != frameSizeInBytes)
       {
-        vtkErrorMacro("Could not read "<<frameSizeInBytes<<" bytes from "<<GetPixelDataFilePath());
+        LOG_ERROR("Could not read "<<frameSizeInBytes<<" bytes from "<<GetPixelDataFilePath());
         numberOfErrors++;
       }
       FrameSizeType frameSize = { this->Dimensions[0], this->Dimensions[1], this->Dimensions[2] };
       if (igsioVideoFrame::GetOrientedClippedImage(&(pixelBuffer[0]), flipInfo, this->ImageType, this->PixelType, this->NumberOfScalarComponents, frameSize, *trackedFrame->GetImageData(), clipRectOrigin, clipRectSize) != IGSIO_SUCCESS)
       {
-        vtkErrorMacro("Failed to get oriented image from sequence file (frame number: " << frameNumber << ")!");
+        LOG_ERROR("Failed to get oriented image from sequence file (frame number: " << frameNumber << ")!");
         numberOfErrors++;
         continue;
       }
@@ -499,7 +499,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ReadImagePixels()
       FrameSizeType frameSize = { this->Dimensions[0], this->Dimensions[1], this->Dimensions[2] };
       if (igsioVideoFrame::GetOrientedClippedImage(gzAllFramesPixelBuffer + frameNumber * frameSizeInBytes, flipInfo, this->ImageType, this->PixelType, this->NumberOfScalarComponents, frameSize, *trackedFrame->GetImageData(), clipRectOrigin, clipRectSize) != IGSIO_SUCCESS)
       {
-        vtkErrorMacro("Failed to get oriented image from sequence file (frame number: " << frameNumber << ")!");
+        LOG_ERROR("Failed to get oriented image from sequence file (frame number: " << frameNumber << ")!");
         numberOfErrors++;
         continue;
       }
@@ -531,13 +531,13 @@ igsioStatus vtkIGSIONrrdSequenceIO::PrepareImageFile()
 
     if (error != Z_OK)
     {
-      vtkErrorMacro("Unable to open compressed file for writing.");
+      LOG_ERROR("Unable to open compressed file for writing.");
       return IGSIO_FAIL;
     }
   }
   else if (FileOpen(&this->OutputImageFileHandle, this->TempImageFileName.c_str(), "ab+") != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("Unable to open output stream for writing.");
+    LOG_ERROR("Unable to open output stream for writing.");
     return IGSIO_FAIL;
   }
 
@@ -571,7 +571,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteInitialImageHeader()
 {
   if (this->TrackedFrameList->GetNumberOfTrackedFrames() == 0)
   {
-    vtkErrorMacro("No frames in frame list, unable to query a frame for meta information.");
+    LOG_ERROR("No frames in frame list, unable to query a frame for meta information.");
     return IGSIO_FAIL;
   }
 
@@ -581,7 +581,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteInitialImageHeader()
 
   if (this->TrackedFrameList->GetTrackedFrame(0)->GetNumberOfScalarComponents(this->NumberOfScalarComponents) == IGSIO_FAIL)
   {
-    vtkErrorMacro("Unable to retrieve number of scalar components.");
+    LOG_ERROR("Unable to retrieve number of scalar components.");
     return IGSIO_FAIL;
   }
 
@@ -630,7 +630,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteInitialImageHeader()
       if (this->TrackedFrameList->GetTrackedFrame(frameNumber)->GetImageData()->IsImageValid()
           && (frameSize[0] != currFrameSize[0] || frameSize[1] != currFrameSize[1] || frameSize[2] != currFrameSize[2]))
       {
-        vtkErrorMacro("Frame size mismatch: expected size (" << frameSize[0] << "x" << frameSize[1] << "x" << frameSize[2]
+        LOG_ERROR("Frame size mismatch: expected size (" << frameSize[0] << "x" << frameSize[1] << "x" << frameSize[2]
                   << ") differ from actual size (" << currFrameSize[0] << "x" << currFrameSize[1] << "x" << currFrameSize[2] << ") for frame #" << frameNumber);
         return IGSIO_FAIL;
       }
@@ -734,14 +734,14 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteInitialImageHeader()
   // open in binary mode because we determine the start of the image buffer also during this read
   if (FileOpen(&stream, this->TempHeaderFileName.c_str(), "wb") != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("The file " << this->TempHeaderFileName << " could not be opened for writing");
+    LOG_ERROR("The file " << this->TempHeaderFileName << " could not be opened for writing");
     return IGSIO_FAIL;
   }
 
   // The header shall start with these lines
   std::stringstream nrrdVersionStream;
   nrrdVersionStream << "NRRD0004" << std::endl << "# Complete NRRD file format specification at:" << std::endl << "# http://teem.sourceforge.net/nrrd/format.html" << std::endl;
-  //nrrdVersionStream << "# File generated by PLUS version " << PLUSLIB_VERSION << std::endl;
+  //nrrdVersionStream << "# File generated by PLUS version " << PLUSLIB_VERSION);
   fputs(nrrdVersionStream.str().c_str(), stream);
   this->TotalBytesWritten += strlen(nrrdVersionStream.str().c_str());
 
@@ -787,14 +787,14 @@ igsioStatus vtkIGSIONrrdSequenceIO::AppendImagesToHeader()
   // open in binary mode because we determine the start of the image buffer also during this read
   if (FileOpen(&stream, this->TempHeaderFileName.c_str(), "ab+") != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("The file " << this->TempHeaderFileName << " could not be opened for writing");
+    LOG_ERROR("The file " << this->TempHeaderFileName << " could not be opened for writing");
     return IGSIO_FAIL;
   }
 
   // Write frame fields (Seq_Frame0000_... = ...)
   for (unsigned int frameNumber = CurrentFrameOffset; frameNumber < this->TrackedFrameList->GetNumberOfTrackedFrames() + CurrentFrameOffset; frameNumber++)
   {
-    vtkDebugMacro("Writing frame " << frameNumber);
+    LOG_DEBUG("Writing frame " << frameNumber);
     unsigned int adjustedFrameNumber = frameNumber - CurrentFrameOffset;
     igsioTrackedFrame* trackedFrame = this->TrackedFrameList->GetTrackedFrame(adjustedFrameNumber);
 
@@ -837,7 +837,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::FinalizeHeader()
   // open in binary mode because we determine the start of the image buffer also during this read
   if (FileOpen(&stream, this->TempHeaderFileName.c_str(), "ab+") != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("The file " << this->TempHeaderFileName << " could not be opened for writing");
+    LOG_ERROR("The file " << this->TempHeaderFileName << " could not be opened for writing");
     return IGSIO_FAIL;
   }
 
@@ -871,7 +871,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::Close()
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIONrrdSequenceIO::WriteCompressedImagePixelsToFile(int& compressedDataSize)
 {
-  vtkDebugMacro("Writing compressed pixel data into file started");
+  LOG_DEBUG("Writing compressed pixel data into file started");
 
   compressedDataSize = 0;
 
@@ -880,7 +880,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteCompressedImagePixelsToFile(int& compre
   FrameSizeType frameSize = { this->Dimensions[0], this->Dimensions[1], this->Dimensions[2] };
   if (blankFrame.AllocateFrame(frameSize, this->PixelType, this->NumberOfScalarComponents) != IGSIO_SUCCESS)
   {
-    vtkErrorMacro("Failed to allocate space for blank image.");
+    LOG_ERROR("Failed to allocate space for blank image.");
     return IGSIO_FAIL;
   }
   blankFrame.FillBlank();
@@ -894,7 +894,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteCompressedImagePixelsToFile(int& compre
       trackedFrame = this->TrackedFrameList->GetTrackedFrame(frameNumber);
       if (trackedFrame == NULL)
       {
-        vtkErrorMacro("Cannot access frame " << frameNumber << " while trying to writing compress data into file");
+        LOG_ERROR("Cannot access frame " << frameNumber << " while trying to writing compress data into file");
         gzclose(this->CompressionStream);
         return IGSIO_FAIL;
       }
@@ -912,7 +912,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteCompressedImagePixelsToFile(int& compre
     size_t numberOfBytesReadyForWriting = videoFrame->GetFrameSizeInBytes();
     if (gzwrite(this->CompressionStream, (Bytef*)videoFrame->GetScalarPointer(), numberOfBytesReadyForWriting) != numberOfBytesReadyForWriting)
     {
-      vtkErrorMacro("Error writing compressed data into file");
+      LOG_ERROR("Error writing compressed data into file");
       gzclose(this->CompressionStream);
       return IGSIO_FAIL;
     }
@@ -920,14 +920,14 @@ igsioStatus vtkIGSIONrrdSequenceIO::WriteCompressedImagePixelsToFile(int& compre
     gzerror(this->CompressionStream, &errnum);
     if (errnum != Z_OK)
     {
-      vtkErrorMacro("Error writing compressed data into file. errnum: " << errnum);
+      LOG_ERROR("Error writing compressed data into file. errnum: " << errnum);
       gzclose(this->CompressionStream);
       return IGSIO_FAIL;
     }
     compressedDataSize += numberOfBytesReadyForWriting;
   }
 
-  vtkDebugMacro("Writing compressed pixel data into file completed");
+  LOG_DEBUG("Writing compressed pixel data into file completed");
 
   return IGSIO_SUCCESS;
 }
@@ -1101,7 +1101,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::ConvertNrrdTypeToVtkPixelType(const std::str
   }
   else
   {
-    vtkErrorMacro("Unknown Nrrd data type: " << elementTypeStr);
+    LOG_ERROR("Unknown Nrrd data type: " << elementTypeStr);
     vtkPixelType = VTK_VOID;
     return IGSIO_FAIL;
   }
@@ -1153,13 +1153,13 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
 {
   if (fieldName == NULL)
   {
-    vtkErrorMacro("NULL fieldname sent to vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader");
+    LOG_ERROR("NULL fieldname sent to vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader");
     return IGSIO_FAIL;
   }
 
   if (this->TempHeaderFileName.empty())
   {
-    vtkErrorMacro("Cannot update file header, filename is invalid");
+    LOG_ERROR("Cannot update file header, filename is invalid");
     return IGSIO_FAIL;
   }
 
@@ -1171,7 +1171,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
 
   if (!stream)
   {
-    vtkErrorMacro("The file " << this->TempHeaderFileName << " could not be opened for reading and writing");
+    LOG_ERROR("The file " << this->TempHeaderFileName << " could not be opened for reading and writing");
     return IGSIO_FAIL;
   }
 
@@ -1189,7 +1189,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
     colonFound = line.find_first_of(":");
     if (colonFound == std::string::npos || line[0] == '#')
     {
-      vtkWarningMacro("Not a field line. Skipping... (" << line << ")");
+      LOG_WARNING("Not a field line. Skipping... (" << line << ")");
       continue;
     }
     std::string name = line.substr(0, colonFound);
@@ -1222,7 +1222,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
       int paddingCharactersNeeded = line.length() - newLineStr.str().size();
       if (paddingCharactersNeeded < 0)
       {
-        vtkErrorMacro("Cannot update line in image header (the new string '" << newLineStr.str() << "' is longer than the current string '" << line << "')");
+        LOG_ERROR("Cannot update line in image header (the new string '" << newLineStr.str() << "' is longer than the current string '" << line << "')");
         return IGSIO_FAIL;
       }
       for (int i = 0; i < paddingCharactersNeeded; i++)
@@ -1236,7 +1236,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
       // overwrite the old line
       if (!(stream << newLineStr.str()))
       {
-        vtkErrorMacro("Cannot update line in image header (writing the updated line into the file failed)");
+        LOG_ERROR("Cannot update line in image header (writing the updated line into the file failed)");
         return IGSIO_FAIL;
       }
 
@@ -1244,7 +1244,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::UpdateFieldInImageHeader(const char* fieldNa
     }
   }
 
-  vtkErrorMacro("Field " << fieldName << " is not found in the header file, update with new value is failed:");
+  LOG_ERROR("Field " << fieldName << " is not found in the header file, update with new value is failed:");
   return IGSIO_FAIL;
 }
 
@@ -1268,7 +1268,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::SetFileName(const std::string& aFilename)
 
   if (aFilename.empty())
   {
-    vtkErrorMacro("Invalid Nrrd file name");
+    LOG_ERROR("Invalid Nrrd file name");
   }
 
   this->FileName = aFilename;
@@ -1298,7 +1298,7 @@ igsioStatus vtkIGSIONrrdSequenceIO::SetFileName(const std::string& aFilename)
   }
   else
   {
-    vtkWarningMacro("Writing sequence file with '" << fileExt << "' extension is not supported. Using nrrd extension instead.");
+    LOG_WARNING("Writing sequence file with '" << fileExt << "' extension is not supported. Using nrrd extension instead.");
     this->FileName += ".nrrd";
     this->PixelDataFileName = std::string("");   //empty string denotes local storage
   }

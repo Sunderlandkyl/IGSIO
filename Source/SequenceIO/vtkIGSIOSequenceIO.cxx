@@ -44,7 +44,7 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, const std::st
     }
     if (writer->Write() != IGSIO_SUCCESS)
     {
-      vtkErrorWithObjectMacro(frameList, "Couldn't write sequence metafile: " <<  filename);
+      LOG_ERROR(frameList, "Couldn't write sequence metafile: " <<  filename);
       return IGSIO_FAIL;
     }
     return IGSIO_SUCCESS;
@@ -64,7 +64,7 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, const std::st
     }
     if (writer->Write() != IGSIO_SUCCESS)
     {
-      vtkErrorWithObjectMacro(frameList, "Couldn't write Nrrd file: " <<  filename);
+      LOG_ERROR(frameList, "Couldn't write Nrrd file: " <<  filename);
       return IGSIO_FAIL;
     }
     return IGSIO_SUCCESS;
@@ -85,13 +85,13 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, const std::st
     }
     if (writer->Write() != IGSIO_SUCCESS)
     {
-      vtkErrorWithObjectMacro(frameList, "Couldn't write Nrrd file: " << filename);
+      LOG_ERROR(frameList, "Couldn't write Nrrd file: " << filename);
       return IGSIO_FAIL;
     }
   }
 #endif
 
-  vtkErrorWithObjectMacro(frameList, "No writer for file: " << filename);
+  LOG_ERROR(frameList, "No writer for file: " << filename);
   return IGSIO_FAIL;
 }
 
@@ -108,7 +108,7 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
 {
   if (!vtksys::SystemTools::FileExists(filename.c_str()))
   {
-    vtkErrorWithObjectMacro(frameList, "File: " << filename << " does not exist.");
+    LOG_ERROR(frameList, "File: " << filename << " does not exist.");
     return IGSIO_FAIL;
   }
 
@@ -120,7 +120,7 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
     reader->SetTrackedFrameList(frameList);
     if (reader->Read() != IGSIO_SUCCESS)
     {
-      vtkErrorWithObjectMacro(frameList, "Couldn't read sequence metafile: " << filename);
+      LOG_ERROR(frameList, "Couldn't read sequence metafile: " << filename);
       return IGSIO_FAIL;
     }
     return IGSIO_SUCCESS;
@@ -133,7 +133,7 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
     reader->SetTrackedFrameList(frameList);
     if (reader->Read() != IGSIO_SUCCESS)
     {
-      vtkErrorWithObjectMacro(frameList, "Couldn't read Nrrd file: " << filename);
+      LOG_ERROR(frameList, "Couldn't read Nrrd file: " << filename);
       return IGSIO_FAIL;
     }
 
@@ -145,7 +145,7 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
     // Attempt MKV read
     if (frameList->ReadFromMatroskaFile(filename.c_str()) != IGSIO_SUCCESS)
     {
-      vtkErrorMacro("Failed to read video buffer from MKV file: " << filename);
+      LOG_ERROR("Failed to read video buffer from MKV file: " << filename);
       return IGSIO_FAIL;
     }
 
@@ -153,7 +153,7 @@ igsioStatus vtkIGSIOSequenceIO::Read(const std::string& filename, vtkIGSIOTracke
   }
 #endif
 
-  vtkErrorWithObjectMacro(frameList, "No reader for file: " << filename);
+  LOG_ERROR(frameList, "No reader for file: " << filename);
   return IGSIO_FAIL;
 }
 
@@ -176,6 +176,6 @@ vtkIGSIOSequenceIOBase* vtkIGSIOSequenceIO::CreateSequenceHandlerForFile(const s
   }
 #endif
 
-  std::cerr << "No writer for file: " << filename << std::endl;
+  LOG_ERROR("No writer for file: " << filename);
   return NULL;
 }

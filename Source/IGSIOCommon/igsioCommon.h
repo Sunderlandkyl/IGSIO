@@ -7,7 +7,7 @@
 #ifndef __igsioCommon_h
 #define __igsioCommon_h
 
-// PLUS includes
+// IGSIO includes
 #include "vtkigsiocommon_export.h"
 #include "vtkIGSIOLogger.h"
 
@@ -24,7 +24,6 @@
 #include <locale>
 #include <sstream>
 
-class vtkPlusUsScanConvert;
 class vtkIGSIOTrackedFrameList;
 
 enum igsioStatus
@@ -33,11 +32,11 @@ enum igsioStatus
   IGSIO_SUCCESS = 1
 };
 
-enum PlusImagingMode
+enum igsioImagingMode
 {
-  Plus_UnknownMode,
-  Plus_BMode,
-  Plus_RfMode
+  IGSIO_UnknownMode,
+  IGSIO_BMode,
+  IGSIO_RfMode
 };
 
 /*!
@@ -45,7 +44,7 @@ enum PlusImagingMode
 \brief Tracked frame field status
 Image field is valid if the image data is not NULL.
 Tool status is valid only if the ToolStatus is TOOL_OK.
-\ingroup PlusLibCommon
+\ingroup igsioCommon
 */
 enum TrackedFrameFieldStatus
 {
@@ -300,7 +299,7 @@ private:
   igsioLockGuard<vtkIGSIORecursiveCriticalSection> updateMutexGuardedLock(this->UpdateMutex);
   \endcode
 
-  \ingroup PlusLibCommon
+  \ingroup igsioLibCommon
 */
 template <typename T>
 class igsioLockGuard
@@ -326,7 +325,7 @@ private:
 /*!
   \def DELETE_IF_NOT_NULL(Object)
   \brief A macro to safely delete a VTK object (usable if the VTK object pointer is already NULL).
-  \ingroup PlusLibCommon
+  \ingroup igsioCommon
 */
 #define DELETE_IF_NOT_NULL( Object ) {\
   if ( Object != NULL ) {\
@@ -404,7 +403,6 @@ class vtkXMLDataElement;
 
 namespace igsioCommon
 {
-  //typedef itk::ImageIOBase::IOComponentType ITKScalarPixelType;
   typedef int VTKScalarPixelType;
   typedef int IGTLScalarPixelType;
 
@@ -569,6 +567,8 @@ namespace igsioCommon
   VTKIGSIOCOMMON_EXPORT std::string GetSequenceFilenameWithoutExtension(std::string name);
   VTKIGSIOCOMMON_EXPORT std::string GetSequenceFilenameExtension(std::string name);
 
+  VTKIGSIOCOMMON_EXPORT std::string Tail(const std::string& source, const std::string::size_type length);
+
   /*! Trim whitespace characters from the left and right */
   VTKIGSIOCOMMON_EXPORT std::string& Trim(std::string& str);
 
@@ -579,7 +579,7 @@ namespace igsioCommon
   */
   VTKIGSIOCOMMON_EXPORT igsioStatus RobustFwrite(FILE* fileHandle, void* data, size_t dataSize, size_t& writtenSize);
 
-  VTKIGSIOCOMMON_EXPORT std::string GetPlusLibVersionString();
+  VTKIGSIOCOMMON_EXPORT std::string GetIGSIOVersionString();
 
   //----------------------------------------------------------------------------
   namespace XML
@@ -656,7 +656,7 @@ namespace igsioCommon
   }
   \endcode
 
-  \ingroup PlusLibCommon
+  \ingroup igsioCommon
 */
 class VTKIGSIOCOMMON_EXPORT igsioTransformName
 {
@@ -728,7 +728,7 @@ private:
       } \
       /* command failed, wait for some time and retry */ \
       numOfTries++;   \
-      vtkPlusAccurateTimer::Delay(delayBetweenRetryAttemptsSec_); \
+      vtkIGSIOAccurateTimer::Delay(delayBetweenRetryAttemptsSec_); \
     } \
   }
 

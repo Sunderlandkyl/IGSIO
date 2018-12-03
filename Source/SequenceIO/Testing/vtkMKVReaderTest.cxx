@@ -47,8 +47,8 @@ int main(int argc, char* argv[])
 
   if (!args.Parse())
   {
-    std::cerr << "Problem parsing arguments" << std::endl;
-    std::cout << "\n\nvtkMKVWriterTest1 help:" << args.GetHelp() << std::endl;
+    LOG_ERROR("Problem parsing arguments");
+    std::cout << "\n\nvtkMKVWriterTest1 help:" << args.GetHelp());
     return EXIT_FAILURE;
   }
 

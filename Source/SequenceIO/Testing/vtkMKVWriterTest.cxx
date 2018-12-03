@@ -48,8 +48,8 @@ int main(int argc, char* argv[])
 
   if (!args.Parse())
   {
-    std::cerr << "Problem parsing arguments" << std::endl;
-    std::cout << "\n\nvtkMKVWriterTest1 help:" << args.GetHelp() << std::endl;
+    LOG_ERROR("Problem parsing arguments");
+    std::cout << "\n\nvtkMKVWriterTest1 help:" << args.GetHelp());
     return EXIT_FAILURE;
   }
 
@@ -58,21 +58,21 @@ int main(int argc, char* argv[])
 
   if (!mkvWriter->WriteHeader())
   {
-    std::cerr << "Could not write header!" << std::endl;
+    LOG_ERROR("Could not write header!");
     return EXIT_FAILURE;
   }
   
   int videoTrackNumber = mkvWriter->AddVideoTrack("Test", "RV24", width, height);
   if (videoTrackNumber < 1)
   {
-    std::cerr << "Could not create video track!" << std::endl;
+    LOG_ERROR("Could not create video track!");
     return EXIT_FAILURE;
   }
 
   int metadataTrackNumber = mkvWriter->AddMetadataTrack("Framenumber");
   if (metadataTrackNumber < 1)
   {
-    std::cerr << "Could not create metadata track!" << std::endl;
+    LOG_ERROR("Could not create metadata track!");
   }
 
   vtkNew<vtkImageData> imageData;

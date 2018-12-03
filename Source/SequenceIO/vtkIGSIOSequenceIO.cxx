@@ -14,12 +14,12 @@
 /// VTK includes
 #include <vtkNew.h>
 
-#ifdef ENABLE_MKV_IO
+#ifdef VTKSEQUENCEIO_USE_MKV
   #include "vtkIGSIOMkvSequenceIO.h"
 #endif
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrackedFrameList* frameList, US_IMAGE_ORIENTATION orientationInFile/*=US_IMG_ORIENT_MF*/, bool useCompression/*=true*/, bool enableImageDataWrite/*=true*/)
+igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, const std::string& path, vtkIGSIOTrackedFrameList* frameList, US_IMAGE_ORIENTATION orientationInFile/*=US_IMG_ORIENT_MF*/, bool useCompression/*=true*/, bool enableImageDataWrite/*=true*/)
 {
   // Convert local filename to plus output filename
   if (vtksys::SystemTools::FileExists(filename.c_str()))
@@ -34,6 +34,7 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
     vtkNew<vtkIGSIOMetaImageSequenceIO> writer;
     writer->SetUseCompression(useCompression);
     writer->SetFileName(filename);
+    writer->SetOutputFilePath(path);
     writer->SetImageOrientationInFile(orientationInFile);
     writer->SetTrackedFrameList(frameList);
     writer->SetEnableImageDataWrite(enableImageDataWrite);
@@ -53,6 +54,7 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
     vtkNew<vtkIGSIONrrdSequenceIO> writer;
     writer->SetUseCompression(useCompression);
     writer->SetFileName(filename);
+    writer->SetOutputFilePath(path);
     writer->SetImageOrientationInFile(orientationInFile);
     writer->SetTrackedFrameList(frameList);
     writer->SetEnableImageDataWrite(enableImageDataWrite);
@@ -67,12 +69,23 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
     }
     return IGSIO_SUCCESS;
   }
-#ifdef VTKSEQUENCEIO_ENABLE_MKV
+#ifdef VTKSEQUENCEIO_USE_MKV
   else if (vtkIGSIOMkvSequenceIO::CanWriteFile(filename))
   {
-    if (frameList->SaveToMatroskaFile(filename, orientationInFile, useCompression, enableImageDataWrite) != IGSIO_SUCCESS)
+    vtkNew<vtkIGSIOMkvSequenceIO> writer;
+    writer->SetUseCompression(useCompression);
+    writer->SetFileName(filename);
+    writer->SetOutputFilePath(path);
+    writer->SetImageOrientationInFile(orientationInFile);
+    writer->SetTrackedFrameList(frameList);
+    writer->SetEnableImageDataWrite(enableImageDataWrite);
+    if (frameList->GetNumberOfTrackedFrames() == 1)
     {
-      vtkErrorMacro("Unable to save file: " << filename << " as MKV file.");
+      writer->IsDataTimeSeriesOff();
+    }
+    if (writer->Write() != IGSIO_SUCCESS)
+    {
+      vtkErrorWithObjectMacro(frameList, "Couldn't write Nrrd file: " << filename);
       return IGSIO_FAIL;
     }
   }
@@ -83,11 +96,11 @@ igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, vtkIGSIOTrack
 }
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, igsioTrackedFrame* frame, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*= true*/, bool EnableImageDataWrite /*= true*/)
+igsioStatus vtkIGSIOSequenceIO::Write(const std::string& filename, const std::string& path, igsioTrackedFrame* frame, US_IMAGE_ORIENTATION orientationInFile /*= US_IMG_ORIENT_MF*/, bool useCompression /*= true*/, bool EnableImageDataWrite /*= true*/)
 {
   vtkNew<vtkIGSIOTrackedFrameList> list;
   list->AddTrackedFrame(frame);
-  return vtkIGSIOSequenceIO::Write(filename, list.GetPointer(), orientationInFile, useCompression, EnableImageDataWrite);
+  return vtkIGSIOSequenceIO::Write(filename, path, list.GetPointer(), orientationInFile, useCompression, EnableImageDataWrite);
 }
 
 //----------------------------------------------------------------------------

@@ -36,7 +36,7 @@ ELSE()
    BINARY_DIR ${IGSIO_libwebm_DIR}
    #--Download step--------------
    GIT_REPOSITORY "https://github.com/Sunderlandkyl/libwebm.git"
-   GIT_TAG "master"
+   GIT_TAG "update"
    #--Configure step-------------
    CMAKE_ARGS
      ${ep_common_args}
@@ -49,6 +49,7 @@ ELSE()
      -DCMAKE_C_FLAGS:STRING=${ep_common_c_flags}
      -DCMAKE_MACOSX_RPATH:BOOL=${CMAKE_MACOSX_RPATH}
      -DBUILD_SHARED_LIBS:BOOL=OFF
+     -DMSVC_RUNTIME:STRING=dll
      # Options
      ${BUILD_OPTIONS}
    #--Build step-----------------

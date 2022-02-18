@@ -46,7 +46,7 @@ public:
   \brief This is a special output class for VTK logs that enforces VTK to
   log to the console instead of displaying them in a pop-up window.
   \sa vtkIGSIOLoggerOutputWindow
-  \ingroup vtkIGSIOCommon
+  \ingroup vtkigsioCommon
 */
 class vtkIGSIOConsoleOutputWindow : public vtkOutputWindow
 {

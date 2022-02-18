@@ -10,6 +10,7 @@
 #include <vtkSmartPointer.h>
 #include "vtkXMLUtilities.h"
 #include "vtkXMLDataElement.h"
+#include "igsioCommon.h"
 
 /*!
   \class igsioXmlUtils

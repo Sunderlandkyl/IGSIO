@@ -30,6 +30,8 @@ ENDIF()
 
 # --------------------------------------------------------------------------
 # Configure output paths for libraries and executables.
+SET(IGSIO_INSTALL_FOLDERNAME "IGSIO-${IGSIO_VERSION_MAJOR}.${IGSIO_VERSION_MINOR}")
+
 IF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 ENDIF()
@@ -50,8 +52,16 @@ IF(NOT IGSIO_INSTALL_LIB_DIR)
   SET(IGSIO_INSTALL_LIB_DIR "lib")
 ENDIF()
 
+IF(NOT IGSIO_INSTALL_ARCHIVE_DIR)
+  SET(IGSIO_INSTALL_ARCHIVE_DIR "lib")
+ENDIF()
+
 IF(NOT IGSIO_INSTALL_DATA_DIR)
   SET(IGSIO_INSTALL_DATA_DIR "share")
+ENDIF()
+
+IF(NOT IGSIO_INCLUDE_INSTALL )
+  SET(IGSIO_INCLUDE_INSTALL "include/${IGSIO_INSTALL_FOLDERNAME}")
 ENDIF()
 
 IF(NOT DEFINED BUILD_SHARED_LIBS)
@@ -87,6 +97,9 @@ FIND_PACKAGE(VTK NO_MODULE REQUIRED PATHS ${VTK_DIR} NO_DEFAULT_PATH)
 IF(VTK_FOUND AND VTK_VERSION VERSION_LESS 8.9.0)
   INCLUDE(${VTK_USE_FILE})
 ENDIF()
+
+FIND_PACKAGE(ITK REQUIRED NO_MODULE)
+INCLUDE(${ITK_USE_FILE})
 
 IF(TARGET VTK::CommonCore)
   SET(IGSIO_VTK_PREFIX VTK::)
@@ -152,8 +165,28 @@ ELSE()
     ${CMAKE_CURRENT_BINARY_DIR}/igsioConfigure.h
     )
 
+  # --------------------------------------------------------------------------
+  # Library export directive file generation
+  
+  # This macro generates a ...Export.h file that specifies platform-specific DLL export directives,
+  # for example on Windows: __declspec( dllexport )
+  MACRO(GENERATE_EXPORT_DIRECTIVE_FILE LIBRARY_NAME)
+    SET(MY_LIBNAME ${LIBRARY_NAME})
+    SET(MY_EXPORT_HEADER_PREFIX ${MY_LIBNAME})
+    SET(MY_LIBRARY_EXPORT_DIRECTIVE "${MY_LIBNAME}Export")
+    CONFIGURE_FILE(
+      ${IGSIO_SOURCE_DIR}/Source/igsioExport.h.in
+      ${CMAKE_CURRENT_BINARY_DIR}/${MY_EXPORT_HEADER_PREFIX}Export.h
+      )
+    INSTALL(FILES 
+      ${CMAKE_CURRENT_BINARY_DIR}/${MY_EXPORT_HEADER_PREFIX}Export.h
+      DESTINATION "${IGSIO_INCLUDE_INSTALL}"
+      )
+  ENDMACRO()
+
   ADD_SUBDIRECTORY(Source/Codecs)
   ADD_SUBDIRECTORY(Source/IGSIOCommon)
+  ADD_SUBDIRECTORY(Source/IGSIOCalibration)
   IF(IGSIO_BUILD_SEQUENCEIO)
     ADD_SUBDIRECTORY(Source/SequenceIO)
   ENDIF()

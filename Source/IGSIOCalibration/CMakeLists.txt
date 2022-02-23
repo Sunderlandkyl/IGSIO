@@ -61,6 +61,8 @@ target_include_directories(vtk${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${IGSIO
 TARGET_LINK_LIBRARIES(vtk${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_LIBS})
 #IGSIOAddVersionInfo(vtk${PROJECT_NAME} "Library containing various calibration algorithms. Part of the IGSIO toolkit." vtk${PROJECT_NAME} vtk${PROJECT_NAME}) # TODO
 
+SET_PROPERTY(GLOBAL APPEND PROPERTY IGSIO_TARGETS vtk${PROJECT_NAME})
+
 # --------------------------------------------------------------------------
 # Set external MS project
 SET(IGSIOLIB_DEPENDENCIES ${IGSIOLIB_DEPENDENCIES} vtk${PROJECT_NAME} CACHE INTERNAL "" FORCE)
@@ -120,7 +122,6 @@ ENDIF()
 # --------------------------------------------------------------------------
 # Install
 #
-
 IGSIOInstallLibrary(vtk${PROJECT_NAME} ${PROJECT_NAME})
   
 # --------------------------------------------------------------------------

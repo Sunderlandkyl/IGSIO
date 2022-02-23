@@ -8,6 +8,7 @@ See License.txt for details.
 #define __vtkIGSIOLandmarkDetectionAlgo_h
 
 #include "igsioConfigure.h"
+#include "igsioCommon.h"
 #include "vtkIGSIOCalibrationExport.h"
 
 #include "vtkObject.h"

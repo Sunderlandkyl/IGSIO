@@ -67,7 +67,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x
 In homogeneous coordinates:
  PivotPoint_Reference = MarkerToReferenceTransformMatrix * PivotPoint_Marker
 
-MarkerToReferenceTransformMatrix decomosed to rotation matrix and translation vector:
+MarkerToReferenceTransformMatrix decomposed to rotation matrix and translation vector:
  PivotPoint_Reference = MarkerToReferenceTransformRotationMatrix * PivotPoint_Marker + MarkerToReferenceTransformTranslationVector
 rearranged:
  MarkerToReferenceTransformRotationMatrix * PivotPoint_Marker - PivotPoint_Reference = -MarkerToReferenceTransformTranslationVector

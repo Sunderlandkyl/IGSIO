@@ -69,6 +69,11 @@ public:
   igsioStatus InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix);
 
   /*!
+    Removes invalid input buffer points. 
+  */
+  igsioStatus CleanInputBuffer();
+
+  /*!
     Calibrate (call the minimizer and set the result)
     \param aTransformRepository Transform repository to save the results into
   */
@@ -86,6 +91,18 @@ public:
     if the percentage of outliers vs total number of points is larger than a few percent.
   */
   int GetNumberOfDetectedOutliers();
+
+  int GetNumberOfCalibrationPoints();
+
+  enum CalibrationError
+  {
+    FAIL = IGSIO_FAIL,
+    SUCCESS = IGSIO_SUCCESS,
+    NOT_STARTED,
+    NOT_ENOUGH_POINTS,
+    NOT_ENOUGH_VARIATION,
+    HIGH_ERROR,
+  };
 
 public:
   vtkGetMacro(CalibrationError, double);
@@ -109,7 +126,11 @@ protected:
   /*! Compute the mean position error of the pivot point (in mm) */
   void ComputeCalibrationError();
 
-  igsioStatus GetPivotPointPosition(double* pivotPoint_Marker, double* pivotPoint_Reference);
+  igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double* pivotPoint_Marker, double* pivotPoint_Reference);
+
+  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();
+
+  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, vtkIGSIOTransformRepository* aTransformRepository = NULL);
 
 protected:
   /*! Pivot point to marker transform (eg. stylus tip to stylus) - the result of the calibration */
@@ -117,9 +138,6 @@ protected:
 
   /*! Mean error of the calibration result in mm */
   double                    CalibrationError;
-
-  /*! Array of the input points */
-  std::list<vtkMatrix4x4*>  MarkerToReferenceTransformMatrixArray;
 
   /*! Name of the object marker coordinate frame (eg. Stylus) */
   char*                     ObjectMarkerCoordinateFrame;
@@ -135,6 +153,32 @@ protected:
 
   /*! List of outlier sample indices */
   std::set<unsigned int>    OutlierIndices;
+
+  /*! Error code indicating what went wrong with the calibration. */
+  int                       ErrorCode{ NOT_STARTED };
+
+  // TODO
+  int                       CalibrationPoseBucketSize{ -1 };
+
+  int                       RequiredNumberOfPoints;
+
+  // TODO
+  struct MarkerToReferenceTransformMatrixBucket
+  {
+    MarkerToReferenceTransformMatrixBucket(int bucketSize)
+    {
+      this->MarkerToReferenceCalibrationPoints = std::vector< vtkSmartPointer<vtkMatrix4x4> >(bucketSize);
+      this->PointsInBucket = 0;
+      this->Error = 0.0;
+    }
+    std::vector< vtkSmartPointer<vtkMatrix4x4> > MarkerToReferenceCalibrationPoints;
+    int PointsInBucket;
+    double Error;
+  };
+  std::vector<MarkerToReferenceTransformMatrixBucket>  MarkerToReferenceTransformMatrixBuckets;
+
+  class vtkInternal;
+  vtkInternal* Internal;
 };
 
 #endif

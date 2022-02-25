@@ -166,24 +166,6 @@ ELSE()
     )
 
   # --------------------------------------------------------------------------
-  # Library export directive file generation
-  
-  # This macro generates a ...Export.h file that specifies platform-specific DLL export directives,
-  # for example on Windows: __declspec( dllexport )
-  MACRO(GENERATE_EXPORT_DIRECTIVE_FILE LIBRARY_NAME)
-    SET(MY_LIBNAME ${LIBRARY_NAME})
-    SET(MY_EXPORT_HEADER_PREFIX ${MY_LIBNAME})
-    SET(MY_LIBRARY_EXPORT_DIRECTIVE "${MY_LIBNAME}Export")
-    CONFIGURE_FILE(
-      ${IGSIO_SOURCE_DIR}/Source/igsioExport.h.in
-      ${CMAKE_CURRENT_BINARY_DIR}/${MY_EXPORT_HEADER_PREFIX}Export.h
-      )
-    INSTALL(FILES 
-      ${CMAKE_CURRENT_BINARY_DIR}/${MY_EXPORT_HEADER_PREFIX}Export.h
-      DESTINATION "${IGSIO_INCLUDE_INSTALL}"
-      )
-  ENDMACRO()
-
   ADD_SUBDIRECTORY(Source/Codecs)
   ADD_SUBDIRECTORY(Source/IGSIOCommon)
   ADD_SUBDIRECTORY(Source/IGSIOCalibration)

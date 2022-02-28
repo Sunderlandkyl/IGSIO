@@ -42,6 +42,8 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
   this->ErrorCode = CALIBRATION_NOT_STARTED;
   this->CalibrationPoseBucketSize = -1;
   this->MaximumBucketError = 3.0;
+  this->PositionDifferenceLowThresholdMm = 2.0;
+  this->OrientationDifferenceLowThresholdDegrees = 2.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -62,14 +64,46 @@ void vtkIGSIOPivotCalibrationAlgo::RemoveAllCalibrationPoints()
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix)
 {
+  double positionDifferenceMm = this->PositionDifferenceLowThresholdMm;
+  double orientationDifferenceDegrees = this->OrientationDifferenceLowThresholdDegrees;
+  if (this->MarkerToReferenceTransformMatrixBuckets.size() >= 1 && this->MarkerToReferenceTransformMatrixBuckets[0].MarkerToReferenceCalibrationPoints.size() > 0)
+  {
+    // Compute position and orientation difference of current and previous positions
+    positionDifferenceMm = igsioMath::GetPositionDifference(aMarkerToReferenceTransformMatrix, this->PreviousMarkerToReferenceTransformMatrix);
+    orientationDifferenceDegrees = igsioMath::GetOrientationDifference(aMarkerToReferenceTransformMatrix, this->PreviousMarkerToReferenceTransformMatrix);
+  }
+  if (positionDifferenceMm < this->PositionDifferenceLowThresholdMm && orientationDifferenceDegrees < this->OrientationDifferenceLowThresholdDegrees)
+  {
+    LOG_DEBUG("Acquired position is too close to the previous - it is skipped");
+    return IGSIO_FAIL;
+  }
+  this->PreviousMarkerToReferenceTransformMatrix->DeepCopy(aMarkerToReferenceTransformMatrix);
+
   MarkerToReferenceTransformMatrixBucket* currentBucket = NULL;
   if (this->MarkerToReferenceTransformMatrixBuckets.size() > 0)
   {
+    // Last bucket is the current one
     currentBucket = &this->MarkerToReferenceTransformMatrixBuckets[this->MarkerToReferenceTransformMatrixBuckets.size() - 1];
   }
+
+  if (currentBucket && this->CalibrationPoseBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->CalibrationPoseBucketSize)
+  {
+    // If the current bucket is full, then we will need to create a new one.
+    currentBucket = NULL;
+  }
+
   if (!currentBucket)
   {
+    // Create a new bucket
     this->MarkerToReferenceTransformMatrixBuckets.push_back(MarkerToReferenceTransformMatrixBucket());
+
+    if (this->MaximumNumberOfBuckets > 0 && this->MarkerToReferenceTransformMatrixBuckets.size() > this->MaximumNumberOfBuckets)
+    {
+      // Maximum number of buckets reached. Remove the oldest one.
+      this->MarkerToReferenceTransformMatrixBuckets.pop_front();
+    }
+
+    // Last bucket is the current one
     currentBucket = &this->MarkerToReferenceTransformMatrixBuckets[this->MarkerToReferenceTransformMatrixBuckets.size() - 1];
   }
 
@@ -78,10 +112,9 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x
   currentBucket->MarkerToReferenceCalibrationPoints.push_back(markerToReferenceTransformMatrixCopy);
   if (this->CalibrationPoseBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->CalibrationPoseBucketSize)
   {
+    // We have filled up the current bucket.
+    // Check to make sure the data is good and remove all buckets if it is not.
     this->CleanInputBuffer();
-
-    // The current bucket is full. We will create a new one.
-    this->MarkerToReferenceTransformMatrixBuckets.push_back(MarkerToReferenceTransformMatrixBucket());
   }
   return IGSIO_SUCCESS;
 }
@@ -95,8 +128,9 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::CleanInputBuffer()
   vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
   double pivotPoint_Marker[4] = { 0, 0, 0, 1 };
   double pivotPoint_Reference[4] = { 0, 0, 0, 1 };
-  igsioStatus status = this->DoPivotCalibrationInternal(&latestBucket, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
-  double meanError = this->ComputeCalibrationError(&latestBucket, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
+  std::set<unsigned int> outlierIndices;
+  igsioStatus status = this->DoPivotCalibrationInternal(&latestBucket, &outlierIndices, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
+  double meanError = this->ComputeCalibrationError(&latestBucket, &outlierIndices, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
   if (status != IGSIO_SUCCESS || meanError > this->MaximumBucketError)
   {
     // The latest pivot calibration bucket does not contain pivoting.
@@ -132,7 +166,7 @@ It's an Ax=b linear problem that can be solved with robust LSQR:
       [ PivotPoint_Reference ]
  bi = [ -MarkerToReferenceTransformTranslationVector ]
 */
-igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double* pivotPoint_Marker, double* pivotPoint_Reference)
+igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference)
 {
   std::vector<vnl_vector<double> > aMatrix;
   std::vector<double> bVector;
@@ -179,7 +213,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vecto
   // corrupted), but there would be no measurable difference anyway if the only a few percent of the points are
   // outliers.
 
-  this->OutlierIndices.clear();
+  outlierIndices->clear();
   unsigned int processFromRowIndex = 0;
   for (unsigned int i = 0; i < notOutliersIndices.size(); i++)
   {
@@ -190,7 +224,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vecto
       for (unsigned int outlierRowIndex = processFromRowIndex; outlierRowIndex < nextNotOutlierRowIndex; outlierRowIndex++)
       {
         int sampleIndex = outlierRowIndex / 3; // 3 rows are generated per sample
-        this->OutlierIndices.insert(sampleIndex);
+        outlierIndices->insert(sampleIndex);
       }
     }
     processFromRowIndex = nextNotOutlierRowIndex + 1;
@@ -300,10 +334,9 @@ double vtkIGSIOPivotCalibrationAlgo::GetMaximumToolOrientationDifferenceDeg()
   std::vector<vtkMatrix4x4*> toolToReferenceMatrices;
   this->GetMarkerToReferenceTransformMatrixArray(&toolToReferenceMatrices);
   std::vector<vtkMatrix4x4*>::const_iterator matricesEnd = toolToReferenceMatrices.end();
-  unsigned int currentRow;
   vtkMatrix4x4* referenceOrientationMatrix = toolToReferenceMatrices.front();
   std::vector<vtkMatrix4x4*>::const_iterator it;
-  for (currentRow = 0, it = toolToReferenceMatrices.begin(); it != matricesEnd; it++, currentRow += 3)
+  for (it = toolToReferenceMatrices.begin(); it != matricesEnd; it++)
   {
     double orientationDifferenceDeg = this->GetOrientationDifferenceDeg(referenceOrientationMatrix, (*it));
     if (maximumOrientationDifferenceDeg < orientationDifferenceDeg)
@@ -335,7 +368,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
 
   double pivotPoint_Marker[4] = { 0.0, 0.0, 0.0, 1.0 };
   double pivotPoint_Reference[4] = { 0.0, 0.0, 0.0, 1.0 };
-  igsioStatus status = this->DoPivotCalibrationInternal(&markerToTransformMatrixArray, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
+  igsioStatus status = this->DoPivotCalibrationInternal(&markerToTransformMatrixArray, &this->OutlierIndices, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
   if (status == IGSIO_SUCCESS)
   {
     this->ErrorCode = CALIBRATION_SUCCESS;
@@ -371,7 +404,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
 }
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
+igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
 {
   if (!markerToTransformMatrixArray || markerToTransformMatrixArray->size() == 0)
   {
@@ -387,7 +420,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::
   pivotPoint_Reference[1] = 0.0;
   pivotPoint_Reference[2] = 0.0;
   pivotPoint_Reference[3] = 1.0;
-  if (this->GetPivotPointPosition(markerToTransformMatrixArray, pivotPoint_Marker, pivotPoint_Reference) != IGSIO_SUCCESS)
+  if (this->GetPivotPointPosition(markerToTransformMatrixArray, outlierIndices, pivotPoint_Marker, pivotPoint_Reference) != IGSIO_SUCCESS)
   {
     return IGSIO_FAIL;
   }
@@ -488,11 +521,11 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* a
 void vtkIGSIOPivotCalibrationAlgo::ComputeCalibrationError()
 {
   const std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
-  this->CalibrationError = this->ComputeCalibrationError(&markerToTransformMatrixArray, this->PivotPointPosition_Reference, this->PivotPointToMarkerTransformMatrix);
+  this->CalibrationError = this->ComputeCalibrationError(&markerToTransformMatrixArray, &this->OutlierIndices, this->PivotPointPosition_Reference, this->PivotPointToMarkerTransformMatrix);
 }
 
 //-----------------------------------------------------------------------------
-double vtkIGSIOPivotCalibrationAlgo::ComputeCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
+double vtkIGSIOPivotCalibrationAlgo::ComputeCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
 {
   vtkSmartPointer<vtkMatrix4x4> pivotPointToReferenceMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 
@@ -503,12 +536,11 @@ double vtkIGSIOPivotCalibrationAlgo::ComputeCalibrationError(const std::vector<v
   for (std::vector< vtkMatrix4x4* >::const_iterator markerToReferenceTransformIt = markerToTransformMatrixArray->begin();
     markerToReferenceTransformIt != markerToTransformMatrixArray->end(); ++markerToReferenceTransformIt, ++sampleIndex)
   {
-    // TODO: Discard outliers
-    //if (this->OutlierIndices.find(sampleIndex) != this->OutlierIndices.end())
-    //{
-    //  // outlier, so skip from the error computation
-    //  continue;
-    //}
+    if (outlierIndices->find(sampleIndex) != outlierIndices->end())
+    {
+      // outlier, so skip from the error computation
+      continue;
+    }
 
     vtkMatrix4x4::Multiply4x4((*markerToReferenceTransformIt), pivotPointToMarkerTransformMatrix, pivotPointToReferenceMatrix);
     for (int i = 0; i < 3; i++)

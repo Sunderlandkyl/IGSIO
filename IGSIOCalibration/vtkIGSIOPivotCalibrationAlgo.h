@@ -17,8 +17,8 @@ See License.txt for details.
 #include <vtkMatrix4x4.h>
 
 // STL includes
-#include <list>
 #include <set>
+#include <deque>
 
 class vtkIGSIOTransformRepository;
 class vtkXMLDataElement;
@@ -69,7 +69,7 @@ public:
   igsioStatus InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix);
 
   /*!
-    Removes invalid input buffer points. 
+    Removes invalid input buffer points.
   */
   igsioStatus CleanInputBuffer();
 
@@ -94,14 +94,18 @@ public:
 
   int GetNumberOfCalibrationPoints();
 
+  // Computes the maximum orientation difference in degrees between the first tool transformation
+  // and all the others. Used for determining if there was enough variation in the input data.
+  double GetMaximumToolOrientationDifferenceDeg();
+
   enum CalibrationError
   {
-    FAIL = IGSIO_FAIL,
-    SUCCESS = IGSIO_SUCCESS,
-    NOT_STARTED,
-    NOT_ENOUGH_POINTS,
-    NOT_ENOUGH_VARIATION,
-    HIGH_ERROR,
+    CALIBRATION_FAIL = IGSIO_FAIL,
+    CALIBRATION_SUCCESS = IGSIO_SUCCESS,
+    CALIBRATION_NOT_STARTED,
+    CALIBRATION_NOT_ENOUGH_POINTS,
+    CALIBRATION_NOT_ENOUGH_VARIATION,
+    CALIBRATION_HIGH_ERROR,
   };
 
 public:
@@ -111,6 +115,14 @@ public:
   vtkGetStringMacro(ObjectMarkerCoordinateFrame);
   vtkGetStringMacro(ReferenceCoordinateFrame);
   vtkGetStringMacro(ObjectPivotPointCoordinateFrame);
+
+  vtkSetMacro(CalibrationPoseBucketSize, int);
+  vtkGetMacro(CalibrationPoseBucketSize, int);
+
+  vtkGetMacro(ErrorCode, int);
+
+  vtkSetMacro(MinimumOrientationDifferenceDeg, double);
+  vtkGetMacro(MinimumOrientationDifferenceDeg, double);
 
 protected:
   vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
@@ -126,27 +138,34 @@ protected:
   /*! Compute the mean position error of the pivot point (in mm) */
   void ComputeCalibrationError();
 
+  double ComputeCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+
   igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double* pivotPoint_Marker, double* pivotPoint_Reference);
 
   std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();
+  void GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray);
+  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray(int bucket);
+  void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
 
-  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, vtkIGSIOTransformRepository* aTransformRepository = NULL);
+  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+
+  // Returns the orientation difference in degrees between two 4x4 homogeneous transformation matrix, in degrees.
+  double GetOrientationDifferenceDeg(vtkMatrix4x4* aMatrix, vtkMatrix4x4* bMatrix);
 
 protected:
-  /*! Pivot point to marker transform (eg. stylus tip to stylus) - the result of the calibration */
-  vtkMatrix4x4*             PivotPointToMarkerTransformMatrix;
+  vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
 
   /*! Mean error of the calibration result in mm */
   double                    CalibrationError;
 
   /*! Name of the object marker coordinate frame (eg. Stylus) */
-  char*                     ObjectMarkerCoordinateFrame;
+  char* ObjectMarkerCoordinateFrame;
 
   /*! Name of the reference coordinate frame (eg. Reference) */
-  char*                     ReferenceCoordinateFrame;
+  char* ReferenceCoordinateFrame;
 
   /*! Name of the object pivot point coordinate frame (eg. StylusTip) */
-  char*                     ObjectPivotPointCoordinateFrame;
+  char* ObjectPivotPointCoordinateFrame;
 
   /*! Pivot point position in the Reference coordinate system */
   double                    PivotPointPosition_Reference[4];
@@ -155,27 +174,34 @@ protected:
   std::set<unsigned int>    OutlierIndices;
 
   /*! Error code indicating what went wrong with the calibration. */
-  int                       ErrorCode{ NOT_STARTED };
+  int                       ErrorCode;
 
   // TODO
-  int                       CalibrationPoseBucketSize{ -1 };
+  int                       CalibrationPoseBucketSize;
 
-  int                       RequiredNumberOfPoints;
+  // TODO
+  double                    MinimumOrientationDifferenceDeg;
+
+  // TODO
+  double                    MaximumBucketError;
+
+  // TODO
+  int                       MaximumNumberOfBuckets;
 
   // TODO
   struct MarkerToReferenceTransformMatrixBucket
   {
-    MarkerToReferenceTransformMatrixBucket(int bucketSize)
+    MarkerToReferenceTransformMatrixBucket()
     {
-      this->MarkerToReferenceCalibrationPoints = std::vector< vtkSmartPointer<vtkMatrix4x4> >(bucketSize);
-      this->PointsInBucket = 0;
-      this->Error = 0.0;
+      this->MarkerToReferenceCalibrationPoints = std::vector< vtkSmartPointer<vtkMatrix4x4> >();
+    }
+    ~MarkerToReferenceTransformMatrixBucket()
+    {
+      this->MarkerToReferenceCalibrationPoints.clear();
     }
     std::vector< vtkSmartPointer<vtkMatrix4x4> > MarkerToReferenceCalibrationPoints;
-    int PointsInBucket;
-    double Error;
   };
-  std::vector<MarkerToReferenceTransformMatrixBucket>  MarkerToReferenceTransformMatrixBuckets;
+  std::deque<MarkerToReferenceTransformMatrixBucket>  MarkerToReferenceTransformMatrixBuckets;
 
   class vtkInternal;
   vtkInternal* Internal;

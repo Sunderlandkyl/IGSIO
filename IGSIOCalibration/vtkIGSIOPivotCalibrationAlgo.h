@@ -77,7 +77,8 @@ public:
     Calibrate (call the minimizer and set the result)
     \param aTransformRepository Transform repository to save the results into
   */
-  igsioStatus DoPivotCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL);
+  igsioStatus DoPivotCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL, bool autoOrient = true);
+  igsioStatus DoSpinCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL, bool snapRotation = false, bool autoOrient = true);
 
   /*!
     Get calibration result string to display
@@ -98,7 +99,7 @@ public:
   // and all the others. Used for determining if there was enough variation in the input data.
   double GetMaximumToolOrientationDifferenceDeg();
 
-  enum CalibrationError
+  enum CalibrationErrorCodes
   {
     CALIBRATION_FAIL = IGSIO_FAIL,
     CALIBRATION_SUCCESS = IGSIO_SUCCESS,
@@ -108,8 +109,16 @@ public:
     CALIBRATION_HIGH_ERROR,
   };
 
+  enum AutoCalibrationModeTypes
+  {
+    PIVOT_CALIBRATION,
+    SPIN_CALIBRATION
+  };
+
 public:
-  vtkGetMacro(CalibrationError, double);
+  vtkGetMacro(PivotCalibrationErrorMm, double);
+  vtkGetMacro(SpinCalibrationErrorMm, double);
+
   vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkGetVector3Macro(PivotPointPosition_Reference, double);
   vtkGetStringMacro(ObjectMarkerCoordinateFrame);
@@ -133,6 +142,9 @@ public:
   vtkGetMacro(OrientationDifferenceLowThresholdDegrees, double);
   vtkSetMacro(OrientationDifferenceLowThresholdDegrees, double);  
 
+  vtkSetMacro(AutoCalibrationMode, int);
+  vtkGetMacro(AutoCalibrationMode, int);
+
 protected:
   vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkSetStringMacro(ObjectMarkerCoordinateFrame);
@@ -145,9 +157,9 @@ protected:
 
 protected:
   /*! Compute the mean position error of the pivot point (in mm) */
-  void ComputeCalibrationError();
+  void ComputePivotCalibrationError();
 
-  double ComputeCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  double ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
 
   igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference);
 
@@ -156,25 +168,41 @@ protected:
   std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray(int bucket);
   void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
 
-  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool autoOrient, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  igsioStatus DoSpinCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool snapRotation, bool autoOrient, vtkMatrix4x4* pivotPointToMarkerTransformMatrix, double& error);
+
+  // Verify whether the tool's shaft is in the same direction as the ToolTip to Tool vector.
+  // Rotate the ToolTip coordinate frame by 180 degrees about the secondary axis to make the 
+  // shaft in the same direction as the ToolTip to Tool vector, if this is not already the case.
+  void UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+
+  // Flip the direction of the shaft axis
+  void FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+
+  void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
 
   // Returns the orientation difference in degrees between two 4x4 homogeneous transformation matrix, in degrees.
   double GetOrientationDifferenceDeg(vtkMatrix4x4* aMatrix, vtkMatrix4x4* bMatrix);
+
+  // TODO
+  vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
 
 protected:
   vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
 
   /*! Mean error of the calibration result in mm */
-  double                    CalibrationError;
+  double                    PivotCalibrationErrorMm;
+  /*! Mean error of the calibration result in mm */
+  double                    SpinCalibrationErrorMm;
 
   /*! Name of the object marker coordinate frame (eg. Stylus) */
-  char* ObjectMarkerCoordinateFrame;
+  char*                     ObjectMarkerCoordinateFrame;
 
   /*! Name of the reference coordinate frame (eg. Reference) */
-  char* ReferenceCoordinateFrame;
+  char*                     ReferenceCoordinateFrame;
 
   /*! Name of the object pivot point coordinate frame (eg. StylusTip) */
-  char* ObjectPivotPointCoordinateFrame;
+  char*                     ObjectPivotPointCoordinateFrame;
 
   /*! Pivot point position in the Reference coordinate system */
   double                    PivotPointPosition_Reference[4];
@@ -199,6 +227,8 @@ protected:
 
   double                    PositionDifferenceLowThresholdMm;
   double                    OrientationDifferenceLowThresholdDegrees;
+
+  int                       AutoCalibrationMode;
 
   // TODO
   struct MarkerToReferenceTransformMatrixBucket

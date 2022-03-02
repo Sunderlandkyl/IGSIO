@@ -23,8 +23,6 @@
 #include <vnl/algo/vnl_svd.h>
 #include <vnl/algo/vnl_symmetric_eigensystem.h>
 #include <vnl/vnl_vector.h>
-#include <cmath>
-vtkStandardNewMacro(vtkIGSIOPivotCalibrationAlgo);
 
 static const double PARALLEL_ANGLE_THRESHOLD_DEGREES = 20.0;
 // Note: If the needle orientation protocol changes, only the definitions of shaftAxis and secondaryAxes need to be changed
@@ -34,6 +32,8 @@ static const double PARALLEL_ANGLE_THRESHOLD_DEGREES = 20.0;
 static const double SHAFT_AXIS[3] = { 0, 0, -1 };
 static const double ORTHOGONAL_AXIS[3] = { 1, 0, 0 };
 static const double BACKUP_AXIS[3] = { 0, 1, 0 };
+
+vtkStandardNewMacro(vtkIGSIOPivotCalibrationAlgo);
 
 //-----------------------------------------------------------------------------
 vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
@@ -52,11 +52,15 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
 
   this->MinimumOrientationDifferenceDeg = 15.0;
 
+  this->PositionDifferenceThresholdMm = 0.0;
+  this->OrientationDifferenceThresholdDegrees = 0.0;
+
   this->ErrorCode = CALIBRATION_NOT_STARTED;
-  this->CalibrationPoseBucketSize = -1;
-  this->MaximumBucketError = 3.0;
-  this->PositionDifferenceLowThresholdMm = 0.0;
-  this->OrientationDifferenceLowThresholdDegrees = 0.0;
+
+  this->AutoCalibrationEnabled = false;
+  this->AutoCalibrationBucketSize = -1;
+  this->AutoCalibrationMaximumBucketError = 3.0;
+
 
   this->AutoCalibrationMode = PIVOT_CALIBRATION;
 }
@@ -72,22 +76,22 @@ vtkIGSIOPivotCalibrationAlgo::~vtkIGSIOPivotCalibrationAlgo()
 void vtkIGSIOPivotCalibrationAlgo::RemoveAllCalibrationPoints()
 {
   this->MarkerToReferenceTransformMatrixBuckets.clear();
-  this->ErrorCode = CALIBRATION_NOT_STARTED;
+  this->SetErrorCode(CALIBRATION_NOT_STARTED);
   this->OutlierIndices.clear();
 }
 
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix)
 {
-  double positionDifferenceMm = this->PositionDifferenceLowThresholdMm;
-  double orientationDifferenceDegrees = this->OrientationDifferenceLowThresholdDegrees;
+  double positionDifferenceMm = this->PositionDifferenceThresholdMm;
+  double orientationDifferenceDegrees = this->OrientationDifferenceThresholdDegrees;
   if (this->MarkerToReferenceTransformMatrixBuckets.size() >= 1 && this->MarkerToReferenceTransformMatrixBuckets[0].MarkerToReferenceCalibrationPoints.size() > 0)
   {
     // Compute position and orientation difference of current and previous positions
     positionDifferenceMm = igsioMath::GetPositionDifference(aMarkerToReferenceTransformMatrix, this->PreviousMarkerToReferenceTransformMatrix);
     orientationDifferenceDegrees = igsioMath::GetOrientationDifference(aMarkerToReferenceTransformMatrix, this->PreviousMarkerToReferenceTransformMatrix);
   }
-  if (positionDifferenceMm < this->PositionDifferenceLowThresholdMm && orientationDifferenceDegrees < this->OrientationDifferenceLowThresholdDegrees)
+  if (positionDifferenceMm < this->PositionDifferenceThresholdMm && orientationDifferenceDegrees < this->OrientationDifferenceThresholdDegrees)
   {
     LOG_DEBUG("Acquired position is too close to the previous - it is skipped");
     return IGSIO_FAIL;
@@ -101,7 +105,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x
     currentBucket = &this->MarkerToReferenceTransformMatrixBuckets[this->MarkerToReferenceTransformMatrixBuckets.size() - 1];
   }
 
-  if (currentBucket && this->CalibrationPoseBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->CalibrationPoseBucketSize)
+  if (this->AutoCalibrationEnabled && currentBucket && this->AutoCalibrationBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->AutoCalibrationBucketSize)
   {
     // If the current bucket is full, then we will need to create a new one.
     currentBucket = NULL;
@@ -112,27 +116,71 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::InsertNextCalibrationPoint(vtkMatrix4x
     // Create a new bucket
     this->MarkerToReferenceTransformMatrixBuckets.push_back(MarkerToReferenceTransformMatrixBucket());
 
-    if (this->MaximumNumberOfBuckets > 0 && this->MarkerToReferenceTransformMatrixBuckets.size() > this->MaximumNumberOfBuckets)
+    if (this->AutoCalibrationEnabled && this->AutoCalibrationMaximumNumberOfBuckets > 0 && this->MarkerToReferenceTransformMatrixBuckets.size() > this->AutoCalibrationMaximumNumberOfBuckets)
     {
       // Maximum number of buckets reached. Remove the oldest one.
       this->MarkerToReferenceTransformMatrixBuckets.pop_front();
     }
 
-    // Last bucket is the current one
+    // Latest bucket is the current one
     currentBucket = &this->MarkerToReferenceTransformMatrixBuckets[this->MarkerToReferenceTransformMatrixBuckets.size() - 1];
   }
 
   vtkNew<vtkMatrix4x4> markerToReferenceTransformMatrixCopy;
   markerToReferenceTransformMatrixCopy->DeepCopy(aMarkerToReferenceTransformMatrix);
   currentBucket->MarkerToReferenceCalibrationPoints.push_back(markerToReferenceTransformMatrixCopy);
-  if (this->CalibrationPoseBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->CalibrationPoseBucketSize)
+  this->InvokeEvent(InputTransformAddedEvent);
+
+  if (this->AutoCalibrationEnabled && this->AutoCalibrationBucketSize > 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() >= this->AutoCalibrationBucketSize)
   {
-    // We have filled up the current bucket.
-    // Check to make sure the data is good and remove all buckets if it is not.
-    this->CleanInputBuffer();
+    // We have filled up the current bucket. Attempt to perform calibration.
+    this->AutoCalibrate();
   }
   return IGSIO_SUCCESS;
 }
+
+//----------------------------------------------------------------------------
+igsioStatus vtkIGSIOPivotCalibrationAlgo::AutoCalibrate()
+{
+  // Check to make sure the data is good and remove all buckets if it is not.
+  this->CleanInputBuffer();
+
+  if (this->GetNumberOfCalibrationPoints() < this->AutoCalibrationNumberOfPoints)
+  {
+    return IGSIO_FAIL;
+  }
+
+  igsioStatus status = IGSIO_FAIL;
+  double error = VTK_DOUBLE_MAX;
+
+  if (this->GetAutoCalibrationMode() == PIVOT_CALIBRATION)
+  {
+    bool autoOrient = true; // TODO
+    status = this->DoPivotCalibration(NULL, autoOrient);
+    error = this->PivotCalibrationErrorMm;
+  }
+  else if (this->GetAutoCalibrationMode() == SPIN_CALIBRATION)
+  {
+    bool snapRotation = true; // TODO
+    bool autoOrient = true;
+    status = this->DoSpinCalibration(NULL, snapRotation, autoOrient);
+    error = this->SpinCalibrationErrorMm;
+  }
+
+  if (error > this->AutoCalibrationMaximumBucketError)
+  {
+    this->SetErrorCode(CALIBRATION_HIGH_ERROR);
+  }
+
+  if (status != IGSIO_SUCCESS || this->ErrorCode != CALIBRATION_SUCCESS)
+  {
+    return IGSIO_FAIL;
+  }
+
+  this->InvokeEvent(AutoCalibrationCompleteEvent);
+  return IGSIO_SUCCESS;
+}
+
 
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOPivotCalibrationAlgo::CleanInputBuffer()
@@ -158,15 +206,15 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::CleanInputBuffer()
     status = this->DoSpinCalibrationInternal(&latestBucket, true, true, pivotPointToMarkerTransformMatrix, meanError);
   }
 
-  if (status != IGSIO_SUCCESS || meanError > this->MaximumBucketError)
+  if (status != IGSIO_SUCCESS || meanError > this->AutoCalibrationMaximumBucketError)
   {
     // The latest pivot calibration bucket does not contain pivoting.
     // Discard it and all earlier buckets.
     this->MarkerToReferenceTransformMatrixBuckets.clear();
-    this->ErrorCode = CALIBRATION_HIGH_ERROR;
+    this->SetErrorCode(CALIBRATION_HIGH_ERROR);
   }
 
-  if (this->MarkerToReferenceTransformMatrixBuckets.size() > this->MaximumNumberOfBuckets)
+  if (this->MarkerToReferenceTransformMatrixBuckets.size() > this->AutoCalibrationMaximumNumberOfBuckets)
   {
     this->MarkerToReferenceTransformMatrixBuckets.pop_front();
   }
@@ -380,13 +428,13 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
 {
   if (this->MarkerToReferenceTransformMatrixBuckets.empty())
   {
-    this->ErrorCode = CALIBRATION_NOT_ENOUGH_POINTS;
+    this->SetErrorCode(CALIBRATION_NOT_ENOUGH_POINTS);
     return IGSIO_FAIL;
   }
 
   if (this->GetMaximumToolOrientationDifferenceDeg() < this->MinimumOrientationDifferenceDeg)
   {
-    this->ErrorCode = CALIBRATION_NOT_ENOUGH_VARIATION;
+    this->SetErrorCode(CALIBRATION_NOT_ENOUGH_VARIATION);
     return IGSIO_FAIL;
   }
 
@@ -398,11 +446,11 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
   igsioStatus status = this->DoPivotCalibrationInternal(&markerToTransformMatrixArray, autoOrient, &this->OutlierIndices, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
   if (status == IGSIO_SUCCESS)
   {
-    this->ErrorCode = CALIBRATION_SUCCESS;
+    this->SetErrorCode(CALIBRATION_SUCCESS);
   }
   else
   {
-    this->ErrorCode = CALIBRATION_FAIL;
+    this->SetErrorCode(CALIBRATION_FAIL);
   }
 
   this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
@@ -532,21 +580,15 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoSpinCalibration(vtkIGSIOTransformRep
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOPivotCalibrationAlgo::DoSpinCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool snapRotation/*=false*/, bool autoOrient/*=true*/, vtkMatrix4x4* toolTipToToolMatrix, double& error)
 {
-  if (this->MarkerToReferenceTransformMatrixBuckets.empty())
+  if (!markerToTransformMatrixArray || markerToTransformMatrixArray->size() < 10)
   {
-    this->ErrorCode = CALIBRATION_NOT_ENOUGH_POINTS;
-    return IGSIO_FAIL;
-  }
-
-  if (markerToTransformMatrixArray->size() < 10)
-  {
-    this->ErrorCode = CALIBRATION_NOT_ENOUGH_POINTS;
+    this->SetErrorCode(CALIBRATION_NOT_ENOUGH_POINTS);
     return IGSIO_FAIL;
   }
 
   if (this->GetMaximumToolOrientationDifferenceDeg() < this->MinimumOrientationDifferenceDeg)
   {
-    this->ErrorCode = CALIBRATION_NOT_ENOUGH_VARIATION;
+    this->SetErrorCode(CALIBRATION_NOT_ENOUGH_VARIATION);
     return IGSIO_FAIL;
   }
 
@@ -682,7 +724,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoSpinCalibrationInternal(const std::v
     this->UpdateShaftDirection(toolTipToToolMatrix); // Flip it if necessary
   }
 
-  this->ErrorCode = CALIBRATION_SUCCESS;
+  this->SetErrorCode(CALIBRATION_SUCCESS);
   return IGSIO_SUCCESS;
 }
 

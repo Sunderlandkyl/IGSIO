@@ -13,6 +13,7 @@ See License.txt for details.
 #include "vtkIGSIOCalibrationExport.h"
 
 // VTK includes
+#include <vtkCommand.h>
 #include <vtkObject.h>
 #include <vtkMatrix4x4.h>
 
@@ -48,6 +49,28 @@ class vtkIGSIOCalibrationExport vtkIGSIOPivotCalibrationAlgo : public vtkObject
 public:
   vtkTypeMacro(vtkIGSIOPivotCalibrationAlgo, vtkObject);
   static vtkIGSIOPivotCalibrationAlgo* New();
+
+  enum Events
+  {
+    InputTransformAddedEvent = vtkCommand::UserEvent + 173,
+    AutoCalibrationCompleteEvent
+  };
+
+  enum CalibrationErrorCodes
+  {
+    CALIBRATION_FAIL = IGSIO_FAIL,
+    CALIBRATION_SUCCESS = IGSIO_SUCCESS,
+    CALIBRATION_NOT_STARTED,
+    CALIBRATION_NOT_ENOUGH_POINTS,
+    CALIBRATION_NOT_ENOUGH_VARIATION,
+    CALIBRATION_HIGH_ERROR,
+  };
+
+  enum AutoCalibrationModeTypes
+  {
+    PIVOT_CALIBRATION,
+    SPIN_CALIBRATION
+  };
 
   /*!
   * Read configuration
@@ -99,23 +122,8 @@ public:
   // and all the others. Used for determining if there was enough variation in the input data.
   double GetMaximumToolOrientationDifferenceDeg();
 
-  enum CalibrationErrorCodes
-  {
-    CALIBRATION_FAIL = IGSIO_FAIL,
-    CALIBRATION_SUCCESS = IGSIO_SUCCESS,
-    CALIBRATION_NOT_STARTED,
-    CALIBRATION_NOT_ENOUGH_POINTS,
-    CALIBRATION_NOT_ENOUGH_VARIATION,
-    CALIBRATION_HIGH_ERROR,
-  };
+  igsioStatus AutoCalibrate();
 
-  enum AutoCalibrationModeTypes
-  {
-    PIVOT_CALIBRATION,
-    SPIN_CALIBRATION
-  };
-
-public:
   vtkGetMacro(PivotCalibrationErrorMm, double);
   vtkGetMacro(SpinCalibrationErrorMm, double);
 
@@ -125,31 +133,42 @@ public:
   vtkGetStringMacro(ReferenceCoordinateFrame);
   vtkGetStringMacro(ObjectPivotPointCoordinateFrame);
 
-  vtkSetMacro(CalibrationPoseBucketSize, int);
-  vtkGetMacro(CalibrationPoseBucketSize, int);
-
   vtkGetMacro(ErrorCode, int);
-
+   
   vtkSetMacro(MinimumOrientationDifferenceDeg, double);
   vtkGetMacro(MinimumOrientationDifferenceDeg, double);
 
-  vtkGetMacro(MaximumNumberOfBuckets, int);
-  vtkSetMacro(MaximumNumberOfBuckets, int);
+  vtkGetMacro(PositionDifferenceThresholdMm, double);
+  vtkSetMacro(PositionDifferenceThresholdMm, double);
 
-  vtkGetMacro(PositionDifferenceLowThresholdMm, double);
-  vtkSetMacro(PositionDifferenceLowThresholdMm, double);
+  vtkGetMacro(OrientationDifferenceThresholdDegrees, double);
+  vtkSetMacro(OrientationDifferenceThresholdDegrees, double);
 
-  vtkGetMacro(OrientationDifferenceLowThresholdDegrees, double);
-  vtkSetMacro(OrientationDifferenceLowThresholdDegrees, double);  
+  vtkGetMacro(AutoCalibrationEnabled, bool);
+  vtkSetMacro(AutoCalibrationEnabled, bool);
+  vtkBooleanMacro(AutoCalibrationEnabled, bool);
 
-  vtkSetMacro(AutoCalibrationMode, int);
+  vtkGetMacro(AutoCalibrationBucketSize, int);
+  vtkSetMacro(AutoCalibrationBucketSize, int);
+
+  vtkGetMacro(AutoCalibrationMaximumNumberOfBuckets, int);
+  vtkSetMacro(AutoCalibrationMaximumNumberOfBuckets, int);
+
+  vtkGetMacro(AutoCalibrationNumberOfPoints, int);
+  vtkSetMacro(AutoCalibrationNumberOfPoints, int);
+
   vtkGetMacro(AutoCalibrationMode, int);
+  vtkSetMacro(AutoCalibrationMode, int);
+
+  vtkGetMacro(AutoCalibrationMaximumBucketError, double);
+  vtkSetMacro(AutoCalibrationMaximumBucketError, double);
 
 protected:
   vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkSetStringMacro(ObjectMarkerCoordinateFrame);
   vtkSetStringMacro(ReferenceCoordinateFrame);
   vtkSetStringMacro(ObjectPivotPointCoordinateFrame);
+  vtkSetMacro(ErrorCode, int);
 
 protected:
   vtkIGSIOPivotCalibrationAlgo();
@@ -213,21 +232,33 @@ protected:
   /*! Error code indicating what went wrong with the calibration. */
   int                       ErrorCode;
 
-  // TODO
-  int                       CalibrationPoseBucketSize;
-
-  // TODO
+  /* Required minimum amount of variation within the recorded poses */
   double                    MinimumOrientationDifferenceDeg;
 
-  // TODO
-  double                    MaximumBucketError;
+  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0mm by default)
+  double                    PositionDifferenceThresholdMm;
+  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0 degrees by default).
+  double                    OrientationDifferenceThresholdDegrees;
 
-  // TODO
-  int                       MaximumNumberOfBuckets;
+  /// Flag that indicates if auto calibration is enabled.
+  /// TODO
+  bool                      AutoCalibrationEnabled;
 
-  double                    PositionDifferenceLowThresholdMm;
-  double                    OrientationDifferenceLowThresholdDegrees;
+  /// Number of points that should be contained in each auto calibration bucket
+  int                       AutoCalibrationBucketSize;
+  
+  /// Number of pooints required for auto calibration.
+  int                       AutoCalibrationNumberOfPoints;
 
+  /// The maximum amount of acceptable error in each bucket.
+  /// If the error in the current bucket exceeds the threshold, all of the buckets will be discarded.
+  double                    AutoCalibrationMaximumBucketError;
+
+  /// The maximum number of buckets to keep. If the number of buckets exceeds the maximum, then the oldest will be discarded.
+  int                       AutoCalibrationMaximumNumberOfBuckets;
+
+  /// The method used for auto calibration.
+  /// PivotCalibration or SpinCalibration
   int                       AutoCalibrationMode;
 
   // TODO

@@ -124,44 +124,98 @@ public:
 
   igsioStatus AutoCalibrate();
 
+  //@{
+  /// Mean error of the pivot calibration result in mm
   vtkGetMacro(PivotCalibrationErrorMm, double);
-  vtkGetMacro(SpinCalibrationErrorMm, double);
+  //@}
 
+  //@{
+  /// Mean error of the spin calibration result in mm
+  vtkGetMacro(SpinCalibrationErrorMm, double);
+  //@}
+  
+  //@{
+  /// Output calibration tip to marker position
   vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkGetVector3Macro(PivotPointPosition_Reference, double);
+  //@}
+
+  /// Name of the object marker coordinate frame (eg. Stylus)
   vtkGetStringMacro(ObjectMarkerCoordinateFrame);
+
+  /// Name of the reference coordinate frame (eg. Reference)
   vtkGetStringMacro(ReferenceCoordinateFrame);
+
+  /// Name of the object pivot point coordinate frame (eg. StylusTip)
   vtkGetStringMacro(ObjectPivotPointCoordinateFrame);
 
+  /// Error code indicating what went wrong with the calibration.
   vtkGetMacro(ErrorCode, int);
-   
+  
+  //@{
+  /// Required minimum amount of variation within the recorded poses
   vtkSetMacro(MinimumOrientationDifferenceDeg, double);
   vtkGetMacro(MinimumOrientationDifferenceDeg, double);
+  //@}
 
+  //@{
+  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0 degrees by default).
   vtkGetMacro(PositionDifferenceThresholdMm, double);
   vtkSetMacro(PositionDifferenceThresholdMm, double);
-
+  //@}
+  
+  //@{
+  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0 degrees by default).
   vtkGetMacro(OrientationDifferenceThresholdDegrees, double);
   vtkSetMacro(OrientationDifferenceThresholdDegrees, double);
+  //@}
 
+  //@{
+  /// Flag that indicates if auto calibration is enabled.
+  /// While auto calibration is enabled, the algorithm will maintain a buffer of input points stored in buckets (\sa SetAutoCalibrationBucketSize, \sa SetAutoCalibrationMaximumNumberOfBuckets).
+  /// If the error in the latest bucket is too high, then all input data will be discarded (\sa SetAutoCalibrationMaximumBucketError).
+  /// When the required number of points are recorded (\sa SetAutoCalibrationNumberOfPoints), and the error is below the threshold (\sa SetAutoCalibrationTargetError), calibration will be run and AutoCalibrationCompleteEvent will be invoked.
+  /// \sa SetAutoCalibrationMode
   vtkGetMacro(AutoCalibrationEnabled, bool);
   vtkSetMacro(AutoCalibrationEnabled, bool);
   vtkBooleanMacro(AutoCalibrationEnabled, bool);
+  //@}
 
+  //@{
+  /// The number of input points to be stored in each bucket
   vtkGetMacro(AutoCalibrationBucketSize, int);
   vtkSetMacro(AutoCalibrationBucketSize, int);
+  //@}
 
+  //@{
+  /// The maximum number of buckets to be stored. If the number of buckets is exceeded, the oldest will be discarded.
   vtkGetMacro(AutoCalibrationMaximumNumberOfBuckets, int);
   vtkSetMacro(AutoCalibrationMaximumNumberOfBuckets, int);
+  //@}
 
+  //@{
+  /// Target threshold to reach before AutoCalibrationCompleteEvent will be invoked.
+  vtkGetMacro(AutoCalibrationTargetError, double);
+  vtkSetMacro(AutoCalibrationTargetError, double);
+
+  //@{
+  /// Number of points to record before attempting to perform calibration
   vtkGetMacro(AutoCalibrationNumberOfPoints, int);
   vtkSetMacro(AutoCalibrationNumberOfPoints, int);
+  //@}
 
+  //@{
+  /// Calibration mode to use for auto calibration.
+  /// Value should be either PIVOT_CALIBRATION or SPIN_CALIBRATION. Default is PIVOT_CALIBRATION.
   vtkGetMacro(AutoCalibrationMode, int);
   vtkSetMacro(AutoCalibrationMode, int);
+  //@}
 
+  //@{
+  /// The accepted amount of error within a single bucket. If the error in the latest bucket exceeds this amount, then all of the buckets will be discarded.
   vtkGetMacro(AutoCalibrationMaximumBucketError, double);
   vtkSetMacro(AutoCalibrationMaximumBucketError, double);
+  //@}
 
 protected:
   vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
@@ -208,19 +262,14 @@ protected:
 
 protected:
   vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
+  vtkMatrix4x4* PreviousMarkerToReferenceTransformMatrix;
 
-  /*! Mean error of the calibration result in mm */
   double                    PivotCalibrationErrorMm;
-  /*! Mean error of the calibration result in mm */
   double                    SpinCalibrationErrorMm;
 
-  /*! Name of the object marker coordinate frame (eg. Stylus) */
+  
   char*                     ObjectMarkerCoordinateFrame;
-
-  /*! Name of the reference coordinate frame (eg. Reference) */
   char*                     ReferenceCoordinateFrame;
-
-  /*! Name of the object pivot point coordinate frame (eg. StylusTip) */
   char*                     ObjectPivotPointCoordinateFrame;
 
   /*! Pivot point position in the Reference coordinate system */
@@ -229,19 +278,13 @@ protected:
   /*! List of outlier sample indices */
   std::set<unsigned int>    OutlierIndices;
 
-  /*! Error code indicating what went wrong with the calibration. */
   int                       ErrorCode;
 
-  /* Required minimum amount of variation within the recorded poses */
   double                    MinimumOrientationDifferenceDeg;
 
-  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0mm by default)
   double                    PositionDifferenceThresholdMm;
-  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0 degrees by default).
   double                    OrientationDifferenceThresholdDegrees;
 
-  /// Flag that indicates if auto calibration is enabled.
-  /// TODO
   bool                      AutoCalibrationEnabled;
 
   /// Number of points that should be contained in each auto calibration bucket
@@ -249,6 +292,8 @@ protected:
   
   /// Number of pooints required for auto calibration.
   int                       AutoCalibrationNumberOfPoints;
+
+  double                    AutoCalibrationTargetError;
 
   /// The maximum amount of acceptable error in each bucket.
   /// If the error in the current bucket exceeds the threshold, all of the buckets will be discarded.
@@ -271,8 +316,6 @@ protected:
     std::vector< vtkSmartPointer<vtkMatrix4x4> > MarkerToReferenceCalibrationPoints;
   };
   std::deque<MarkerToReferenceTransformMatrixBucket>  MarkerToReferenceTransformMatrixBuckets;
-
-  vtkNew<vtkMatrix4x4> PreviousMarkerToReferenceTransformMatrix;
 
   class vtkInternal;
   vtkInternal* Internal;

@@ -39,8 +39,11 @@ vtkStandardNewMacro(vtkIGSIOPivotCalibrationAlgo);
 vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
 {
   this->PivotPointToMarkerTransformMatrix = NULL;
+  this->PreviousMarkerToReferenceTransformMatrix = vtkMatrix4x4::New();
+
   this->PivotCalibrationErrorMm = -1.0;
   this->SpinCalibrationErrorMm = -1.0;
+
   this->ObjectMarkerCoordinateFrame = NULL;
   this->ReferenceCoordinateFrame = NULL;
   this->ObjectPivotPointCoordinateFrame = NULL;
@@ -50,18 +53,17 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
   this->PivotPointPosition_Reference[2] = 0.0;
   this->PivotPointPosition_Reference[3] = 1.0;
 
-  this->MinimumOrientationDifferenceDeg = 15.0;
-
-  this->PositionDifferenceThresholdMm = 0.0;
-  this->OrientationDifferenceThresholdDegrees = 0.0;
-
   this->ErrorCode = CALIBRATION_NOT_STARTED;
 
+  this->MinimumOrientationDifferenceDeg = 15.0;
+  this->PositionDifferenceThresholdMm = 0.0;
+  this->OrientationDifferenceThresholdDegrees = 0.0;
   this->AutoCalibrationEnabled = false;
-  this->AutoCalibrationBucketSize = -1;
+  this->AutoCalibrationBucketSize = 10;
+  this->AutoCalibrationNumberOfPoints = 50;
+  this->AutoCalibrationTargetError = 2.0;
   this->AutoCalibrationMaximumBucketError = 3.0;
-
-
+  this->AutoCalibrationMaximumNumberOfBuckets = 5;
   this->AutoCalibrationMode = PIVOT_CALIBRATION;
 }
 
@@ -69,6 +71,7 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
 vtkIGSIOPivotCalibrationAlgo::~vtkIGSIOPivotCalibrationAlgo()
 {
   this->SetPivotPointToMarkerTransformMatrix(NULL);
+  this->PreviousMarkerToReferenceTransformMatrix->Delete();
   this->RemoveAllCalibrationPoints();
 }
 
@@ -167,7 +170,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::AutoCalibrate()
     error = this->SpinCalibrationErrorMm;
   }
 
-  if (error > this->AutoCalibrationMaximumBucketError)
+  if (error > this->AutoCalibrationTargetError)
   {
     this->SetErrorCode(CALIBRATION_HIGH_ERROR);
   }

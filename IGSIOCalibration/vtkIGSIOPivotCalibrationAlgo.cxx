@@ -160,7 +160,6 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::AutoCalibrate()
 
   if (this->GetAutoCalibrationMode() == PIVOT_CALIBRATION)
   {
-
     status = this->DoPivotCalibration(NULL, this->AutoCalibrationAutoOrient);
     error = this->PivotCalibrationErrorMm;
   }

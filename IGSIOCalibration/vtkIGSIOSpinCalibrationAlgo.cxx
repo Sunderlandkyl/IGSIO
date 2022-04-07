@@ -7,7 +7,7 @@
 // IGSIO includes
 #include "igsioConfigure.h"
 #include "igsioMath.h"
-#include "vtkIGSIOPivotCalibrationAlgo.h"
+#include "vtkIGSIOSpinCalibrationAlgo.h"
 #include "vtkIGSIOTransformRepository.h"
 #include <vtkIGSIOAccurateTimer.h>
 
@@ -33,48 +33,22 @@ static const double SHAFT_AXIS[3] = { 0, 0, -1 };
 static const double ORTHOGONAL_AXIS[3] = { 1, 0, 0 };
 static const double BACKUP_AXIS[3] = { 0, 1, 0 };
 
-vtkStandardNewMacro(vtkIGSIOPivotCalibrationAlgo);
+vtkStandardNewMacro(vtkIGSIOSpinCalibrationAlgo);
 
 //-----------------------------------------------------------------------------
-vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
+vtkIGSIOSpinCalibrationAlgo::vtkIGSIOSpinCalibrationAlgo()
 {
-  this->PivotPointToMarkerTransformMatrix = NULL;
-
-  this->PivotCalibrationErrorMm = -1.0;
-
-  //this->ObjectMarkerCoordinateFrame = NULL;
-  //this->ReferenceCoordinateFrame = NULL;
-  //this->ObjectPivotPointCoordinateFrame = NULL;
-
-  //this->PivotPointPosition_Reference[0] = 0.0;
-  //this->PivotPointPosition_Reference[1] = 0.0;
-  //this->PivotPointPosition_Reference[2] = 0.0;
-  //this->PivotPointPosition_Reference[3] = 1.0;
-
-  /*this->ErrorCode = CALIBRATION_NOT_STARTED;*/
-
-  /*this->MinimumOrientationDifferenceDeg = 15.0;
-  this->PositionDifferenceThresholdMm = 0.0;
-  this->OrientationDifferenceThresholdDegrees = 0.0;
-  this->AutoCalibrationEnabled = false;
-  this->AutoCalibrationBucketSize = 10;
-  this->AutoCalibrationNumberOfPoints = 50;
-  this->AutoCalibrationTargetError = 2.0;
-  this->AutoCalibrationMaximumBucketError = 3.0;
-  this->AutoCalibrationMaximumNumberOfBuckets = 5;
-  this->AutoCalibrationMode = PIVOT_CALIBRATION;
-  this->AutoCalibrationAutoOrient = true;
-  this->AutoCalibrationSnapRotation = false;*/
+  this->SpinCalibrationErrorMm = -1.0;
 }
 
 //-----------------------------------------------------------------------------
-vtkIGSIOPivotCalibrationAlgo::~vtkIGSIOPivotCalibrationAlgo()
+vtkIGSIOSpinCalibrationAlgo::~vtkIGSIOSpinCalibrationAlgo()
 {
   this->SetPivotPointToMarkerTransformMatrix(NULL);
 }
 
 //-----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::RemoveAllCalibrationPoints()
+void vtkIGSIOSpinCalibrationAlgo::RemoveAllCalibrationPoints()
 {
 }
 
@@ -97,7 +71,7 @@ It's an Ax=b linear problem that can be solved with robust LSQR:
       [ PivotPoint_Reference ]
  bi = [ -MarkerToReferenceTransformTranslationVector ]
 */
-igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference)
+igsioStatus vtkIGSIOSpinCalibrationAlgo::GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference)
 {
   std::vector<vnl_vector<double> > aMatrix;
   std::vector<double> bVector;
@@ -133,7 +107,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vecto
   }
   if (igsioMath::LSQRMinimize(aMatrix, bVector, xVector, &mean, &stdev, &notOutliersIndices) != IGSIO_SUCCESS)
   {
-    LOG_ERROR("vtkIGSIOPivotCalibrationAlgo failed: LSQRMinimize error");
+    LOG_ERROR("vtkIGSIOSpinCalibrationAlgo failed: LSQRMinimize error");
     return IGSIO_FAIL;
   }
 
@@ -173,7 +147,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vecto
 }
 
 //----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray()
+std::vector<vtkMatrix4x4*> vtkIGSIOSpinCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray()
 {
   std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
   for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
@@ -184,7 +158,7 @@ std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTra
 }
 
 //----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray)
+void vtkIGSIOSpinCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray)
 {
   for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
   {
@@ -193,7 +167,7 @@ void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(std:
 }
 
 //----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex)
+std::vector<vtkMatrix4x4*> vtkIGSIOSpinCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex)
 {
   std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
   if (this->MarkerToReferenceTransformMatrixBuckets.size() > bucketIndex)
@@ -204,7 +178,7 @@ std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTra
 }
 
 //----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex, std::vector<vtkMatrix4x4*>* matrixArray)
+void vtkIGSIOSpinCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex, std::vector<vtkMatrix4x4*>* matrixArray)
 {
   if (this->MarkerToReferenceTransformMatrixBuckets.size() <= bucketIndex)
   {
@@ -225,37 +199,30 @@ void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int 
 }
 
 //----------------------------------------------------------------------------
-int vtkIGSIOPivotCalibrationAlgo::GetNumberOfCalibrationPoints()
-{
-  int numberOfCalibrationPoints = 0;
-  for (std::deque<vtkIGSIOPivotCalibrationAlgo::MarkerToReferenceTransformMatrixBucket>::iterator bucketIt = this->MarkerToReferenceTransformMatrixBuckets.begin();
-    bucketIt != this->MarkerToReferenceTransformMatrixBuckets.end(); ++bucketIt)
-  {
-    numberOfCalibrationPoints += bucketIt->MarkerToReferenceCalibrationPoints.size();
-  }
-  return numberOfCalibrationPoints;
-}
-
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error)
+igsioStatus vtkIGSIOSpinCalibrationAlgo::DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error)
 {
   double pivotPoint_Marker[4] = { 0.0, 0.0, 0.0, 0.0 };
   double pivotPoint_Reference[4] = { 0.0, 0.0, 0.0, 0.0 };
   vtkNew<vtkMatrix4x4> pivotPointToTool;
-  std::set<unsigned int> outlierIndices;
-  if (this->DoPivotCalibrationInternal(markerToTransformMatrixArray, true, &outlierIndices, pivotPoint_Marker, pivotPoint_Reference, pivotPointToTool) != IGSIO_SUCCESS)
-  {
-    return IGSIO_FAIL;
-  }
-
-  error = this->ComputePivotCalibrationError(markerToTransformMatrixArray, &outlierIndices, pivotPoint_Reference, pivotPointToTool);
-  return IGSIO_SUCCESS;
+  bool snapRotation = false;
+  bool autoOrient = true;
+  return this->DoSpinCalibrationInternal(markerToTransformMatrixArray, snapRotation, autoOrient, pivotPointToTool, error);
 }
 
 //----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRepository* aTransformRepository/* = NULL*/, bool autoOrient)
+igsioStatus vtkIGSIOSpinCalibrationAlgo::DoSpinCalibration(vtkIGSIOTransformRepository* aTransformRepository/* = NULL*/, bool snapRotation/*=false*/, bool autoOrient/*=true*/)
 {
-  if (this->MarkerToReferenceTransformMatrixBuckets.empty())
+  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
+  vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
+  igsioStatus status = this->DoSpinCalibrationInternal(&markerToTransformMatrixArray, snapRotation, autoOrient, pivotPointToMarkerTransformMatrix, this->SpinCalibrationErrorMm);
+  this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
+  return status;
+}
+
+//----------------------------------------------------------------------------
+igsioStatus vtkIGSIOSpinCalibrationAlgo::DoSpinCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool snapRotation, bool autoOrient, vtkMatrix4x4* toolTipToToolMatrix, double& error)
+{
+  if (!markerToTransformMatrixArray || markerToTransformMatrixArray->size() < 10)
   {
     this->SetErrorCode(CALIBRATION_NOT_ENOUGH_POINTS);
     return IGSIO_FAIL;
@@ -267,142 +234,144 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
     return IGSIO_FAIL;
   }
 
-  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
+  // Setup our system to find the axis of rotation
+  unsigned int rows = 3, columns = 3;
 
-  double pivotPoint_Marker[4] = { 0.0, 0.0, 0.0, 1.0 };
-  double pivotPoint_Reference[4] = { 0.0, 0.0, 0.0, 1.0 };
-  vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
-  igsioStatus status = this->DoPivotCalibrationInternal(&markerToTransformMatrixArray, autoOrient, &this->OutlierIndices, pivotPoint_Marker, pivotPoint_Reference, pivotPointToMarkerTransformMatrix);
-  if (status == IGSIO_SUCCESS)
+  vnl_matrix<double> A(rows, columns, 0);
+
+  vnl_matrix<double> I(3, 3, 0);
+  I.set_identity();
+
+  vnl_matrix<double> RI(rows, columns);
+
+  std::vector< vtkMatrix4x4* >::const_iterator previt = markerToTransformMatrixArray->end();
+  for (std::vector< vtkMatrix4x4* >::const_iterator it = markerToTransformMatrixArray->begin(); it != markerToTransformMatrixArray->end(); it++)
   {
-    this->SetErrorCode(CALIBRATION_SUCCESS);
-  }
-  else
-  {
-    this->SetErrorCode(CALIBRATION_FAIL);
-  }
+    if (previt == markerToTransformMatrixArray->end())
+    {
+      previt = it;
+      continue; // No comparison to make for the first matrix
+    }
 
-  this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
-  this->ComputePivotCalibrationError();
+    vtkSmartPointer< vtkMatrix4x4 > itinverse = vtkSmartPointer< vtkMatrix4x4 >::New();
+    vtkMatrix4x4::Invert((*it), itinverse);
 
-  // Save result
-  if (aTransformRepository)
-  {
-    igsioTransformName pivotPointToMarkerTransformName(this->ObjectPivotPointCoordinateFrame, this->ObjectMarkerCoordinateFrame);
-    aTransformRepository->SetTransform(pivotPointToMarkerTransformName, this->PivotPointToMarkerTransformMatrix);
-    aTransformRepository->SetTransformPersistent(pivotPointToMarkerTransformName, true);
-    aTransformRepository->SetTransformDate(pivotPointToMarkerTransformName, vtkIGSIOAccurateTimer::GetInstance()->GetDateAndTimeString().c_str());
-    aTransformRepository->SetTransformError(pivotPointToMarkerTransformName, this->PivotCalibrationErrorMm);
-  }
-  else
-  {
-    LOG_DEBUG("Transform repository object is NULL, cannot save results into it");
-  }
+    vtkSmartPointer< vtkMatrix4x4 > instRotation = vtkSmartPointer< vtkMatrix4x4 >::New();
+    vtkMatrix4x4::Multiply4x4(itinverse, (*previt), instRotation);
 
-  this->PivotPointPosition_Reference[0] = pivotPoint_Reference[0];
-  this->PivotPointPosition_Reference[1] = pivotPoint_Reference[1];
-  this->PivotPointPosition_Reference[2] = pivotPoint_Reference[2];
+    for (int i = 0; i < 3; i++)
+    {
+      for (int j = 0; j < 3; j++)
+      {
+        RI(i, j) = instRotation->GetElement(i, j);
+      }
+    }
 
-  return status;
-}
+    RI = RI - I;
+    A = A + RI.transpose() * RI;
 
-//----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool autoOrient, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
-{
-  if (!markerToTransformMatrixArray || markerToTransformMatrixArray->size() == 0)
-  {
-    return IGSIO_FAIL;
+    previt = it;
   }
 
-  pivotPoint_Marker[0] = 0.0;
-  pivotPoint_Marker[1] = 0.0;
-  pivotPoint_Marker[2] = 0.0;
-  pivotPoint_Marker[3] = 1.0;
+  // Setup the axes
+  vnl_vector<double> shaftAxis_Shaft(columns, columns, SHAFT_AXIS);
+  vnl_vector<double> orthogonalAxis_Shaft(columns, columns, ORTHOGONAL_AXIS);
+  vnl_vector<double> backupAxis_Shaft(columns, columns, BACKUP_AXIS);
 
-  pivotPoint_Reference[0] = 0.0;
-  pivotPoint_Reference[1] = 0.0;
-  pivotPoint_Reference[2] = 0.0;
-  pivotPoint_Reference[3] = 1.0;
-  if (this->GetPivotPointPosition(markerToTransformMatrixArray, outlierIndices, pivotPoint_Marker, pivotPoint_Reference) != IGSIO_SUCCESS)
+  // Find the eigenvector associated with the smallest eigenvalue
+  // This is the best axis of rotation over all instantaneous rotations
+  vnl_matrix<double> eigenvectors(columns, columns, 0);
+  vnl_vector<double> eigenvalues(columns, 0);
+  vnl_symmetric_eigensystem_compute(A, eigenvectors, eigenvalues);
+  // Note: eigenvectors are ordered in increasing eigenvalue ( 0 = smallest, end = biggest )
+  vnl_vector<double> shaftAxis_ToolTip(columns, 0);
+  shaftAxis_ToolTip(0) = eigenvectors(0, 0);
+  shaftAxis_ToolTip(1) = eigenvectors(1, 0);
+  shaftAxis_ToolTip(2) = eigenvectors(2, 0);
+  shaftAxis_ToolTip.normalize();
+
+  // Snap the direction vector to be exactly aligned with one of the coordinate axes
+  // This is if the sensor is known to be parallel to one of the axis, just not which one
+  if (snapRotation)
   {
-    return IGSIO_FAIL;
+    int closestCoordinateAxis = element_product(shaftAxis_ToolTip, shaftAxis_ToolTip).arg_max();
+    shaftAxis_ToolTip.fill(0);
+    shaftAxis_ToolTip.put(closestCoordinateAxis, 1); // Doesn't matter the direction, will be sorted out later
   }
 
-  if (!pivotPointToMarkerTransformMatrix)
+  //set the RMSE
+  error = sqrt(eigenvalues(0) / markerToTransformMatrixArray->size());
+  // Note: This error is the RMS distance from the ideal axis of rotation to the axis of rotation for each instantaneous rotation
+  // This RMS distance can be computed to an angle in the following way: angle = arccos( 1 - SpinRMSE^2 / 2 )
+  // Here we elect to return the RMS distance because this is the quantity that was actually minimized in the calculation
+
+  // If the secondary axis 1 is parallel to the shaft axis in the tooltip frame, then use secondary axis 2
+  vnl_vector<double> orthogonalAxis_ToolTip = this->ComputeSecondaryAxis(shaftAxis_ToolTip);
+  // Do the registration find the appropriate rotation
+  orthogonalAxis_ToolTip = orthogonalAxis_ToolTip - dot_product(orthogonalAxis_ToolTip, shaftAxis_ToolTip) * shaftAxis_ToolTip;
+  orthogonalAxis_ToolTip.normalize();
+
+  // Register X,Y,O points in the two coordinate frames (only spherical registration - since pure rotation)
+  vnl_matrix<double> ToolTipPoints(3, 3, 0.0);
+  vnl_matrix<double> ShaftPoints(3, 3, 0.0);
+
+  ToolTipPoints.put(0, 0, shaftAxis_ToolTip(0));
+  ToolTipPoints.put(0, 1, shaftAxis_ToolTip(1));
+  ToolTipPoints.put(0, 2, shaftAxis_ToolTip(2));
+  ToolTipPoints.put(1, 0, orthogonalAxis_ToolTip(0));
+  ToolTipPoints.put(1, 1, orthogonalAxis_ToolTip(1));
+  ToolTipPoints.put(1, 2, orthogonalAxis_ToolTip(2));
+  ToolTipPoints.put(2, 0, 0);
+  ToolTipPoints.put(2, 1, 0);
+  ToolTipPoints.put(2, 2, 0);
+
+  ShaftPoints.put(0, 0, shaftAxis_Shaft(0));
+  ShaftPoints.put(0, 1, shaftAxis_Shaft(1));
+  ShaftPoints.put(0, 2, shaftAxis_Shaft(2));
+  ShaftPoints.put(1, 0, orthogonalAxis_Shaft(0));
+  ShaftPoints.put(1, 1, orthogonalAxis_Shaft(1));
+  ShaftPoints.put(1, 2, orthogonalAxis_Shaft(2));
+  ShaftPoints.put(2, 0, 0);
+  ShaftPoints.put(2, 1, 0);
+  ShaftPoints.put(2, 2, 0);
+
+  vnl_svd<double> ShaftToToolTipRegistrator(ShaftPoints.transpose() * ToolTipPoints);
+  vnl_matrix<double> V = ShaftToToolTipRegistrator.V();
+  vnl_matrix<double> U = ShaftToToolTipRegistrator.U();
+  vnl_matrix<double> Rotation = V * U.transpose();
+
+  // Make sure the determinant is positve (i.e. +1)
+  double determinant = vnl_determinant(Rotation);
+  if (determinant < 0)
   {
-    return IGSIO_SUCCESS;
+    // Switch the sign of the third column of V if the determinant is not +1
+    // This is the recommended approach from Huang et al. 1987
+    V.put(0, 2, -V.get(0, 2));
+    V.put(1, 2, -V.get(1, 2));
+    V.put(2, 2, -V.get(2, 2));
+    Rotation = V * U.transpose();
   }
 
-  // Get the result (tooltip to tool transform)
-  double x = pivotPoint_Marker[0];
-  double y = pivotPoint_Marker[1];
-  double z = pivotPoint_Marker[2];
-
-  pivotPointToMarkerTransformMatrix->SetElement(0, 3, x);
-  pivotPointToMarkerTransformMatrix->SetElement(1, 3, y);
-  pivotPointToMarkerTransformMatrix->SetElement(2, 3, z);
-
-  // Compute tool orientation
-  // Z axis: from the pivot point to the marker is on the -Z axis of the tool
-  double pivotPointToMarkerTransformZ[3] = { x, y, z };
-  vtkMath::Normalize(pivotPointToMarkerTransformZ);
-  pivotPointToMarkerTransformMatrix->SetElement(0, 2, pivotPointToMarkerTransformZ[0]);
-  pivotPointToMarkerTransformMatrix->SetElement(1, 2, pivotPointToMarkerTransformZ[1]);
-  pivotPointToMarkerTransformMatrix->SetElement(2, 2, pivotPointToMarkerTransformZ[2]);
-
-  // Y axis: orthogonal to tool's Z axis and the marker's X axis
-  double pivotPointToMarkerTransformY[3] = { 0, 0, 0 };
-  // Use the unitX vector as pivotPointToMarkerTransformX vector, unless unitX is parallel to pivotPointToMarkerTransformZ.
-  // If unitX is parallel to pivotPointToMarkerTransformZ then use the unitY vector as pivotPointToMarkerTransformX.
-
-  double unitX[3] = { 1, 0, 0 };
-  double angle = acos(vtkMath::Dot(pivotPointToMarkerTransformZ, unitX));
-  // Normalize between -pi/2 .. +pi/2
-  if (angle > vtkMath::Pi() / 2)
+  // Set the elements of the output matrix
+  for (int i = 0; i < 3; i++)
   {
-    angle -= vtkMath::Pi();
+    for (int j = 0; j < 3; j++)
+    {
+      toolTipToToolMatrix->SetElement(i, j, Rotation[i][j]);
+    }
   }
-  else if (angle < -vtkMath::Pi() / 2)
-  {
-    angle += vtkMath::Pi();
-  }
-  if (fabs(angle) * 180.0 / vtkMath::Pi() > 20.0)
-  {
-    // unitX is not parallel to pivotPointToMarkerTransformZ
-    vtkMath::Cross(pivotPointToMarkerTransformZ, unitX, pivotPointToMarkerTransformY);
-    LOG_DEBUG("Use unitX");
-  }
-  else
-  {
-    // unitX is parallel to pivotPointToMarkerTransformZ
-    // use the unitY instead
-    double unitY[3] = { 0, 1, 0 };
-    vtkMath::Cross(pivotPointToMarkerTransformZ, unitY, pivotPointToMarkerTransformY);
-    LOG_DEBUG("Use unitY");
-  }
-  vtkMath::Normalize(pivotPointToMarkerTransformY);
-  pivotPointToMarkerTransformMatrix->SetElement(0, 1, pivotPointToMarkerTransformY[0]);
-  pivotPointToMarkerTransformMatrix->SetElement(1, 1, pivotPointToMarkerTransformY[1]);
-  pivotPointToMarkerTransformMatrix->SetElement(2, 1, pivotPointToMarkerTransformY[2]);
-
-  // X axis: orthogonal to tool's Y axis and Z axis
-  double pivotPointToMarkerTransformX[3] = { 0, 0, 0 };
-  vtkMath::Cross(pivotPointToMarkerTransformY, pivotPointToMarkerTransformZ, pivotPointToMarkerTransformX);
-  vtkMath::Normalize(pivotPointToMarkerTransformX);
-  pivotPointToMarkerTransformMatrix->SetElement(0, 0, pivotPointToMarkerTransformX[0]);
-  pivotPointToMarkerTransformMatrix->SetElement(1, 0, pivotPointToMarkerTransformX[1]);
-  pivotPointToMarkerTransformMatrix->SetElement(2, 0, pivotPointToMarkerTransformX[2]);
-
   if (autoOrient)
   {
-    this->UpdateShaftDirection(pivotPointToMarkerTransformMatrix); // Flip it if necessary
+    this->UpdateShaftDirection(toolTipToToolMatrix); // Flip it if necessary
   }
 
+  this->SetErrorCode(CALIBRATION_SUCCESS);
   return IGSIO_SUCCESS;
 }
 
+
 //---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
+void vtkIGSIOSpinCalibrationAlgo::UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
 {
   // We need to verify that the ToolTipToTool vector in the Shaft coordinate system is in the opposite direction of the shaft
   vtkSmartPointer< vtkMatrix4x4 > rotationMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
@@ -426,7 +395,7 @@ void vtkIGSIOPivotCalibrationAlgo::UpdateShaftDirection(vtkMatrix4x4* toolTipToT
 }
 
 //---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
+void vtkIGSIOSpinCalibrationAlgo::FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
 {
   // Need to rotate around the orthogonal axis
   vtkSmartPointer< vtkMatrix4x4 > rotationMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
@@ -448,7 +417,7 @@ void vtkIGSIOPivotCalibrationAlgo::FlipShaftDirection(vtkMatrix4x4* toolTipToToo
 }
 
 //---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix)
+void vtkIGSIOSpinCalibrationAlgo::GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix)
 {
   rotationMatrix->Identity();
 
@@ -464,7 +433,7 @@ void vtkIGSIOPivotCalibrationAlgo::GetToolTipToToolRotation(vtkMatrix4x4* toolTi
 }
 
 //---------------------------------------------------------------------------
-vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip)
+vnl_vector< double > vtkIGSIOSpinCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip)
 {
   // If the secondary axis 1 is parallel to the shaft axis in the tooltip frame, then use secondary axis 2
   vnl_vector< double > orthogonalAxis_Shaft(3, 3, ORTHOGONAL_AXIS);
@@ -488,7 +457,7 @@ vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vect
 
 
 //-----------------------------------------------------------------------------
-std::string vtkIGSIOPivotCalibrationAlgo::GetPivotPointToMarkerTranslationString(double aPrecision/*=3*/)
+std::string vtkIGSIOSpinCalibrationAlgo::GetPivotPointToMarkerTranslationString(double aPrecision/*=3*/)
 {
   if (this->PivotPointToMarkerTransformMatrix == NULL)
   {
@@ -507,57 +476,11 @@ std::string vtkIGSIOPivotCalibrationAlgo::GetPivotPointToMarkerTranslationString
 }
 
 //-----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
+igsioStatus vtkIGSIOSpinCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
 {
-  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOPivotCalibrationAlgo");
+  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOSpinCalibrationAlgo");
   XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectMarkerCoordinateFrame, pivotCalibrationElement);
   XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ReferenceCoordinateFrame, pivotCalibrationElement);
   XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectPivotPointCoordinateFrame, pivotCalibrationElement);
   return IGSIO_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::ComputePivotCalibrationError()
-{
-  const std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
-  this->PivotCalibrationErrorMm = this->ComputePivotCalibrationError(&markerToTransformMatrixArray, &this->OutlierIndices, this->PivotPointPosition_Reference, this->PivotPointToMarkerTransformMatrix);
-}
-
-//-----------------------------------------------------------------------------
-double vtkIGSIOPivotCalibrationAlgo::ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix)
-{
-  vtkSmartPointer<vtkMatrix4x4> pivotPointToReferenceMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-
-  // Compute the error for each sample as distance between the mean pivot point position and the pivot point position computed from each sample
-  std::vector<double> errorValues;
-  double currentPivotPoint_Reference[4] = { 0, 0, 0, 1 };
-  unsigned int sampleIndex = 0;
-  for (std::vector< vtkMatrix4x4* >::const_iterator markerToReferenceTransformIt = markerToTransformMatrixArray->begin();
-    markerToReferenceTransformIt != markerToTransformMatrixArray->end(); ++markerToReferenceTransformIt, ++sampleIndex)
-  {
-    if (outlierIndices->find(sampleIndex) != outlierIndices->end())
-    {
-      // outlier, so skip from the error computation
-      continue;
-    }
-
-    vtkMatrix4x4::Multiply4x4((*markerToReferenceTransformIt), pivotPointToMarkerTransformMatrix, pivotPointToReferenceMatrix);
-    for (int i = 0; i < 3; i++)
-    {
-      currentPivotPoint_Reference[i] = pivotPointToReferenceMatrix->Element[i][3];
-    }
-    double errorValue = sqrt(vtkMath::Distance2BetweenPoints(currentPivotPoint_Reference, pivotPoint_Reference));
-    errorValues.push_back(errorValue);
-  }
-
-  double mean = 0;
-  double stdev = 0;
-  igsioMath::ComputeMeanAndStdev(errorValues, mean, stdev);
-  return mean;
-}
-
-//-----------------------------------------------------------------------------
-int vtkIGSIOPivotCalibrationAlgo::GetNumberOfDetectedOutliers()
-{
-  return this->OutlierIndices.size();
 }

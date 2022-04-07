@@ -76,25 +76,25 @@ public:
     Call this method to get rid of previously added calibration points
     before starting a new calibration.
   */
-  void RemoveAllCalibrationPoints();
+  virtual void RemoveAllCalibrationPoints();
 
   /*!
     Insert acquired point to calibration point list
     \param aMarkerToReferenceTransformMatrix New calibration point (tool to reference transform)
   */
-  igsioStatus InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix);
+  virtual igsioStatus InsertNextCalibrationPoint(vtkMatrix4x4* aMarkerToReferenceTransformMatrix);
 
   /*!
     Get the number of outlier points. It is recommended to display a warning to the user
     if the percentage of outliers vs total number of points is larger than a few percent.
   */
-  int GetNumberOfDetectedOutliers();
+  virtual int GetNumberOfDetectedOutliers();
 
-  int GetNumberOfCalibrationPoints();
+  virtual int GetNumberOfCalibrationPoints();
 
   // Computes the maximum orientation difference in degrees between the first tool transformation
   // and all the others. Used for determining if there was enough variation in the input data.
-  /*double GetMaximumToolOrientationDifferenceDeg();*/
+  virtual double GetMaximumToolOrientationDifferenceDeg();
 
   //@{
   /// Output calibration tip to marker position
@@ -163,24 +163,23 @@ protected:
 
 protected:
 
-  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();
-  void GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray);
-  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray(int bucket);
-  void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
+  virtual std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();
+  virtual void GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray);
+  virtual std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray(int bucket);
+  virtual void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
 
   /// Removes all data if the latest bucket is not within the acceptable error threshold.
   igsioStatus CleanInputBuffer();
 
-  virtual igsioStatus DoCalibration(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error) = 0;
   virtual igsioStatus DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error) = 0;
 
-  void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
+  /*virtual void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);*/
 
   // Returns the orientation difference in degrees between two 4x4 homogeneous transformation matrix, in degrees.
-  double GetOrientationDifferenceDeg(vtkMatrix4x4* aMatrix, vtkMatrix4x4* bMatrix);
+  virtual double GetOrientationDifferenceDeg(vtkMatrix4x4* aMatrix, vtkMatrix4x4* bMatrix);
 
-  // Helper method to compute the secondary axis, given a shaft axis
-  vnl_vector< double > vtkIGSIOAbstractCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
+  //// Helper method to compute the secondary axis, given a shaft axis
+  //virtual vnl_vector< double > vtkIGSIOAbstractCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
 
 protected:
   /*vtkMatrix4x4* PivotPointToMarkerTransformMatrix;*/

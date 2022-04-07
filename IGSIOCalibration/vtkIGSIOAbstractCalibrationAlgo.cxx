@@ -42,7 +42,6 @@ vtkIGSIOAbstractCalibrationAlgo::vtkIGSIOAbstractCalibrationAlgo()
 //-----------------------------------------------------------------------------
 vtkIGSIOAbstractCalibrationAlgo::~vtkIGSIOAbstractCalibrationAlgo()
 {
-  /*this->SetPivotPointToMarkerTransformMatrix(NULL);*/
   this->PreviousMarkerToReferenceTransformMatrix->Delete();
   this->RemoveAllCalibrationPoints();
 }
@@ -220,28 +219,28 @@ double vtkIGSIOAbstractCalibrationAlgo::GetOrientationDifferenceDeg(vtkMatrix4x4
   return vtkMath::DegreesFromRadians(normalizedAngleDiff_rad);
 }
 
-////---------------------------------------------------------------------------
-//double vtkIGSIOAbstractCalibrationAlgo::GetMaximumToolOrientationDifferenceDeg()
-//{
-//  // this will store the maximum difference in orientation between the first transform and all the other transforms
-//  double maximumOrientationDifferenceDeg = 0;
-//
-//  std::vector<vtkMatrix4x4*> toolToReferenceMatrices;
-//  this->GetMarkerToReferenceTransformMatrixArray(&toolToReferenceMatrices);
-//  std::vector<vtkMatrix4x4*>::const_iterator matricesEnd = toolToReferenceMatrices.end();
-//  vtkMatrix4x4* referenceOrientationMatrix = toolToReferenceMatrices.front();
-//  std::vector<vtkMatrix4x4*>::const_iterator it;
-//  for (it = toolToReferenceMatrices.begin(); it != matricesEnd; it++)
-//  {
-//    double orientationDifferenceDeg = this->GetOrientationDifferenceDeg(referenceOrientationMatrix, (*it));
-//    if (maximumOrientationDifferenceDeg < orientationDifferenceDeg)
-//    {
-//      maximumOrientationDifferenceDeg = orientationDifferenceDeg;
-//    }
-//  }
-//
-//  return maximumOrientationDifferenceDeg;
-//}
+//---------------------------------------------------------------------------
+double vtkIGSIOAbstractCalibrationAlgo::GetMaximumToolOrientationDifferenceDeg()
+{
+  // this will store the maximum difference in orientation between the first transform and all the other transforms
+  double maximumOrientationDifferenceDeg = 0;
+
+  std::vector<vtkMatrix4x4*> toolToReferenceMatrices;
+  this->GetMarkerToReferenceTransformMatrixArray(&toolToReferenceMatrices);
+  std::vector<vtkMatrix4x4*>::const_iterator matricesEnd = toolToReferenceMatrices.end();
+  vtkMatrix4x4* referenceOrientationMatrix = toolToReferenceMatrices.front();
+  std::vector<vtkMatrix4x4*>::const_iterator it;
+  for (it = toolToReferenceMatrices.begin(); it != matricesEnd; it++)
+  {
+    double orientationDifferenceDeg = this->GetOrientationDifferenceDeg(referenceOrientationMatrix, (*it));
+    if (maximumOrientationDifferenceDeg < orientationDifferenceDeg)
+    {
+      maximumOrientationDifferenceDeg = orientationDifferenceDeg;
+    }
+  }
+
+  return maximumOrientationDifferenceDeg;
+}
 
 //-----------------------------------------------------------------------------
 int vtkIGSIOAbstractCalibrationAlgo::GetNumberOfDetectedOutliers()

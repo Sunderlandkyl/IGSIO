@@ -4,8 +4,8 @@ Copyright (c) Laboratory for Percutaneous Surgery. All rights reserved.
 See License.txt for details.
 =========================================================IGSIO=header=end*/
 
-#ifndef __vtkIGSIOPivotCalibrationAlgo_h
-#define __vtkIGSIOPivotCalibrationAlgo_h
+#ifndef __vtkIGSIOSpinCalibrationAlgo_h
+#define __vtkIGSIOSpinCalibrationAlgo_h
 
 // Local includes
 #include "igsioConfigure.h"
@@ -28,7 +28,7 @@ class vtkXMLDataElement;
 //-----------------------------------------------------------------------------
 
 /*!
-  \class vtkIGSIOPivotCalibrationAlgo
+  \class vtkIGSIOSpinCalibrationAlgo
   \brief Pivot calibration algorithm to calibrate a stylus. It determines the pose of the stylus tip relative to the marker attached to the stylus.
 
   The stylus tip position is computed by robust LSQR method, which detects and ignores outliers (that have much larger reprojection error than other points).
@@ -45,11 +45,11 @@ class vtkXMLDataElement;
 
   \ingroup igsioCalibrationAlgorithm
 */
-class vtkIGSIOCalibrationExport vtkIGSIOPivotCalibrationAlgo : public vtkIGSIOAbstractCalibrationAlgo
+class vtkIGSIOCalibrationExport vtkIGSIOSpinCalibrationAlgo : public vtkIGSIOAbstractCalibrationAlgo
 {
 public:
-  vtkTypeMacro(vtkIGSIOPivotCalibrationAlgo, vtkIGSIOAbstractCalibrationAlgo);
-  static vtkIGSIOPivotCalibrationAlgo* New();
+  vtkTypeMacro(vtkIGSIOSpinCalibrationAlgo, vtkIGSIOAbstractCalibrationAlgo);
+  static vtkIGSIOSpinCalibrationAlgo* New();
 
   /*!
   * Read configuration
@@ -68,7 +68,7 @@ public:
     Calibrate (call the minimizer and set the result)
     \param aTransformRepository Transform repository to save the results into
   */
-  igsioStatus DoPivotCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL, bool autoOrient = true);
+  igsioStatus DoSpinCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL, bool snapRotation = false, bool autoOrient = true);
 
   /*!
     Get calibration result string to display
@@ -76,19 +76,6 @@ public:
     \return Calibration result (e.g. stylus tip to stylus translation) string
   */
   std::string GetPivotPointToMarkerTranslationString(double aPrecision = 3);
-
-  /*!
-    Get the number of outlier points. It is recommended to display a warning to the user
-    if the percentage of outliers vs total number of points is larger than a few percent.
-  */
-  int GetNumberOfDetectedOutliers();
-
-  int GetNumberOfCalibrationPoints();
-
-  //@{
-  /// Mean error of the pivot calibration result in mm
-  vtkGetMacro(PivotCalibrationErrorMm, double);
-  //@}
 
   //@{
   /// Output calibration tip to marker position
@@ -131,14 +118,18 @@ protected:
   vtkSetMacro(ErrorCode, int);
 
 protected:
-  vtkIGSIOPivotCalibrationAlgo();
-  virtual ~vtkIGSIOPivotCalibrationAlgo();
+  vtkIGSIOSpinCalibrationAlgo();
+  virtual ~vtkIGSIOSpinCalibrationAlgo();
 
 protected:
-  /*! Compute the mean position error of the pivot point (in mm) */
-  void ComputePivotCalibrationError();
+  //@{
+  /// Mean error of the pivot calibration result in mm
+  vtkGetMacro(SpinCalibrationErrorMm, double);
+  //@}
 
-  double ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  /*! Compute the mean position error of the pivot point (in mm) */
+  //void ComputePivotCalibrationError();
+  //double ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
 
   igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference);
 
@@ -148,7 +139,7 @@ protected:
   void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
 
   igsioStatus DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error) override;
-  igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool autoOrient, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  igsioStatus DoSpinCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool snapRotation, bool autoOrient, vtkMatrix4x4* pivotPointToMarkerTransformMatrix, double& error);
 
   // Verify whether the tool's shaft is in the same direction as the ToolTip to Tool vector.
   // Rotate the ToolTip coordinate frame by 180 degrees about the secondary axis to make the
@@ -161,11 +152,11 @@ protected:
   void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
 
   // Helper method to compute the secondary axis, given a shaft axis
-  vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
+  vnl_vector< double > vtkIGSIOSpinCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
 
 protected:
   vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
-  double                    PivotCalibrationErrorMm;
+  double                    SpinCalibrationErrorMm;
 
   /*! Pivot point position in the Reference coordinate system */
   double                    PivotPointPosition_Reference[4];

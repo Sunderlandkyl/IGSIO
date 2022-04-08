@@ -58,13 +58,6 @@ public:
   igsioStatus ReadConfiguration(vtkXMLDataElement* aConfig) override;
 
   /*!
-    Remove all previously inserted calibration points.
-    Call this method to get rid of previously added calibration points
-    before starting a new calibration.
-  */
-  void RemoveAllCalibrationPoints();
-
-  /*!
     Calibrate (call the minimizer and set the result)
     \param aTransformRepository Transform repository to save the results into
   */
@@ -80,6 +73,7 @@ public:
   //@{
   /// Output calibration tip to marker position
   vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkGetVector3Macro(PivotPointPosition_Reference, double);
   //@}
 
@@ -98,20 +92,12 @@ public:
   vtkSetMacro(PositionDifferenceThresholdMm, double);
   //@}
 
-  ////@{
-  ///// Automatically flips the shaft direction to be consistent with the needle orientation protocol.
-  //vtkGetMacro(AutoCalibrationAutoOrient, bool);
-  //vtkSetMacro(AutoCalibrationAutoOrient, bool);
-  ////@}
-
-  ////@{
-  ///// Snaps the rotation to be a 90 degree rotation about one of the coordinate axes.
-  //vtkGetMacro(AutoCalibrationSnapRotation, bool);
-  //vtkSetMacro(AutoCalibrationSnapRotation, bool);
-  ////@}
+  //@{
+  /// Mean error of the pivot calibration result in mm
+  vtkGetMacro(SpinCalibrationErrorMm, double);
+  //@}
 
 protected:
-  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkSetStringMacro(ObjectMarkerCoordinateFrame);
   vtkSetStringMacro(ReferenceCoordinateFrame);
   vtkSetStringMacro(ObjectPivotPointCoordinateFrame);
@@ -122,15 +108,6 @@ protected:
   virtual ~vtkIGSIOSpinCalibrationAlgo();
 
 protected:
-  //@{
-  /// Mean error of the pivot calibration result in mm
-  vtkGetMacro(SpinCalibrationErrorMm, double);
-  //@}
-
-  /*! Compute the mean position error of the pivot point (in mm) */
-  //void ComputePivotCalibrationError();
-  //double ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
-
   igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference);
 
   std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();

@@ -58,13 +58,6 @@ public:
   igsioStatus ReadConfiguration(vtkXMLDataElement* aConfig) override;
 
   /*!
-    Remove all previously inserted calibration points.
-    Call this method to get rid of previously added calibration points
-    before starting a new calibration.
-  */
-  void RemoveAllCalibrationPoints();
-
-  /*!
     Calibrate (call the minimizer and set the result)
     \param aTransformRepository Transform repository to save the results into
   */
@@ -93,6 +86,7 @@ public:
   //@{
   /// Output calibration tip to marker position
   vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkGetVector3Macro(PivotPointPosition_Reference, double);
   //@}
 
@@ -124,7 +118,6 @@ public:
   ////@}
 
 protected:
-  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
   vtkSetStringMacro(ObjectMarkerCoordinateFrame);
   vtkSetStringMacro(ReferenceCoordinateFrame);
   vtkSetStringMacro(ObjectPivotPointCoordinateFrame);

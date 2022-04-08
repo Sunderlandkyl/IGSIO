@@ -31,7 +31,7 @@ vtkIGSIOLandmarkDetectionAlgo::vtkIGSIOLandmarkDetectionAlgo()
   this->DetectionTimeSec = 1.0;
   this->StylusShaftMinimumDisplacementThresholdMm = 30;
   this->StylusTipMaximumDisplacementThresholdMm = 1.5;
-  this->MinimunDistanceBetweenLandmarksMm = 15.0;
+  this->MinimumDistanceBetweenLandmarksMm = 15.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -321,7 +321,7 @@ int vtkIGSIOLandmarkDetectionAlgo::GetNearExistingLandmarkId( double stylusTipPo
     landmarkDifference_Reference[1] = detectedLandmark_Reference[1] - stylusTipPosition_Reference[1];
     landmarkDifference_Reference[2] = detectedLandmark_Reference[2] - stylusTipPosition_Reference[2];
     landmarkDifference_Reference[3] = detectedLandmark_Reference[3] - stylusTipPosition_Reference[3];
-    if( vtkMath::Norm( landmarkDifference_Reference ) < this->MinimunDistanceBetweenLandmarksMm / 3 )
+    if( vtkMath::Norm( landmarkDifference_Reference ) < this->MinimumDistanceBetweenLandmarksMm / 3 )
     {
       return id;
     }
@@ -446,7 +446,7 @@ igsioStatus vtkIGSIOLandmarkDetectionAlgo::ReadConfiguration( vtkXMLDataElement*
   }
 
   LOG_DEBUG( "AcquisitionRate = " << AcquisitionRate << "[fps] WindowTimeSec = " << FilterWindowTimeSec << "[s] DetectionTimeSec = " << DetectionTimeSec << "[s]" );
-  LOG_DEBUG( "NumberOfWindows = " << numberOfWindows << " WindowSize = " << filterWindowSize << " MinimunDistanceBetweenLandmarksMm = " << MinimunDistanceBetweenLandmarksMm << "[mm] LandmarkThreshold " << StylusTipMaximumDisplacementThresholdMm << "[mm]" );
+  LOG_DEBUG( "NumberOfWindows = " << numberOfWindows << " WindowSize = " << filterWindowSize << " MinimumDistanceBetweenLandmarksMm = " << MinimumDistanceBetweenLandmarksMm << "[mm] LandmarkThreshold " << StylusTipMaximumDisplacementThresholdMm << "[mm]" );
 
   return IGSIO_SUCCESS;
 }

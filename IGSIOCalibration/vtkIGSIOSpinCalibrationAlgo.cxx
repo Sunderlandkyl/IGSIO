@@ -38,6 +38,7 @@ vtkStandardNewMacro(vtkIGSIOSpinCalibrationAlgo);
 //-----------------------------------------------------------------------------
 vtkIGSIOSpinCalibrationAlgo::vtkIGSIOSpinCalibrationAlgo()
 {
+  this->PivotPointToMarkerTransformMatrix = NULL;
   this->SpinCalibrationErrorMm = -1.0;
 }
 
@@ -45,11 +46,6 @@ vtkIGSIOSpinCalibrationAlgo::vtkIGSIOSpinCalibrationAlgo()
 vtkIGSIOSpinCalibrationAlgo::~vtkIGSIOSpinCalibrationAlgo()
 {
   this->SetPivotPointToMarkerTransformMatrix(NULL);
-}
-
-//-----------------------------------------------------------------------------
-void vtkIGSIOSpinCalibrationAlgo::RemoveAllCalibrationPoints()
-{
 }
 
 //----------------------------------------------------------------------------
@@ -203,20 +199,25 @@ igsioStatus vtkIGSIOSpinCalibrationAlgo::DoCalibrationInternal(const std::vector
 {
   double pivotPoint_Marker[4] = { 0.0, 0.0, 0.0, 0.0 };
   double pivotPoint_Reference[4] = { 0.0, 0.0, 0.0, 0.0 };
-  vtkNew<vtkMatrix4x4> pivotPointToTool;
+
+  // For internal calibration used for bucket error detection, we don't care about orienting the tool corretcly, only the error.
   bool snapRotation = false;
-  bool autoOrient = true;
+  bool autoOrient = false;
+  vtkNew<vtkMatrix4x4> pivotPointToTool;
   return this->DoSpinCalibrationInternal(markerToTransformMatrixArray, snapRotation, autoOrient, pivotPointToTool, error);
 }
 
 //----------------------------------------------------------------------------
 igsioStatus vtkIGSIOSpinCalibrationAlgo::DoSpinCalibration(vtkIGSIOTransformRepository* aTransformRepository/* = NULL*/, bool snapRotation/*=false*/, bool autoOrient/*=true*/)
 {
+  if (!this->PivotPointToMarkerTransformMatrix)
+  {
+    vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
+    this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
+  }
+
   std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
-  vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
-  igsioStatus status = this->DoSpinCalibrationInternal(&markerToTransformMatrixArray, snapRotation, autoOrient, pivotPointToMarkerTransformMatrix, this->SpinCalibrationErrorMm);
-  this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
-  return status;
+  return this->DoSpinCalibrationInternal(&markerToTransformMatrixArray, snapRotation, autoOrient, this->PivotPointToMarkerTransformMatrix, this->SpinCalibrationErrorMm);
 }
 
 //----------------------------------------------------------------------------

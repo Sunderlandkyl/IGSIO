@@ -100,12 +100,16 @@ igsioStatus vtkIGSIOAbstractCalibrationAlgo::InsertNextCalibrationPoint(vtkMatri
     currentBucket = &this->MarkerToReferenceTransformMatrixBuckets[this->MarkerToReferenceTransformMatrixBuckets.size() - 1];
   }
 
-  this->CleanInputBuffer();
-
   vtkNew<vtkMatrix4x4> markerToReferenceTransformMatrixCopy;
   markerToReferenceTransformMatrixCopy->DeepCopy(aMarkerToReferenceTransformMatrix);
   currentBucket->MarkerToReferenceCalibrationPoints.push_back(markerToReferenceTransformMatrixCopy);
   this->InvokeEvent(InputTransformAddedEvent);
+
+  if (this->PoseBucketSize >= 0 && currentBucket->MarkerToReferenceCalibrationPoints.size() == this->PoseBucketSize)
+  {
+    // Bucket is filled. Clean the input buffer
+    this->CleanInputBuffer();
+  }
 
   return IGSIO_SUCCESS;
 }
@@ -232,7 +236,7 @@ double vtkIGSIOAbstractCalibrationAlgo::GetMaximumToolOrientationDifferenceDeg()
   std::vector<vtkMatrix4x4*>::const_iterator it;
   for (it = toolToReferenceMatrices.begin(); it != matricesEnd; it++)
   {
-    double orientationDifferenceDeg = this->GetOrientationDifferenceDeg(referenceOrientationMatrix, (*it));
+    double orientationDifferenceDeg = fabs(this->GetOrientationDifferenceDeg(referenceOrientationMatrix, (*it)));
     if (maximumOrientationDifferenceDeg < orientationDifferenceDeg)
     {
       maximumOrientationDifferenceDeg = orientationDifferenceDeg;

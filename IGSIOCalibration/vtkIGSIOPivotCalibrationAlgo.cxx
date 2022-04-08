@@ -24,15 +24,6 @@
 #include <vnl/algo/vnl_symmetric_eigensystem.h>
 #include <vnl/vnl_vector.h>
 
-static const double PARALLEL_ANGLE_THRESHOLD_DEGREES = 20.0;
-// Note: If the needle orientation protocol changes, only the definitions of shaftAxis and secondaryAxes need to be changed
-// Define the shaft axis and the secondary shaft axis
-// Current needle orientation protocol dictates: shaft axis -z, orthogonal axis +x
-// If StylusX is parallel to ShaftAxis then: shaft axis -z, orthogonal axis +y
-static const double SHAFT_AXIS[3] = { 0, 0, -1 };
-static const double ORTHOGONAL_AXIS[3] = { 1, 0, 0 };
-static const double BACKUP_AXIS[3] = { 0, 1, 0 };
-
 vtkStandardNewMacro(vtkIGSIOPivotCalibrationAlgo);
 
 //-----------------------------------------------------------------------------
@@ -52,6 +43,16 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
 vtkIGSIOPivotCalibrationAlgo::~vtkIGSIOPivotCalibrationAlgo()
 {
   this->SetPivotPointToMarkerTransformMatrix(NULL);
+}
+
+//-----------------------------------------------------------------------------
+igsioStatus vtkIGSIOPivotCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
+{
+  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOPivotCalibrationAlgo");
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectMarkerCoordinateFrame, pivotCalibrationElement);
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ReferenceCoordinateFrame, pivotCalibrationElement);
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectPivotPointCoordinateFrame, pivotCalibrationElement);
+  return IGSIO_SUCCESS;
 }
 
 //----------------------------------------------------------------------------
@@ -187,7 +188,7 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibration(vtkIGSIOTransformRe
 
   double pivotPoint_Marker[4] = { 0.0, 0.0, 0.0, 1.0 };
   double pivotPoint_Reference[4] = { 0.0, 0.0, 0.0, 1.0 };
-  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
+  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetAllMarkerToReferenceMatrices();
   igsioStatus status = this->DoPivotCalibrationInternal(&markerToTransformMatrixArray, autoOrient, &this->OutlierIndices, pivotPoint_Marker, pivotPoint_Reference, this->PivotPointToMarkerTransformMatrix);
   if (status == IGSIO_SUCCESS)
   {
@@ -317,19 +318,9 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::
 }
 
 //-----------------------------------------------------------------------------
-igsioStatus vtkIGSIOPivotCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
-{
-  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOPivotCalibrationAlgo");
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectMarkerCoordinateFrame, pivotCalibrationElement);
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ReferenceCoordinateFrame, pivotCalibrationElement);
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectPivotPointCoordinateFrame, pivotCalibrationElement);
-  return IGSIO_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------
 void vtkIGSIOPivotCalibrationAlgo::ComputePivotCalibrationError()
 {
-  const std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
+  const std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetAllMarkerToReferenceMatrices();
   this->PivotCalibrationErrorMm = this->ComputePivotCalibrationError(&markerToTransformMatrixArray, &this->OutlierIndices, this->PivotPointPosition_Reference, this->PivotPointToMarkerTransformMatrix);
 }
 

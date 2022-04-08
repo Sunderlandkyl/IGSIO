@@ -132,7 +132,7 @@ igsioStatus vtkIGSIOAbstractCalibrationAlgo::InsertNextCalibrationPoint(vtkMatri
 igsioStatus vtkIGSIOAbstractCalibrationAlgo::CleanInputBuffer()
 {
   std::vector<vtkMatrix4x4*> latestBucket;
-  this->GetMarkerToReferenceTransformMatrixArray(this->MarkerToReferenceTransformMatrixBuckets.size() - 1, &latestBucket);
+  this->GetLatestBucketMarkerToReferenceMatrices(&latestBucket);
 
   vtkNew<vtkMatrix4x4> pivotPointToMarkerTransformMatrix;
   double pivotPoint_Marker[4] = { 0, 0, 0, 1 };
@@ -154,38 +154,38 @@ igsioStatus vtkIGSIOAbstractCalibrationAlgo::CleanInputBuffer()
 }
 
 //----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOAbstractCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray()
+std::vector<vtkMatrix4x4*> vtkIGSIOAbstractCalibrationAlgo::GetAllMarkerToReferenceMatrices()
 {
   std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
   for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
   {
-    this->GetMarkerToReferenceTransformMatrixArray(i, &markerToTransformMatrixArray);
+    this->GetBucketMarkerToReferenceMatrices(i, &markerToTransformMatrixArray);
   }
   return markerToTransformMatrixArray;
 }
 
 //----------------------------------------------------------------------------
-void vtkIGSIOAbstractCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray)
+void vtkIGSIOAbstractCalibrationAlgo::GetAllMarkerToReferenceMatrices(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray)
 {
   for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
   {
-    this->GetMarkerToReferenceTransformMatrixArray(i, markerToTransformMatrixArray);
+    this->GetBucketMarkerToReferenceMatrices(i, markerToTransformMatrixArray);
   }
 }
 
 //----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOAbstractCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex)
+std::vector<vtkMatrix4x4*> vtkIGSIOAbstractCalibrationAlgo::GetBucketMarkerToReferenceMatrices(int bucketIndex)
 {
   std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
   if (this->MarkerToReferenceTransformMatrixBuckets.size() > bucketIndex)
   {
-    this->GetMarkerToReferenceTransformMatrixArray(bucketIndex, &markerToTransformMatrixArray);
+    this->GetBucketMarkerToReferenceMatrices(bucketIndex, &markerToTransformMatrixArray);
   }
   return markerToTransformMatrixArray;
 }
 
 //----------------------------------------------------------------------------
-void vtkIGSIOAbstractCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex, std::vector<vtkMatrix4x4*>* matrixArray)
+void vtkIGSIOAbstractCalibrationAlgo::GetBucketMarkerToReferenceMatrices(int bucketIndex, std::vector<vtkMatrix4x4*>* matrixArray)
 {
   if (this->MarkerToReferenceTransformMatrixBuckets.size() <= bucketIndex)
   {
@@ -203,6 +203,18 @@ void vtkIGSIOAbstractCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(i
   {
     matrixArray->push_back(*poseIt);
   }
+}
+
+//----------------------------------------------------------------------------
+std::vector<vtkMatrix4x4*> vtkIGSIOAbstractCalibrationAlgo::GetLatestBucketMarkerToReferenceMatrices()
+{
+  this->GetBucketMarkerToReferenceMatrices(this->MarkerToReferenceTransformMatrixBuckets.size() - 1);
+}
+
+//----------------------------------------------------------------------------
+void vtkIGSIOAbstractCalibrationAlgo::GetLatestBucketMarkerToReferenceMatrices(std::vector<vtkMatrix4x4*>* latestBucket)
+{
+  this->GetBucketMarkerToReferenceMatrices(this->MarkerToReferenceTransformMatrixBuckets.size() - 1, latestBucket);
 }
 
 //----------------------------------------------------------------------------
@@ -244,7 +256,8 @@ double vtkIGSIOAbstractCalibrationAlgo::GetMaximumToolOrientationDifferenceDeg()
   double maximumOrientationDifferenceDeg = 0;
 
   std::vector<vtkMatrix4x4*> toolToReferenceMatrices;
-  this->GetMarkerToReferenceTransformMatrixArray(&toolToReferenceMatrices);
+  this->GetAllMarkerToReferenceMatrices(&toolToReferenceMatrices);
+
   std::vector<vtkMatrix4x4*>::const_iterator matricesEnd = toolToReferenceMatrices.end();
   vtkMatrix4x4* referenceOrientationMatrix = toolToReferenceMatrices.front();
   std::vector<vtkMatrix4x4*>::const_iterator it;

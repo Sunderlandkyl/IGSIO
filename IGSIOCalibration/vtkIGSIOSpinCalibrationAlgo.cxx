@@ -24,7 +24,6 @@
 #include <vnl/algo/vnl_symmetric_eigensystem.h>
 #include <vnl/vnl_vector.h>
 
-static const double PARALLEL_ANGLE_THRESHOLD_DEGREES = 20.0;
 // Note: If the needle orientation protocol changes, only the definitions of shaftAxis and secondaryAxes need to be changed
 // Define the shaft axis and the secondary shaft axis
 // Current needle orientation protocol dictates: shaft axis -z, orthogonal axis +x
@@ -46,6 +45,16 @@ vtkIGSIOSpinCalibrationAlgo::vtkIGSIOSpinCalibrationAlgo()
 vtkIGSIOSpinCalibrationAlgo::~vtkIGSIOSpinCalibrationAlgo()
 {
   this->SetPivotPointToMarkerTransformMatrix(NULL);
+}
+
+//-----------------------------------------------------------------------------
+igsioStatus vtkIGSIOSpinCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
+{
+  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOSpinCalibrationAlgo");
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectMarkerCoordinateFrame, pivotCalibrationElement);
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ReferenceCoordinateFrame, pivotCalibrationElement);
+  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectPivotPointCoordinateFrame, pivotCalibrationElement);
+  return IGSIO_SUCCESS;
 }
 
 //----------------------------------------------------------------------------
@@ -70,7 +79,7 @@ igsioStatus vtkIGSIOSpinCalibrationAlgo::DoSpinCalibration(vtkIGSIOTransformRepo
     this->SetPivotPointToMarkerTransformMatrix(pivotPointToMarkerTransformMatrix);
   }
 
-  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetMarkerToReferenceTransformMatrixArray();
+  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray = this->GetAllMarkerToReferenceMatrices();
   return this->DoSpinCalibrationInternal(&markerToTransformMatrixArray, snapRotation, autoOrient, this->PivotPointToMarkerTransformMatrix, this->SpinCalibrationErrorMm);
 }
 
@@ -215,21 +224,12 @@ igsioStatus vtkIGSIOSpinCalibrationAlgo::DoSpinCalibrationInternal(const std::ve
       toolTipToToolMatrix->SetElement(i, j, Rotation[i][j]);
     }
   }
+
   if (autoOrient)
   {
     this->UpdateShaftDirection(toolTipToToolMatrix); // Flip it if necessary
   }
 
   this->SetErrorCode(CALIBRATION_SUCCESS);
-  return IGSIO_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------
-igsioStatus vtkIGSIOSpinCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
-{
-  XML_FIND_NESTED_ELEMENT_REQUIRED(pivotCalibrationElement, aConfig, "vtkIGSIOSpinCalibrationAlgo");
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectMarkerCoordinateFrame, pivotCalibrationElement);
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ReferenceCoordinateFrame, pivotCalibrationElement);
-  XML_READ_CSTRING_ATTRIBUTE_REQUIRED(ObjectPivotPointCoordinateFrame, pivotCalibrationElement);
   return IGSIO_SUCCESS;
 }

@@ -26,7 +26,6 @@ class vtkIGSIOTransformRepository;
 class vtkXMLDataElement;
 
 //-----------------------------------------------------------------------------
-
 /*!
   \class vtkIGSIOPivotCalibrationAlgo
   \brief Pivot calibration algorithm to calibrate a stylus. It determines the pose of the stylus tip relative to the marker attached to the stylus.
@@ -85,7 +84,7 @@ protected:
   igsioStatus DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error) override;
   igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool autoOrient, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
 
-protected: 
+protected:
   double PivotCalibrationErrorMm;
 
   class vtkInternal;

@@ -63,105 +63,31 @@ public:
   */
   igsioStatus DoPivotCalibration(vtkIGSIOTransformRepository* aTransformRepository = NULL, bool autoOrient = true);
 
-  /*!
-    Get calibration result string to display
-    \param aPrecision Number of decimals shown
-    \return Calibration result (e.g. stylus tip to stylus translation) string
-  */
-  std::string GetPivotPointToMarkerTranslationString(double aPrecision = 3);
-
-  /*!
-    Get the number of outlier points. It is recommended to display a warning to the user
-    if the percentage of outliers vs total number of points is larger than a few percent.
-  */
-  int GetNumberOfDetectedOutliers();
-
-  int GetNumberOfCalibrationPoints();
-
   //@{
   /// Mean error of the pivot calibration result in mm
   vtkGetMacro(PivotCalibrationErrorMm, double);
   //@}
-
-  //@{
-  /// Output calibration tip to marker position
-  vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
-  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
-  vtkGetVector3Macro(PivotPointPosition_Reference, double);
-  //@}
-
-  /// Name of the object pivot point coordinate frame (eg. StylusTip)
-  vtkGetStringMacro(ObjectPivotPointCoordinateFrame);
-
-  //@{
-  /// Required minimum amount of variation within the recorded poses
-  vtkSetMacro(MinimumOrientationDifferenceDeg, double);
-  vtkGetMacro(MinimumOrientationDifferenceDeg, double);
-  //@}
-
-  //@{
-  /// Required minimum amount of variation in position from the previous position in order for a transform to be accepted (0 degrees by default).
-  vtkGetMacro(PositionDifferenceThresholdMm, double);
-  vtkSetMacro(PositionDifferenceThresholdMm, double);
-  //@}
-
-  ////@{
-  ///// Automatically flips the shaft direction to be consistent with the needle orientation protocol.
-  //vtkGetMacro(AutoCalibrationAutoOrient, bool);
-  //vtkSetMacro(AutoCalibrationAutoOrient, bool);
-  ////@}
-
-  ////@{
-  ///// Snaps the rotation to be a 90 degree rotation about one of the coordinate axes.
-  //vtkGetMacro(AutoCalibrationSnapRotation, bool);
-  //vtkSetMacro(AutoCalibrationSnapRotation, bool);
-  ////@}
-
-protected:
-  vtkSetStringMacro(ObjectMarkerCoordinateFrame);
-  vtkSetStringMacro(ReferenceCoordinateFrame);
-  vtkSetStringMacro(ObjectPivotPointCoordinateFrame);
-  vtkSetMacro(ErrorCode, int);
 
 protected:
   vtkIGSIOPivotCalibrationAlgo();
   virtual ~vtkIGSIOPivotCalibrationAlgo();
 
 protected:
-  /*! Compute the mean position error of the pivot point (in mm) */
-  void ComputePivotCalibrationError();
 
+  ////@{
+  /// Compute the mean position error of the pivot point (in mm)
+  void ComputePivotCalibrationError();
   double ComputePivotCalibrationError(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Reference, vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
+  ////@}
 
   igsioStatus GetPivotPointPosition(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, std::set<unsigned int>* outlierIndices, double* pivotPoint_Marker, double* pivotPoint_Reference);
-
-  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray();
-  void GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray);
-  std::vector<vtkMatrix4x4*> GetMarkerToReferenceTransformMatrixArray(int bucket);
-  void GetMarkerToReferenceTransformMatrixArray(int bucket, std::vector<vtkMatrix4x4*>* matrixArray);
 
   igsioStatus DoCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, double& error) override;
   igsioStatus DoPivotCalibrationInternal(const std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray, bool autoOrient, std::set<unsigned int>* outlierIndices, double pivotPoint_Marker[4], double pivotPoint_Reference[4], vtkMatrix4x4* pivotPointToMarkerTransformMatrix);
 
-  // Verify whether the tool's shaft is in the same direction as the ToolTip to Tool vector.
-  // Rotate the ToolTip coordinate frame by 180 degrees about the secondary axis to make the
-  // shaft in the same direction as the ToolTip to Tool vector, if this is not already the case.
-  void UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+protected: 
+  double PivotCalibrationErrorMm;
 
-  // Flip the direction of the shaft axis
-  void FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
-
-  void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
-
-  // Helper method to compute the secondary axis, given a shaft axis
-  vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
-
-protected:
-  vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
-  double                    PivotCalibrationErrorMm;
-
-  /*! Pivot point position in the Reference coordinate system */
-  double                    PivotPointPosition_Reference[4];
   class vtkInternal;
   vtkInternal* Internal;
 };

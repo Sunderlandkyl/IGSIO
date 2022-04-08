@@ -150,6 +150,13 @@ public:
   vtkSetMacro(MaximumPoseBucketError, double);
   //@}
 
+  //@{
+  /// Output calibration tip to marker position
+  vtkGetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);
+  vtkGetVector3Macro(PivotPointPosition_Reference, double);
+  //@}
+
 protected:
   /*vtkSetObjectMacro(PivotPointToMarkerTransformMatrix, vtkMatrix4x4);*/
   vtkSetStringMacro(ObjectMarkerCoordinateFrame);
@@ -178,19 +185,28 @@ protected:
   // Returns the orientation difference in degrees between two 4x4 homogeneous transformation matrix, in degrees.
   virtual double GetOrientationDifferenceDeg(vtkMatrix4x4* aMatrix, vtkMatrix4x4* bMatrix);
 
-  //// Helper method to compute the secondary axis, given a shaft axis
-  //virtual vnl_vector< double > vtkIGSIOAbstractCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
+  // Verify whether the tool's shaft is in the same direction as the ToolTip to Tool vector.
+  // Rotate the ToolTip coordinate frame by 180 degrees about the secondary axis to make the
+  // shaft in the same direction as the ToolTip to Tool vector, if this is not already the case.
+  void UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+
+  // Flip the direction of the shaft axis
+  void FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+
+  void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
+
+  // Helper method to compute the secondary axis, given a shaft axis
+  vnl_vector< double > ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
 
 protected:
-  /*vtkMatrix4x4* PivotPointToMarkerTransformMatrix;*/
+  vtkMatrix4x4* PivotPointToMarkerTransformMatrix;
+  double        PivotPointPosition_Reference[4];
+
   vtkMatrix4x4* PreviousMarkerToReferenceTransformMatrix;
 
   char*                     ObjectMarkerCoordinateFrame;
   char*                     ReferenceCoordinateFrame;
   char*                     ObjectPivotPointCoordinateFrame;
-
-  /*! Pivot point position in the Reference coordinate system */
-  /*double                    PivotPointPosition_Reference[4];*/
 
   /*! List of outlier sample indices */
   std::set<unsigned int>    OutlierIndices;

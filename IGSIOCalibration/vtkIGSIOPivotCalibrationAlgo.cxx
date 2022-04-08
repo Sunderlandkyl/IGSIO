@@ -42,29 +42,10 @@ vtkIGSIOPivotCalibrationAlgo::vtkIGSIOPivotCalibrationAlgo()
 
   this->PivotCalibrationErrorMm = -1.0;
 
-  //this->ObjectMarkerCoordinateFrame = NULL;
-  //this->ReferenceCoordinateFrame = NULL;
-  //this->ObjectPivotPointCoordinateFrame = NULL;
-
   this->PivotPointPosition_Reference[0] = 0.0;
   this->PivotPointPosition_Reference[1] = 0.0;
   this->PivotPointPosition_Reference[2] = 0.0;
   this->PivotPointPosition_Reference[3] = 1.0;
-
-  /*this->ErrorCode = CALIBRATION_NOT_STARTED;*/
-
-  /*this->MinimumOrientationDifferenceDeg = 15.0;
-  this->PositionDifferenceThresholdMm = 0.0;
-  this->OrientationDifferenceThresholdDegrees = 0.0;
-  this->AutoCalibrationEnabled = false;
-  this->AutoCalibrationBucketSize = 10;
-  this->AutoCalibrationNumberOfPoints = 50;
-  this->AutoCalibrationTargetError = 2.0;
-  this->AutoCalibrationMaximumBucketError = 3.0;
-  this->AutoCalibrationMaximumNumberOfBuckets = 5;
-  this->AutoCalibrationMode = PIVOT_CALIBRATION;
-  this->AutoCalibrationAutoOrient = true;
-  this->AutoCalibrationSnapRotation = false;*/
 }
 
 //-----------------------------------------------------------------------------
@@ -165,70 +146,6 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::GetPivotPointPosition(const std::vecto
   pivotPoint_Reference[2] = xVector[5];
 
   return IGSIO_SUCCESS;
-}
-
-//----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray()
-{
-  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
-  for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
-  {
-    this->GetMarkerToReferenceTransformMatrixArray(i, &markerToTransformMatrixArray);
-  }
-  return markerToTransformMatrixArray;
-}
-
-//----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(std::vector<vtkMatrix4x4*>* markerToTransformMatrixArray)
-{
-  for (int i = 0; i < this->MarkerToReferenceTransformMatrixBuckets.size(); ++i)
-  {
-    this->GetMarkerToReferenceTransformMatrixArray(i, markerToTransformMatrixArray);
-  }
-}
-
-//----------------------------------------------------------------------------
-std::vector<vtkMatrix4x4*> vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex)
-{
-  std::vector<vtkMatrix4x4*> markerToTransformMatrixArray;
-  if (this->MarkerToReferenceTransformMatrixBuckets.size() > bucketIndex)
-  {
-    this->GetMarkerToReferenceTransformMatrixArray(bucketIndex, &markerToTransformMatrixArray);
-  }
-  return markerToTransformMatrixArray;
-}
-
-//----------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetMarkerToReferenceTransformMatrixArray(int bucketIndex, std::vector<vtkMatrix4x4*>* matrixArray)
-{
-  if (this->MarkerToReferenceTransformMatrixBuckets.size() <= bucketIndex)
-  {
-    return;
-  }
-
-  if (!matrixArray)
-  {
-    return;
-  }
-
-  MarkerToReferenceTransformMatrixBucket* bucket = &this->MarkerToReferenceTransformMatrixBuckets[bucketIndex];
-  std::vector<vtkSmartPointer<vtkMatrix4x4> >* poses = &bucket->MarkerToReferenceCalibrationPoints;
-  for (std::vector<vtkSmartPointer<vtkMatrix4x4> >::iterator poseIt = poses->begin(); poseIt != poses->end(); ++poseIt)
-  {
-    matrixArray->push_back(*poseIt);
-  }
-}
-
-//----------------------------------------------------------------------------
-int vtkIGSIOPivotCalibrationAlgo::GetNumberOfCalibrationPoints()
-{
-  int numberOfCalibrationPoints = 0;
-  for (std::deque<vtkIGSIOPivotCalibrationAlgo::MarkerToReferenceTransformMatrixBucket>::iterator bucketIt = this->MarkerToReferenceTransformMatrixBuckets.begin();
-    bucketIt != this->MarkerToReferenceTransformMatrixBuckets.end(); ++bucketIt)
-  {
-    numberOfCalibrationPoints += bucketIt->MarkerToReferenceCalibrationPoints.size();
-  }
-  return numberOfCalibrationPoints;
 }
 
 //----------------------------------------------------------------------------
@@ -399,111 +316,6 @@ igsioStatus vtkIGSIOPivotCalibrationAlgo::DoPivotCalibrationInternal(const std::
   return IGSIO_SUCCESS;
 }
 
-//---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
-{
-  // We need to verify that the ToolTipToTool vector in the Shaft coordinate system is in the opposite direction of the shaft
-  vtkSmartPointer< vtkMatrix4x4 > rotationMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  this->GetToolTipToToolRotation(toolTipToToolMatrix, rotationMatrix);
-  rotationMatrix->Invert();
-
-  double toolTipToToolTranslation_ToolTip[4] = { 0, 0, 0, 0 }; // This is a vector, not a point, so the last element is 0
-  toolTipToToolTranslation_ToolTip[0] = toolTipToToolMatrix->GetElement(0, 3);
-  toolTipToToolTranslation_ToolTip[1] = toolTipToToolMatrix->GetElement(1, 3);
-  toolTipToToolTranslation_ToolTip[2] = toolTipToToolMatrix->GetElement(2, 3);
-
-  double toolTipToToolTranslation_Shaft[4] = { 0, 0, 0, 0 }; // This is a vector, not a point, so the last element is 0
-  rotationMatrix->MultiplyPoint(toolTipToToolTranslation_ToolTip, toolTipToToolTranslation_Shaft);
-  double toolTipToToolTranslation3_Shaft[3] = { toolTipToToolTranslation_Shaft[0], toolTipToToolTranslation_Shaft[1], toolTipToToolTranslation_Shaft[2] };
-
-  // Check if it is parallel or opposite to shaft direction
-  if (vtkMath::Dot(SHAFT_AXIS, toolTipToToolTranslation3_Shaft) > 0)
-  {
-    this->FlipShaftDirection(toolTipToToolMatrix);
-  }
-}
-
-//---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix)
-{
-  // Need to rotate around the orthogonal axis
-  vtkSmartPointer< vtkMatrix4x4 > rotationMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  this->GetToolTipToToolRotation(toolTipToToolMatrix, rotationMatrix);
-
-  double shaftAxis_Shaft[4] = { SHAFT_AXIS[0], SHAFT_AXIS[1], SHAFT_AXIS[2], 0 }; // This is a vector, not a point, so the last element is 0
-  double shaftAxis_ToolTip[4] = { 0, 0, 0, 0 };
-  rotationMatrix->MultiplyPoint(shaftAxis_Shaft, shaftAxis_ToolTip);
-
-  vnl_vector< double > orthogonalAxis_Shaft = this->ComputeSecondaryAxis(vnl_vector< double >(3, 3, shaftAxis_ToolTip));
-
-  vtkSmartPointer< vtkTransform > flipTransform = vtkSmartPointer< vtkTransform >::New();
-  flipTransform->RotateWXYZ(180, orthogonalAxis_Shaft.get(0), orthogonalAxis_Shaft.get(1), orthogonalAxis_Shaft.get(2));
-  vtkSmartPointer< vtkTransform > originalTransform = vtkSmartPointer< vtkTransform >::New();
-  originalTransform->SetMatrix(toolTipToToolMatrix);
-  originalTransform->PreMultiply();
-  originalTransform->Concatenate(flipTransform);
-  originalTransform->GetMatrix(toolTipToToolMatrix);
-}
-
-//---------------------------------------------------------------------------
-void vtkIGSIOPivotCalibrationAlgo::GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix)
-{
-  rotationMatrix->Identity();
-
-  rotationMatrix->SetElement(0, 0, toolTipToToolMatrix->GetElement(0, 0));
-  rotationMatrix->SetElement(0, 1, toolTipToToolMatrix->GetElement(0, 1));
-  rotationMatrix->SetElement(0, 2, toolTipToToolMatrix->GetElement(0, 2));
-  rotationMatrix->SetElement(1, 0, toolTipToToolMatrix->GetElement(1, 0));
-  rotationMatrix->SetElement(1, 1, toolTipToToolMatrix->GetElement(1, 1));
-  rotationMatrix->SetElement(1, 2, toolTipToToolMatrix->GetElement(1, 2));
-  rotationMatrix->SetElement(2, 0, toolTipToToolMatrix->GetElement(2, 0));
-  rotationMatrix->SetElement(2, 1, toolTipToToolMatrix->GetElement(2, 1));
-  rotationMatrix->SetElement(2, 2, toolTipToToolMatrix->GetElement(2, 2));
-}
-
-//---------------------------------------------------------------------------
-vnl_vector< double > vtkIGSIOPivotCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip)
-{
-  // If the secondary axis 1 is parallel to the shaft axis in the tooltip frame, then use secondary axis 2
-  vnl_vector< double > orthogonalAxis_Shaft(3, 3, ORTHOGONAL_AXIS);
-  double angle = acos(dot_product(shaftAxis_ToolTip, orthogonalAxis_Shaft));
-  // Force angle to be between -pi/2 and +pi/2
-  if (angle > vtkMath::Pi() / 2)
-  {
-    angle -= vtkMath::Pi();
-  }
-  if (angle < -vtkMath::Pi() / 2)
-  {
-    angle += vtkMath::Pi();
-  }
-
-  if (fabs(angle) < vtkMath::RadiansFromDegrees(PARALLEL_ANGLE_THRESHOLD_DEGREES)) // If shaft axis and orthogonal axis are not parallel
-  {
-    return vnl_vector< double >(3, 3, BACKUP_AXIS);
-  }
-  return orthogonalAxis_Shaft;
-}
-
-
-//-----------------------------------------------------------------------------
-std::string vtkIGSIOPivotCalibrationAlgo::GetPivotPointToMarkerTranslationString(double aPrecision/*=3*/)
-{
-  if (this->PivotPointToMarkerTransformMatrix == NULL)
-  {
-    LOG_ERROR("Tooltip to tool transform is not initialized!");
-    return "";
-  }
-
-  std::ostringstream s;
-  s << std::fixed << std::setprecision(aPrecision)
-    << this->PivotPointToMarkerTransformMatrix->GetElement(0, 3)
-    << " x " << this->PivotPointToMarkerTransformMatrix->GetElement(1, 3)
-    << " x " << this->PivotPointToMarkerTransformMatrix->GetElement(2, 3)
-    << std::ends;
-
-  return s.str();
-}
-
 //-----------------------------------------------------------------------------
 igsioStatus vtkIGSIOPivotCalibrationAlgo::ReadConfiguration(vtkXMLDataElement* aConfig)
 {
@@ -552,10 +364,4 @@ double vtkIGSIOPivotCalibrationAlgo::ComputePivotCalibrationError(const std::vec
   double stdev = 0;
   igsioMath::ComputeMeanAndStdev(errorValues, mean, stdev);
   return mean;
-}
-
-//-----------------------------------------------------------------------------
-int vtkIGSIOPivotCalibrationAlgo::GetNumberOfDetectedOutliers()
-{
-  return this->OutlierIndices.size();
 }

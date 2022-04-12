@@ -29,9 +29,12 @@ class vtkXMLDataElement;
   \class vtkIGSIOAbstractCalibrationAlgo
   \brief Abstract calibration algorithm
 
-  Input transforms are collected and maintained in buckets.
-  As each bucket is filled, a calibration is performed to ensure that it is valid.
-  TODO
+  Abstract class for performing calibration algorithms.
+
+  Input transforms are collected and stored in an input buffer that inserts each transform into a bucket.
+  New buckets are added as each are filled, up to a specified maximum. If a bucket is filled, then it is checked
+  to ensure it contains valid calibration poses, and the error within the bucket is below a specified threshold.
+  If the poses are invalid or the error is too high, then the entire buffer is discarded.
 
   \ingroup igsioCalibrationAlgorithm
 */
@@ -58,7 +61,6 @@ public:
   /// Read configuration
   /// \param aConfig Root element of the device set configuration
   virtual igsioStatus ReadConfiguration(vtkXMLDataElement* aConfig) = 0;
-
 
   /// Remove all previously inserted calibration points.
   /// Call this method to get rid of previously added calibration points
@@ -138,14 +140,17 @@ public:
   vtkGetVector3Macro(PivotPointPosition_Reference, double);
   //@}
 
+  /// Flip the direction of the shaft axis.
+  static void FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
+
+  /// Get only the rotation component from toolTipToToolMatrix.
+  static void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
+
+  // Helper method to compute the secondary axis, given a shaft axis
+  static vnl_vector< double > ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
+
 protected:
   vtkSetMacro(ErrorCode, int);
-
-protected:
-  vtkIGSIOAbstractCalibrationAlgo();
-  virtual ~vtkIGSIOAbstractCalibrationAlgo();
-
-protected:
 
   /// Get a vector containing all MarkerToReference matrices.
   virtual std::vector<vtkMatrix4x4*> GetAllMarkerToReferenceMatrices();
@@ -175,14 +180,9 @@ protected:
   // shaft in the same direction as the ToolTip to Tool vector, if this is not already the case.
   void UpdateShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
 
-  /// Flip the direction of the shaft axis.
-  void FlipShaftDirection(vtkMatrix4x4* toolTipToToolMatrix);
-
-  /// Get only the rotation component from toolTipToToolMatrix.
-  void GetToolTipToToolRotation(vtkMatrix4x4* toolTipToToolMatrix, vtkMatrix4x4* rotationMatrix);
-
-  // Helper method to compute the secondary axis, given a shaft axis
-  vnl_vector< double > ComputeSecondaryAxis(vnl_vector< double > shaftAxis_ToolTip);
+protected:
+  vtkIGSIOAbstractCalibrationAlgo();
+  virtual ~vtkIGSIOAbstractCalibrationAlgo();
 
 protected:
   vtkMatrix4x4* PivotPointToMarkerTransformMatrix;

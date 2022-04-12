@@ -308,13 +308,13 @@ void vtkIGSIOAbstractCalibrationAlgo::FlipShaftDirection(vtkMatrix4x4* toolTipTo
 {
   // Need to rotate around the orthogonal axis
   vtkSmartPointer< vtkMatrix4x4 > rotationMatrix = vtkSmartPointer< vtkMatrix4x4 >::New();
-  this->GetToolTipToToolRotation(toolTipToToolMatrix, rotationMatrix);
+  vtkIGSIOAbstractCalibrationAlgo::GetToolTipToToolRotation(toolTipToToolMatrix, rotationMatrix);
 
   double shaftAxis_Shaft[4] = { SHAFT_AXIS[0], SHAFT_AXIS[1], SHAFT_AXIS[2], 0 }; // This is a vector, not a point, so the last element is 0
   double shaftAxis_ToolTip[4] = { 0, 0, 0, 0 };
   rotationMatrix->MultiplyPoint(shaftAxis_Shaft, shaftAxis_ToolTip);
 
-  vnl_vector< double > orthogonalAxis_Shaft = this->ComputeSecondaryAxis(vnl_vector< double >(3, 3, shaftAxis_ToolTip));
+  vnl_vector< double > orthogonalAxis_Shaft = vtkIGSIOAbstractCalibrationAlgo::ComputeSecondaryAxis(vnl_vector< double >(3, 3, shaftAxis_ToolTip));
 
   vtkSmartPointer< vtkTransform > flipTransform = vtkSmartPointer< vtkTransform >::New();
   flipTransform->RotateWXYZ(180, orthogonalAxis_Shaft.get(0), orthogonalAxis_Shaft.get(1), orthogonalAxis_Shaft.get(2));

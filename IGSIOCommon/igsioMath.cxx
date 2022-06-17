@@ -621,7 +621,6 @@ igsioStatus igsioMath::RemoveOutliersFromLSQR(vnl_sparse_matrix<double>& sparseM
       }
     }
 
-
     sparseMatrixLeftSide.resize(matrixRowsData.size(), numberOfUnknowns);
     for (unsigned int r = 0; r < matrixRowsData.size(); r++)
     {

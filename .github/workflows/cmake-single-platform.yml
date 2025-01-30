@@ -24,10 +24,10 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install VTK
-      run: sudo apt-get -qq -y install libvtk9.1t64
+      run: sudo apt-get -qq -y install libvtk9.1
         
     - name: VTK files
-      run: dpkg -L libvtk9.1t64
+      run: dpkg -L libvtk9.1
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

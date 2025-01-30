@@ -26,15 +26,30 @@ jobs:
     - name: Install Dependencies
       run: sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
+    - name: Get VTK Git Hash
+      id: vtk_hash
+      run: echo "VTK_HASH=$(git ls-remote https://gitlab.kitware.com/vtk/vtk.git refs/heads/v9.3.0 | cut -f1)" >> $GITHUB_ENV
+
+    - name: Cache VTK Build
+      uses: actions/cache@v4
+      with:
+        path: vtk-build
+        key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}
+        restore-keys: |
+          vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-
+
     - name: Clone VTK
+      if: steps.cache.outputs.cache-hit != 'true'
       run: |
         git clone https://gitlab.kitware.com/vtk/vtk.git --branch v9.3.0 --depth 1
         mkdir -p vtk-build
 
     - name: Configure VTK
+      if: steps.cache.outputs.cache-hit != 'true'
       run: cmake -S vtk -B vtk-build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF
 
     - name: Build VTK
+      if: steps.cache.outputs.cache-hit != 'true'
       run: cmake --build vtk-build -- -j$(nproc)
 
     - name: Install VTK

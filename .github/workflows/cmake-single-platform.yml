@@ -26,7 +26,7 @@ jobs:
     - name: Install VTK
       run: sudo apt update | sudo apt install libvtk9-dev
 
-    - name Find VTK
+    - name: Find VTK
       run: find /usr -name "VTKConfig.cmake"
       
     - name: Configure CMake

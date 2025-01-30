@@ -23,26 +23,24 @@ jobs:
 
     - uses: actions/checkout@v4
 
+    - name: Clone VTK
+      run: |
+        git clone https://gitlab.kitware.com/vtk/vtk.git --branch v9.3.0 --depth 1
+        mkdir -p vtk-build
+
+    - name: Configure VTK
+      run: cmake -S vtk -B vtk-build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF
+
+    - name: Build VTK
+      run: cmake --build vtk-build -- -j$(nproc)
+
     - name: Install VTK
-      run: sudo apt update | sudo apt install vtk9 libvtk9-dev
-
-    - name: Grep VTK
-      run: dpkg -l | grep vtk
-
-    - name: Find VTKConfig.cmake
-      run: find /usr -name "VTKConfig.cmake" 2>/dev/null
-
-      
-    - name: Find VTKConfig.cmake lib
-      run: find /usr/lib -name "VTKConfig.cmake" 2>/dev/null
-
-    - name: Find VTKConfig.cmake share
-      run: find /usr/share -name "VTKConfig.cmake" 2>/dev/null
+      run: sudo cmake --install vtk-build
       
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=/usr/lib/cmake/vtk-9.1
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-build
 
     - name: Build
       # Build your program with the given configuration

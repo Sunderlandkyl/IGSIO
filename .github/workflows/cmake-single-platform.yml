@@ -29,7 +29,7 @@ jobs:
     - name: Install VTK
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libvtk9-dev
+        sudo apt-get -qq -y install libvtk9
 
     - name: VTK files
       run: dpkg -L libvtk9

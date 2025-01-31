@@ -36,13 +36,15 @@ jobs:
         sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     ### CACHE & BUILD VTK ###
-    - name: Set VTK Version
-      run: |
-        echo "VTK_VERSION=${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }}" >> $GITHUB_ENV
-
     - name: Get VTK Git Hash
       id: vtk_hash
-      run: echo "VTK_HASH=${{ env.VTK_VERSION }}" >> $GITHUB_ENV
+      run: |
+        HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} | cut -f1)
+        if [ -z "$HASH" ]; then
+          echo "Failed to retrieve VTK commit hash. Exiting."
+          exit 1
+        fi
+        echo "VTK_HASH=$HASH" >> $GITHUB_ENV
 
     - name: Cache VTK Build
       id: cache-vtk
@@ -64,14 +66,11 @@ jobs:
         fi
 
     - name: Clone VTK
+      if: env.CACHE_HIT == 'false'
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK clone (cache hit)."
-        else
-          echo "Cloning VTK..."
-          git clone https://gitlab.kitware.com/vtk/vtk.git --branch v${{ env.VTK_VERSION }} --depth 1
-          mkdir -p vtk-build
-        fi
+        echo "Cloning VTK..."
+        git clone https://gitlab.kitware.com/vtk/vtk.git --branch v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} --depth 1
+        mkdir -p vtk-build
 
     - name: Configure VTK
       run: |
@@ -97,13 +96,15 @@ jobs:
         cmake --install vtk-build
 
     ### CACHE & BUILD ITK ###
-    - name: Set ITK Version
-      run: |
-        echo "ITK_VERSION=${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }}" >> $GITHUB_ENV
-
     - name: Get ITK Git Hash
       id: itk_hash
-      run: echo "ITK_HASH=${{ env.ITK_VERSION }}" >> $GITHUB_ENV
+      run: |
+        HASH=$(git ls-remote --tags https://github.com/InsightSoftwareConsortium/ITK.git v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} | cut -f1)
+        if [ -z "$HASH" ]; then
+          echo "Failed to retrieve ITK commit hash. Exiting."
+          exit 1
+        fi
+        echo "ITK_HASH=$HASH" >> $GITHUB_ENV
 
     - name: Cache ITK Build
       id: cache-itk
@@ -125,14 +126,11 @@ jobs:
         fi
 
     - name: Clone ITK
+      if: env.CACHE_HIT == 'false'
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK clone (cache hit)."
-        else
-          echo "Cloning ITK..."
-          git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_VERSION }} --depth 1
-          mkdir -p itk-build
-        fi
+        echo "Cloning ITK..."
+        git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
+        mkdir -p itk-build
 
     - name: Configure ITK
       run: |

@@ -92,8 +92,12 @@ jobs:
 
     - name: Install VTK
       run: |
-        echo "Installing VTK..."
-        cmake --install vtk-build
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping VTK install (cache hit)."
+        else
+          echo "Installing VTK..."
+          cmake --install vtk-build
+        fi
 
     ### CACHE & BUILD ITK ###
     - name: Get ITK Git Hash
@@ -152,5 +156,9 @@ jobs:
 
     - name: Install ITK
       run: |
-        echo "Installing ITK..."
-        cmake --install itk-build
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK install (cache hit)."
+        else
+          echo "Installing ITK..."
+          cmake --install itk-build
+        fi

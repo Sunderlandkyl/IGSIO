@@ -10,11 +10,12 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
-  # Specify VTK and ITK versions separately
+  # Specify VTK version 
   VTK_MAJOR: 9
   VTK_MINOR: 3
   VTK_PATCH: 0
 
+  # Specify ITK version
   ITK_MAJOR: 5
   ITK_MINOR: 3
   ITK_PATCH: 0

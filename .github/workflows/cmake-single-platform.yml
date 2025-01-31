@@ -27,9 +27,15 @@ jobs:
       run: sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     ### CACHE & BUILD VTK ###
-    - name: Get VTK Git Hash
+    - name: Get VTK Git Hash (Fail on Error)
       id: vtk_hash
-      run: echo "VTK_HASH=$(git ls-remote https://gitlab.kitware.com/vtk/vtk.git refs/heads/v9.3.0 | cut -f1)" >> $GITHUB_ENV
+      run: |
+        HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v9.3.0 | cut -f1)
+        if [ -z "$HASH" ]; then
+          echo "Failed to retrieve VTK hash. Exiting."
+          exit 1
+        fi
+        echo "VTK_HASH=$HASH" >> $GITHUB_ENV
 
     - name: Cache VTK Build
       uses: actions/cache@v4

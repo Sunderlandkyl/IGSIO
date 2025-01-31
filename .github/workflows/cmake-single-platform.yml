@@ -1,5 +1,3 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
 name: CMake on a single platform
 
 on:
@@ -12,11 +10,24 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
+  # Specify VTK and ITK versions separately
+  VTK_MAJOR: 9
+  VTK_MINOR: 3
+  VTK_PATCH: 0
+
+  ITK_MAJOR: 5
+  ITK_MINOR: 3
+  ITK_PATCH: 0
+
+  # Construct full version strings
+  VTK_VERSION: ${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }}
+  ITK_VERSION: ${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }}
+
+  # Set installation directory
+  INSTALL_DIR: ${{ github.workspace }}/install
+
 jobs:
   build:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-22.04
 
     steps:
@@ -24,20 +35,17 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
-      run: sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     ### CACHE & BUILD VTK ###
-    - name: Get VTK Git Hash (Fail on Error)
+    - name: Get VTK Git Hash
       id: vtk_hash
-      run: |
-        HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v9.3.0 | cut -f1)
-        if [ -z "$HASH" ]; then
-          echo "Failed to retrieve VTK hash. Exiting."
-          exit 1
-        fi
-        echo "VTK_HASH=$HASH" >> $GITHUB_ENV
+      run: echo "VTK_HASH=${{ env.VTK_VERSION }}" >> $GITHUB_ENV
 
     - name: Cache VTK Build
+      id: cache-vtk
       uses: actions/cache@v4
       with:
         path: vtk-build
@@ -45,29 +53,56 @@ jobs:
         restore-keys: |
           vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
-    - name: Clone VTK
-      if: steps.cache.outputs.cache-hit != 'true'
+    - name: Check VTK Cache
       run: |
-        git clone https://gitlab.kitware.com/vtk/vtk.git --branch v9.3.0 --depth 1
-        mkdir -p vtk-build
+        if [ -d "vtk-build" ]; then
+          echo "VTK build found in cache. Skipping clone, configure, and build."
+          echo "CACHE_HIT=true" >> $GITHUB_ENV
+        else
+          echo "VTK not found in cache. Proceeding with clone, configure, and build."
+          echo "CACHE_HIT=false" >> $GITHUB_ENV
+        fi
+
+    - name: Clone VTK
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping VTK clone (cache hit)."
+        else
+          echo "Cloning VTK..."
+          git clone https://gitlab.kitware.com/vtk/vtk.git --branch v${{ env.VTK_VERSION }} --depth 1
+          mkdir -p vtk-build
+        fi
 
     - name: Configure VTK
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: cmake -S vtk -B vtk-build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping VTK configuration (cache hit)."
+        else
+          echo "Configuring VTK..."
+          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF
+        fi
 
     - name: Build VTK
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: cmake --build vtk-build -- -j$(nproc)
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping VTK build (cache hit)."
+        else
+          echo "Building VTK..."
+          cmake --build vtk-build -- -j$(nproc)
+        fi
 
     - name: Install VTK
-      run: sudo cmake --install vtk-build
+      run: |
+        echo "Installing VTK..."
+        cmake --install vtk-build
 
     ### CACHE & BUILD ITK ###
     - name: Get ITK Git Hash
       id: itk_hash
-      run: echo "ITK_HASH=$(git ls-remote https://github.com/InsightSoftwareConsortium/ITK.git refs/heads/master | cut -f1)" >> $GITHUB_ENV
+      run: echo "ITK_HASH=${{ env.ITK_VERSION }}" >> $GITHUB_ENV
 
     - name: Cache ITK Build
+      id: cache-itk
       uses: actions/cache@v4
       with:
         path: itk-build
@@ -75,19 +110,45 @@ jobs:
         restore-keys: |
           itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
-    - name: Clone ITK
-      if: steps.cache.outputs.cache-hit != 'true'
+    - name: Check ITK Cache
       run: |
-        git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch master --depth 1
-        mkdir -p itk-build
+        if [ -d "itk-build" ]; then
+          echo "ITK build found in cache. Skipping clone, configure, and build."
+          echo "CACHE_HIT=true" >> $GITHUB_ENV
+        else
+          echo "ITK not found in cache. Proceeding with clone, configure, and build."
+          echo "CACHE_HIT=false" >> $GITHUB_ENV
+        fi
+
+    - name: Clone ITK
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK clone (cache hit)."
+        else
+          echo "Cloning ITK..."
+          git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_VERSION }} --depth 1
+          mkdir -p itk-build
+        fi
 
     - name: Configure ITK
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: cmake -S ITK -B itk-build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK configuration (cache hit)."
+        else
+          echo "Configuring ITK..."
+          cmake -S ITK -B itk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
+        fi
 
     - name: Build ITK
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: cmake --build itk-build -- -j$(nproc)
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK build (cache hit)."
+        else
+          echo "Building ITK..."
+          cmake --build itk-build -- -j$(nproc)
+        fi
 
     - name: Install ITK
-      run: sudo cmake --install itk-build
+      run: |
+        echo "Installing ITK..."
+        cmake --install itk-build

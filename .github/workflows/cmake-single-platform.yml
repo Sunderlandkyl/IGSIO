@@ -39,12 +39,13 @@ jobs:
     - name: Get VTK Git Hash
       id: vtk_hash
       run: |
-        HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} | cut -f1)
+        HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} | awk '{print $1}')
         if [ -z "$HASH" ]; then
           echo "Failed to retrieve VTK commit hash. Exiting."
           exit 1
         fi
         echo "VTK_HASH=$HASH" >> $GITHUB_ENV
+        echo "VTK commit hash retrieved: $HASH"
 
     - name: Cache VTK Build
       id: cache-vtk
@@ -99,12 +100,14 @@ jobs:
     - name: Get ITK Git Hash
       id: itk_hash
       run: |
-        HASH=$(git ls-remote --tags https://github.com/InsightSoftwareConsortium/ITK.git v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} | cut -f1)
+        echo "Retrieving ITK commit hash..."
+        HASH=$(git ls-remote --tags https://github.com/InsightSoftwareConsortium/ITK.git v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} | awk '{print $1}')
         if [ -z "$HASH" ]; then
           echo "Failed to retrieve ITK commit hash. Exiting."
           exit 1
         fi
         echo "ITK_HASH=$HASH" >> $GITHUB_ENV
+        echo "ITK commit hash retrieved: $HASH"
 
     - name: Cache ITK Build
       id: cache-itk

@@ -53,8 +53,6 @@ jobs:
       with:
         path: vtk-build
         key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}
-        restore-keys: |
-          vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
     - name: Check VTK Cache
       run: |
@@ -115,8 +113,6 @@ jobs:
       with:
         path: itk-build
         key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.ITK_HASH }}
-        restore-keys: |
-          itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
     - name: Check ITK Cache
       run: |

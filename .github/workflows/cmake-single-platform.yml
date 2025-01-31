@@ -19,10 +19,6 @@ env:
   ITK_MINOR: 3
   ITK_PATCH: 0
 
-  # Construct full version strings
-  VTK_VERSION: ${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }}
-  ITK_VERSION: ${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }}
-
   # Set installation directory
   INSTALL_DIR: ${{ github.workspace }}/install
 
@@ -40,6 +36,10 @@ jobs:
         sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     ### CACHE & BUILD VTK ###
+    - name: Set VTK Version
+      run: |
+        echo "VTK_VERSION=${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }}" >> $GITHUB_ENV
+
     - name: Get VTK Git Hash
       id: vtk_hash
       run: echo "VTK_HASH=${{ env.VTK_VERSION }}" >> $GITHUB_ENV
@@ -97,6 +97,10 @@ jobs:
         cmake --install vtk-build
 
     ### CACHE & BUILD ITK ###
+    - name: Set ITK Version
+      run: |
+        echo "ITK_VERSION=${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }}" >> $GITHUB_ENV
+
     - name: Get ITK Git Hash
       id: itk_hash
       run: echo "ITK_HASH=${{ env.ITK_VERSION }}" >> $GITHUB_ENV

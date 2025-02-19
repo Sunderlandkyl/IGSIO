@@ -29,6 +29,10 @@ jobs:
   update_vtk:
     runs-on: ubuntu-22.04
     steps:
+    - name: Install Dependencies
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Get VTK Git Hash
       id: vtk_hash
@@ -96,6 +100,10 @@ jobs:
     # BUILD AND CACHE ITK
     runs-on: ubuntu-22.04
     steps:
+    - name: Install Dependencies
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Get ITK Git Hash
       id: itk_hash
@@ -164,6 +172,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

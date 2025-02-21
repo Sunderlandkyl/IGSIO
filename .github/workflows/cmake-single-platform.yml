@@ -137,7 +137,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          itk
+          ITK
           itk-build
         key: ${{steps.itk_hash.outputs.cache_key}}
 
@@ -166,7 +166,7 @@ jobs:
           echo "Skipping ITK clone (cache hit)."
         else
           echo "Cloning ITK..."
-          git clone https://github.com/InsightSoftwareConsortium/ITK.git itk --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
+          git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
           mkdir -p itk-build
         fi
 
@@ -222,7 +222,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          itk
+          ITK
           itk-build
         key: ${{needs.update_itk.outputs.cache_key}}
 

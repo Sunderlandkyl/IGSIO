@@ -28,6 +28,9 @@ jobs:
   # BUILD AND CACHE VTK
   update_vtk:
     runs-on: ubuntu-22.04
+    outputs:
+      cache_key: ${{steps.gen_output.outputs.cache_key}}
+      git_hash: ${{steps.gen_output.outputs.git_hash}}
     steps:
     - name: Install Dependencies
       run: |
@@ -51,6 +54,7 @@ jobs:
       with:
         path: vtk-build
         key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}
+      run: echo "VTK_KEY=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}" >> $GITHUB_ENV
 
     - name: Check VTK Cache
       run: |
@@ -94,6 +98,8 @@ jobs:
           echo "Installing VTK..."
           cmake --install vtk-build
         fi
+        echo "cache_key=$VTK_KEY" >> "$GITHUB_OUTPUT"
+        echo "git_hash=$VTK_HASH" >> "$GITHUB_OUTPUT"
 
   update_itk:
     ########
@@ -183,17 +189,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: vtk-build
-        key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}
-
-    - name: Check VTK Cache
-      run: |
-        if [ -d "vtk-build" ]; then
-          echo "VTK build found in cache. Skipping clone, configure, and build."
-          echo "CACHE_HIT=true" >> $GITHUB_ENV
-        else
-          echo "VTK not found in cache. Proceeding with clone, configure, and build."
-          echo "CACHE_HIT=false" >> $GITHUB_ENV
-        fi
+        key: ${needs.update_vtk.outputs.cache_key}
 
     - name: Clone VTK
       run: |
@@ -207,16 +203,6 @@ jobs:
       with:
         path: itk-build
         key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.ITK_HASH }}
-
-    - name: Check ITK Cache
-      run: |
-        if [ -d "itk-build" ]; then
-          echo "ITK build found in cache. Skipping clone, configure, and build."
-          echo "CACHE_HIT=true" >> $GITHUB_ENV
-        else
-          echo "ITK not found in cache. Proceeding with clone, configure, and build."
-          echo "CACHE_HIT=false" >> $GITHUB_ENV
-        fi
 
     - name: Clone ITK
       run: |

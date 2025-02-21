@@ -41,10 +41,9 @@ jobs:
           echo "Failed to retrieve VTK commit hash. Exiting."
           exit 1
         fi
-        echo "VTK_HASH=$HASH" >> $GITHUB_ENV
         echo "VTK commit hash retrieved: $HASH"
         echo "cache_key=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-$HASH" >> "$GITHUB_OUTPUT"
-        echo "git_hash=$VTK_HASH" >> "$GITHUB_OUTPUT"
+        echo "git_hash=$HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache VTK Build
       id: cache-vtk
@@ -105,6 +104,10 @@ jobs:
     ########
     # BUILD AND CACHE ITK
     runs-on: ubuntu-22.04
+    outputs:
+      cache_key: ${{steps.itk_hash.outputs.cache_key}}
+      git_hash: ${{steps.itk_hash.outputs.git_hash}}
+
     steps:
     - name: Install Dependencies
       run: |
@@ -120,15 +123,16 @@ jobs:
           echo "Failed to retrieve ITK commit hash. Exiting."
           exit 1
         fi
-        echo "ITK_HASH=$HASH" >> $GITHUB_ENV
         echo "ITK commit hash retrieved: $HASH"
+        echo "cache_key=itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-$HASH" >> "$GITHUB_OUTPUT"
+        echo "git_hash=$HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache ITK Build
       id: cache-itk
       uses: actions/cache@v4
       with:
         path: itk-build
-        key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.ITK_HASH }}
+        key: ${{steps.itk_hash.outputs.cache_key}}
 
     - name: Check ITK Cache
       run: |
@@ -184,19 +188,19 @@ jobs:
         echo "Installing system dependencies..."
         sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
-    - name: Cache VTK Build
+    - name: Restore VTK Cache
       id: cache-vtk
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: vtk-build
-        key: ${needs.update_vtk.outputs.cache_key}
+        key: ${{needs.update_vtk.outputs.cache_key}}
 
-    - name: Cache ITK Build
+    - name: Restore ITK Cache
       id: cache-itk
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: itk-build
-        key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.ITK_HASH }}
+        keys: ${{needs.update_itk.outputs.cache_key}}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

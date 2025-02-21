@@ -29,8 +29,8 @@ jobs:
   update_vtk:
     runs-on: ubuntu-22.04
     outputs:
-      cache_key: ${{steps.gen_output.outputs.cache_key}}
-      git_hash: ${{steps.gen_output.outputs.git_hash}}
+      cache_key: ${{steps.vtk_hash.outputs.cache_key}}
+      git_hash: ${{steps.vtk_hash.outputs.git_hash}}
 
     steps:
     - name: Get VTK Git Hash

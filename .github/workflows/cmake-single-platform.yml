@@ -49,7 +49,9 @@ jobs:
       id: cache-vtk
       uses: actions/cache@v4
       with:
-        path: vtk-build
+        path: |
+          vtk
+          vtk-build
         key: ${{steps.vtk_hash.outputs.cache_key}}
 
     - name: Check VTK Cache
@@ -64,14 +66,22 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        echo "Installing system dependencies..."
-        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping install dependencies (cache hit)."
+        else
+          echo "Installing system dependencies..."
+          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+        fi
 
     - name: Clone VTK
       run: |
-        echo "Cloning VTK..."
-        git clone https://gitlab.kitware.com/vtk/vtk.git --branch v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} --depth 1
-        mkdir -p vtk-build
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping VTK clone (cache hit)."
+        else
+          echo "Cloning VTK..."
+          git clone https://gitlab.kitware.com/vtk/vtk.git --branch v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} --depth 1
+          mkdir -p vtk-build
+        fi
 
     - name: Configure VTK
       run: |
@@ -131,7 +141,9 @@ jobs:
       id: cache-itk
       uses: actions/cache@v4
       with:
-        path: itk-build
+        path: |
+          itk
+          itk-build
         key: ${{steps.itk_hash.outputs.cache_key}}
 
     - name: Check ITK Cache

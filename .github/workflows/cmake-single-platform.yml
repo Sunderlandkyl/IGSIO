@@ -43,7 +43,7 @@ jobs:
         fi
         echo "VTK_HASH=$HASH" >> $GITHUB_ENV
         echo "VTK commit hash retrieved: $HASH"
-        echo "cache_key=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}" >> "$GITHUB_OUTPUT"
+        echo "cache_key=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-$HASH" >> "$GITHUB_OUTPUT"
         echo "git_hash=$VTK_HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache VTK Build
@@ -51,7 +51,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: vtk-build
-        key: ${{steps.update_vtk.outputs.cache_key}}
+        key: ${{steps.vtk_hash.outputs.cache_key}}
 
     - name: Check VTK Cache
       run: |

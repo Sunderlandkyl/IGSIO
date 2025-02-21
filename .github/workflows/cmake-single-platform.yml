@@ -31,12 +31,8 @@ jobs:
     outputs:
       cache_key: ${{steps.gen_output.outputs.cache_key}}
       git_hash: ${{steps.gen_output.outputs.git_hash}}
-    steps:
-    - name: Install Dependencies
-      run: |
-        echo "Installing system dependencies..."
-        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
+    steps:
     - name: Get VTK Git Hash
       id: vtk_hash
       run: |
@@ -48,13 +44,15 @@ jobs:
         echo "VTK_HASH=$HASH" >> $GITHUB_ENV
         echo "VTK commit hash retrieved: $HASH"
         echo "VTK_KEY=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ env.VTK_HASH }}" >> $GITHUB_ENV
+        echo "cache_key=$VTK_KEY" >> "$GITHUB_OUTPUT"
+        echo "git_hash=$VTK_HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache VTK Build
       id: cache-vtk
       uses: actions/cache@v4
       with:
         path: vtk-build
-        key: $VTK_KEY
+        key: ${{steps.update_vtk.outputs.cache_key}}
 
     - name: Check VTK Cache
       run: |
@@ -65,6 +63,11 @@ jobs:
           echo "VTK not found in cache. Proceeding with clone, configure, and build."
           echo "CACHE_HIT=false" >> $GITHUB_ENV
         fi
+
+    - name: Install Dependencies
+      run: |
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Clone VTK
       run: |
@@ -98,8 +101,6 @@ jobs:
           echo "Installing VTK..."
           cmake --install vtk-build
         fi
-        echo "cache_key=$VTK_KEY" >> "$GITHUB_OUTPUT"
-        echo "git_hash=$VTK_HASH" >> "$GITHUB_OUTPUT"
 
   update_itk:
     ########

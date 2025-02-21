@@ -119,11 +119,6 @@ jobs:
       git_hash: ${{steps.itk_hash.outputs.git_hash}}
 
     steps:
-    - name: Install Dependencies
-      run: |
-        echo "Installing system dependencies..."
-        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
-
     - name: Get ITK Git Hash
       id: itk_hash
       run: |
@@ -156,11 +151,24 @@ jobs:
           echo "CACHE_HIT=false" >> $GITHUB_ENV
         fi
 
+    - name: Install Dependencies
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping install dependencies (cache hit)."
+        else
+          echo "Installing system dependencies..."
+          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+        fi
+
     - name: Clone ITK
       run: |
-        echo "Cloning ITK..."
-        git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
-        mkdir -p itk-build
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK clone (cache hit)."
+        else
+          echo "Cloning ITK..."
+          git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
+          mkdir -p itk-build
+        fi
 
     - name: Configure ITK
       run: |

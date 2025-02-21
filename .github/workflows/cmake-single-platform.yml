@@ -166,7 +166,7 @@ jobs:
           echo "Skipping ITK clone (cache hit)."
         else
           echo "Cloning ITK..."
-          git clone https://github.com/InsightSoftwareConsortium/ITK.git --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
+          git clone https://github.com/InsightSoftwareConsortium/ITK.git itk --branch v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} --depth 1
           mkdir -p itk-build
         fi
 

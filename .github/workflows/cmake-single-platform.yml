@@ -204,14 +204,18 @@ jobs:
       id: cache-vtk
       uses: actions/cache/restore@v4
       with:
-        path: vtk-build
+        path: |
+          vtk
+          vtk-build
         key: ${{needs.update_vtk.outputs.cache_key}}
 
     - name: Restore ITK Cache
       id: cache-itk
       uses: actions/cache/restore@v4
       with:
-        path: itk-build
+        path: |
+          itk
+          itk-build
         key: ${{needs.update_itk.outputs.cache_key}}
 
     - name: Configure CMake

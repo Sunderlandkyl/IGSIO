@@ -50,6 +50,7 @@ jobs:
     steps:
     - name: Get VTK Git Hash
       id: vtk_hash
+      shell: bash
       run: |
         HASH=$(git ls-remote --tags https://gitlab.kitware.com/vtk/vtk.git v${{ env.VTK_MAJOR }}.${{ env.VTK_MINOR }}.${{ env.VTK_PATCH }} | awk '{print $1}')
         if [ -z "$HASH" ]; then
@@ -150,6 +151,7 @@ jobs:
     steps:
     - name: Get ITK Git Hash
       id: itk_hash
+      shell: bash
       run: |
         echo "Retrieving ITK commit hash..."
         HASH=$(git ls-remote --tags https://github.com/InsightSoftwareConsortium/ITK.git v${{ env.ITK_MAJOR }}.${{ env.ITK_MINOR }}.${{ env.ITK_PATCH }} | awk '{print $1}')
@@ -247,6 +249,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
+      shell: bash
       run: |
         echo "Installing system dependencies..."
         sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make

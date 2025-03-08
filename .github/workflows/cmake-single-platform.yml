@@ -71,6 +71,7 @@ jobs:
         key: ${{steps.vtk_hash.outputs.cache_key}}
 
     - name: Check VTK Cache
+      shell: bash
       run: |
         if [ -d "vtk-build" ]; then
           echo "VTK build found in cache. Skipping clone, configure, and build."
@@ -81,6 +82,7 @@ jobs:
         fi
 
     - name: Install Dependencies
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping install dependencies (cache hit)."
@@ -90,6 +92,7 @@ jobs:
         fi
 
     - name: Clone VTK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping VTK clone (cache hit)."
@@ -100,6 +103,7 @@ jobs:
         fi
 
     - name: Configure VTK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping VTK configuration (cache hit)."
@@ -109,6 +113,7 @@ jobs:
         fi
 
     - name: Build VTK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping VTK build (cache hit)."
@@ -118,6 +123,7 @@ jobs:
         fi
 
     - name: Install VTK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping VTK install (cache hit)."
@@ -173,6 +179,7 @@ jobs:
         key: ${{steps.itk_hash.outputs.cache_key}}
 
     - name: Check ITK Cache
+      shell: bash
       run: |
         if [ -d "itk-build" ]; then
           echo "ITK build found in cache. Skipping clone, configure, and build."
@@ -183,6 +190,7 @@ jobs:
         fi
 
     - name: Install Dependencies
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping install dependencies (cache hit)."
@@ -192,6 +200,7 @@ jobs:
         fi
 
     - name: Clone ITK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping ITK clone (cache hit)."
@@ -202,6 +211,7 @@ jobs:
         fi
 
     - name: Configure ITK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping ITK configuration (cache hit)."
@@ -211,6 +221,7 @@ jobs:
         fi
 
     - name: Build ITK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping ITK build (cache hit)."
@@ -220,6 +231,7 @@ jobs:
         fi
 
     - name: Install ITK
+      shell: bash
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping ITK install (cache hit)."
@@ -275,6 +287,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      shell: bash
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-build -DITK_DIR=${{github.workspace}}/itk-build -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"
 
@@ -282,4 +295,5 @@ jobs:
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      shell: bash
       run: ctest -C ${{env.BUILD_TYPE}} -D Experimental -DCTEST_SITE="GH Action ${{ runner.os }}"

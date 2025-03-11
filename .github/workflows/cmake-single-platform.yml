@@ -72,12 +72,13 @@ jobs:
 
     - name: Install Dependencies
       shell: bash
+      if: contains(matrix.os, 'ubuntu')
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping install dependencies (cache hit)."
         else
           echo "Installing system dependencies..."
-          # sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
         fi
 
     - name: Clone VTK
@@ -165,12 +166,13 @@ jobs:
 
     - name: Install Dependencies
       shell: bash
+      if: contains(matrix.os, 'ubuntu')
       run: |
         if [ "$CACHE_HIT" == "true" ]; then
           echo "Skipping install dependencies (cache hit)."
         else
           echo "Installing system dependencies..."
-          # sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
+          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
         fi
 
     - name: Clone ITK
@@ -229,6 +231,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
+      if: contains(matrix.os, 'ubuntu')
       shell: bash
       run: |
         echo "Installing system dependencies..."

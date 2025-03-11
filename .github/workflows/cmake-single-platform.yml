@@ -119,17 +119,7 @@ jobs:
           echo "Skipping VTK build (cache hit)."
         else
           echo "Building VTK..."
-          cmake --build vtk-build -- -j$(nproc)
-        fi
-
-    - name: Install VTK
-      shell: bash
-      run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK install (cache hit)."
-        else
-          echo "Installing VTK..."
-          cmake --install vtk-build
+          cmake --build vtk-build
         fi
 
   update_itk:
@@ -227,19 +217,9 @@ jobs:
           echo "Skipping ITK build (cache hit)."
         else
           echo "Building ITK..."
-          cmake --build itk-build -- -j$(nproc)
+          cmake --build itk-build
         fi
 
-    - name: Install ITK
-      shell: bash
-      run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK install (cache hit)."
-        else
-          echo "Installing ITK..."
-          cmake --install itk-build
-        fi
-  
   build:
     needs: [update_vtk, update_itk]
     runs-on: ${{ matrix.os }}

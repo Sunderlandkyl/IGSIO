@@ -87,6 +87,8 @@ jobs:
           echo "Skipping VTK clone (cache hit)."
         else
           echo "Cloning VTK..."
+          mkdir vtk
+          cd vtk
           git init
           git remote add origin https://gitlab.kitware.com/vtk/vtk.git
           git fetch --depth 1 origin $VTK_HASH
@@ -178,6 +180,8 @@ jobs:
           echo "Skipping ITK clone (cache hit)."
         else
           echo "Cloning ITK..."
+          mkdir itk
+          cd itk
           git init
           git remote add origin https://github.com/InsightSoftwareConsortium/ITK.git
           git fetch --depth 1 origin $ITK_HASH

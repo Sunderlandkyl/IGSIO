@@ -114,6 +114,7 @@ jobs:
         else
           echo "Installing VTK..."
           cmake --install vtk-build
+        fi
 
   update_itk:
     ########

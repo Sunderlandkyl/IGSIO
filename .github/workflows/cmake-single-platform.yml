@@ -93,7 +93,7 @@ jobs:
           echo "Skipping VTK configuration (cache hit)."
         else
           echo "Configuring VTK..."
-          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }}/vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
+          cmake -S vtk -B vtk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }}/vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
         fi
 
     - name: Build VTK
@@ -103,7 +103,7 @@ jobs:
           echo "Skipping VTK build (cache hit)."
         else
           echo "Building VTK..."
-          cmake --build vtk-build --parallel 4
+          cmake --build vtk-build --parallel 4 --config Release
         fi
 
     - name: Install VTK

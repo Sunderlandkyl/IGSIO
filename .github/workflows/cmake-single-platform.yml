@@ -103,7 +103,7 @@ jobs:
           echo "Skipping VTK build (cache hit)."
         else
           echo "Building VTK..."
-          cmake --build vtk-build
+          cmake --build vtk-build --parallel 4
         fi
 
     - name: Install VTK
@@ -199,7 +199,7 @@ jobs:
           echo "Skipping ITK build (cache hit)."
         else
           echo "Building ITK..."
-          cmake --build itk-build
+          cmake --build itk-build --parallel 4
         fi
 
   build:

@@ -52,7 +52,7 @@ jobs:
     - name: Check VTK Cache
       shell: bash
       run: |
-        if [ -d "vtk-install" ]; then
+        if [ -d "${{ env.INSTALL_DIR }}/vtk-install" ]; then
           echo "VTK build found in cache. Skipping clone, configure, and build."
           echo "CACHE_HIT=true" >> $GITHUB_ENV
         else

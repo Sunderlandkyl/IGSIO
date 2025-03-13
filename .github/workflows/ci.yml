@@ -185,7 +185,7 @@ jobs:
           echo "Skipping ITK configuration (cache hit)."
         else
           echo "Configuring ITK..."
-          cmake -S ITK -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
+          cmake -S itk -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
         fi
 
     - name: Build ITK

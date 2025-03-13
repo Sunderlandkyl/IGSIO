@@ -93,7 +93,7 @@ jobs:
           echo "Skipping VTK configuration (cache hit)."
         else
           echo "Configuring VTK..."
-          cmake -S vtk -B vtk-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }}/vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
+          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }}/vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
         fi
 
     - name: Build VTK
@@ -103,7 +103,7 @@ jobs:
           echo "Skipping VTK build (cache hit)."
         else
           echo "Building VTK..."
-          cmake --build vtk-build --parallel 4 --config Release
+          cmake --build vtk-build --parallel 4 --config ${{ env.BUILD_TYPE }}
         fi
 
     - name: Install VTK
@@ -240,8 +240,6 @@ jobs:
         key: ${{needs.update_itk.outputs.cache_key}}
 
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       shell: bash
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-build -DITK_DIR=${{github.workspace}}/itk-build -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"

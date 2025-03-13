@@ -16,9 +16,6 @@ env:
   # Specify ITK version
   ITK_HASH: f09334f6c3c8ddfbc032d80261705e5d9fd8a4f6 # v5.3.0
 
-  # Set installation directory
-  INSTALL_DIR: ${{ github.workspace }}/install
-
 jobs:
   ########
   # BUILD AND CACHE VTK
@@ -46,13 +43,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          ${{ env.INSTALL_DIR }}/vtk-install
+          vtk-install
         key: ${{steps.vtk_hash.outputs.cache_key}}
 
     - name: Check VTK Cache
       shell: bash
       run: |
-        if [ -d "${{ env.INSTALL_DIR }}/vtk-install" ]; then
+        if [ -d "vtk-install" ]; then
           echo "VTK build found in cache. Skipping clone, configure, and build."
           echo "CACHE_HIT=true" >> $GITHUB_ENV
         else
@@ -93,7 +90,7 @@ jobs:
           echo "Skipping VTK configuration (cache hit)."
         else
           echo "Configuring VTK..."
-          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }}/vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
+          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
         fi
 
     - name: Build VTK
@@ -141,8 +138,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          ITK
-          itk-build
+          itk-install
         key: ${{steps.itk_hash.outputs.cache_key}}
 
     - name: Check ITK Cache
@@ -189,7 +185,7 @@ jobs:
           echo "Skipping ITK configuration (cache hit)."
         else
           echo "Configuring ITK..."
-          cmake -S ITK -B itk-build -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
+          cmake -S ITK -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DITK_BUILD_TESTING=OFF
         fi
 
     - name: Build ITK
@@ -200,6 +196,16 @@ jobs:
         else
           echo "Building ITK..."
           cmake --build itk-build --parallel 4
+        fi
+
+    - name: Install ITK
+      shell: bash
+      run: |
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "Skipping ITK install (cache hit)."
+        else
+          echo "Installing ITK..."
+          cmake --install itk-build
         fi
 
   build:
@@ -226,8 +232,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          vtk
-          vtk-build
+          vtk-install
         key: ${{needs.update_vtk.outputs.cache_key}}
 
     - name: Restore ITK Cache
@@ -235,14 +240,13 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          ITK
-          itk-build
+          itk-install
         key: ${{needs.update_itk.outputs.cache_key}}
 
     - name: Configure CMake
       shell: bash
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-build -DITK_DIR=${{github.workspace}}/itk-build -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=vtk-install/lib/cmake/vtk -DITK_DIR=itk-install/lib/cmake/itk-5.3 -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"
 
     - name: Build and Test
       working-directory: ${{github.workspace}}/build

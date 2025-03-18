@@ -42,76 +42,45 @@ jobs:
       id: cache-vtk
       uses: actions/cache@v4
       with:
-        path: |
-          vtk-install
+        path: vtk-install
+        lookup-only:
         key: ${{steps.vtk_hash.outputs.cache_key}}
 
-    - name: Check VTK Cache
-      shell: bash
-      run: |
-        if [ -d "vtk-install" ]; then
-          echo "VTK build found in cache. Skipping clone, configure, and build."
-          echo "CACHE_HIT=true" >> $GITHUB_ENV
-        else
-          echo "VTK not found in cache. Proceeding with clone, configure, and build."
-          echo "CACHE_HIT=false" >> $GITHUB_ENV
-        fi
-
     - name: Install Dependencies
+      if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       if: contains(matrix.os, 'ubuntu')
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping install dependencies (cache hit)."
-        else
-          echo "Installing system dependencies..."
-          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
-        fi
+        echo "Installing system dependencies..."
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Clone VTK
+      if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK clone (cache hit)."
-        else
-          echo "Cloning VTK..."
-          mkdir vtk
-          cd vtk
-          git init
-          git remote add origin https://gitlab.kitware.com/vtk/vtk.git
-          git fetch --depth 1 origin $VTK_HASH
-          git checkout FETCH_HEAD
-        fi
+        mkdir vtk
+        cd vtk
+        git init
+        git remote add origin https://gitlab.kitware.com/vtk/vtk.git
+        git fetch --depth 1 origin $VTK_HASH
+        git checkout FETCH_HEAD
 
     - name: Configure VTK
+      if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
-      run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK configuration (cache hit)."
-        else
-          echo "Configuring VTK..."
-          cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
-        fi
+        cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
 
     - name: Build VTK
+      if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK build (cache hit)."
-        else
-          echo "Building VTK..."
-          cmake --build vtk-build --parallel 4 --config ${{ env.BUILD_TYPE }}
-        fi
+        cmake --build vtk-build --parallel 4 --config ${{ env.BUILD_TYPE }}
 
     - name: Install VTK
+      if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping VTK install (cache hit)."
-        else
-          echo "Installing VTK..."
-          cmake --install vtk-build
-        fi
+        cmake --install vtk-build
 
   update_itk:
     ########

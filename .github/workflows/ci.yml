@@ -47,9 +47,8 @@ jobs:
         key: ${{steps.vtk_hash.outputs.cache_key}}
 
     - name: Install Dependencies
-      if: steps.cache-vtk.outputs.cache-hit != 'true'
+      if: contains(matrix.os, 'ubuntu') && steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
-      if: contains(matrix.os, 'ubuntu')
       run: |
         echo "Installing system dependencies..."
         sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make

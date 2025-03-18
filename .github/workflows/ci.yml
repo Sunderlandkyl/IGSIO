@@ -233,7 +233,7 @@ jobs:
       with:
         path: |
           vtk-install
-        key: ${{needs.update_vtk.outputs.cache_key}}
+        key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{needs.update_vtk.outputs.git_hash}}
 
     - name: Restore ITK Cache
       id: cache-itk
@@ -241,7 +241,7 @@ jobs:
       with:
         path: |
           itk-install
-        key: ${{needs.update_itk.outputs.cache_key}}
+        key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{needs.update_itk.outputs.git_hash}}
 
     - name: Configure CMake
       shell: bash

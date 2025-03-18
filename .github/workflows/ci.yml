@@ -247,6 +247,7 @@ jobs:
       working-directory: ${{github.workspace}}
       shell: bash
       run: |
+        ls
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-install/lib/cmake/vtk -DITK_DIR=itk-install/lib/cmake/ITK-5.4 -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"
 
     - name: Build and Test

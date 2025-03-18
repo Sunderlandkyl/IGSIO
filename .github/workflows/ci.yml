@@ -7,9 +7,6 @@ on:
     branches: [ "master" ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
   # Specify VTK version
   VTK_HASH: 6b6b89ee577e6c6a5ee6f5220b9c6a12513c30b4 # v9.4.1
 
@@ -27,16 +24,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
-    outputs:
-      cache_key: ${{steps.vtk_hash.outputs.cache_key}}
-      git_hash: ${{steps.vtk_hash.outputs.git_hash}}
-
-    steps:
-    - name: Set VTK Cache Key
-      id: vtk_hash
-      shell: bash
-      run: |
-        echo "cache_key=vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-$VTK_HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache VTK Build
       id: cache-vtk
@@ -44,7 +31,7 @@ jobs:
       with:
         path: vtk-install
         lookup-only:
-        key: ${{steps.vtk_hash.outputs.cache_key}}
+        key: vtk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.VTK_HASH }}
 
     - name: Install Dependencies
       if: contains(matrix.os, 'ubuntu') && steps.cache-vtk.outputs.cache-hit != 'true'
@@ -68,13 +55,13 @@ jobs:
       if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
+        cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
 
     - name: Build VTK
       if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        cmake --build vtk-build --parallel 4 --config ${{ env.BUILD_TYPE }}
+        cmake --build vtk-build --parallel 4 --config ${{ matrix.build_type }}
 
     - name: Install VTK
       if: steps.cache-vtk.outputs.cache-hit != 'true'
@@ -92,15 +79,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
-    outputs:
-      cache_key: ${{steps.itk_hash.outputs.cache_key}}
-
-    steps:
-    - name: Get ITK Git Hash
-      id: itk_hash
-      shell: bash
-      run: |
-        echo "cache_key=itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-$ITK_HASH" >> "$GITHUB_OUTPUT"
 
     - name: Cache ITK Build
       id: cache-itk
@@ -108,7 +86,7 @@ jobs:
       with:
         path: |
           itk-install
-        key: ${{steps.itk_hash.outputs.cache_key}}
+        key: itk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.ITK_HASH }}
 
     - name: Check ITK Cache
       shell: bash
@@ -154,7 +132,7 @@ jobs:
           echo "Skipping ITK configuration (cache hit)."
         else
           echo "Configuring ITK..."
-          cmake -S itk -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
+          cmake -S itk -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
         fi
 
     - name: Build ITK
@@ -164,7 +142,7 @@ jobs:
           echo "Skipping ITK build (cache hit)."
         else
           echo "Building ITK..."
-          cmake --build itk-build --parallel 4 --config ${{ env.BUILD_TYPE }}
+          cmake --build itk-build --parallel 4 --config ${{ matrix.build_type }}
         fi
 
     - name: Install ITK
@@ -202,7 +180,7 @@ jobs:
       with:
         path: |
           vtk-install
-        key: vtk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{needs.update_vtk.outputs.git_hash}}
+        key: vtk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.VTK_HASH }}
 
     - name: Restore ITK Cache
       id: cache-itk
@@ -210,16 +188,16 @@ jobs:
       with:
         path: |
           itk-install
-        key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{needs.update_itk.outputs.git_hash}}
+        key: itk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.ITK_HASH }}
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}
       run: |
-        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"
+        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ matrix.os }} ${{ matrix.build_type }}"
 
     - name: Build and Test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
-        ctest -C ${{env.BUILD_TYPE}} -D Experimental -DCTEST_SITE="GH Action ${{ runner.os }}"
+        ctest -C ${{ matrix.build_type }} -D Experimental -DCTEST_SITE="GH Action ${{ runner.os }}"

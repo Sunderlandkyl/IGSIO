@@ -14,7 +14,7 @@ env:
   VTK_HASH: 6b6b89ee577e6c6a5ee6f5220b9c6a12513c30b4 # v9.4.1
 
   # Specify ITK version
-  ITK_HASH: 311b7060ef39e371f3cd209ec135284ff5fde735 # v5.4.0
+  ITK_HASH: 016fd31396836319285cf86389f7e330767b2b65 # v5.4.1
 
 jobs:
   ########

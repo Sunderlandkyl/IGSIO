@@ -28,6 +28,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
 
+    steps:
     - name: Cache VTK Build
       id: cache-vtk
       uses: actions/cache@v4
@@ -82,6 +83,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
 
+    steps:
     - name: Cache ITK Build
       id: cache-itk
       uses: actions/cache@v4

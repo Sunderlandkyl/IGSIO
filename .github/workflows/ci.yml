@@ -68,6 +68,7 @@ jobs:
     - name: Configure VTK
       if: steps.cache-vtk.outputs.cache-hit != 'true'
       shell: bash
+      run: |
         cmake -S vtk -B vtk-build -DCMAKE_INSTALL_PREFIX=vtk-install -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=ON -DVTK_BUILD_TESTING=OFF -DVTK_VERSIONED_INSTALL=OFF
 
     - name: Build VTK

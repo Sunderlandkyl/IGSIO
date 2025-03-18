@@ -7,6 +7,9 @@ on:
     branches: [ "master" ]
 
 env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
   # Specify VTK version
   VTK_HASH: 6b6b89ee577e6c6a5ee6f5220b9c6a12513c30b4 # v9.4.1
 

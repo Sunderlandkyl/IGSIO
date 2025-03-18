@@ -30,7 +30,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: vtk-install
-        lookup-only:
+        lookup-only: true
         key: vtk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.VTK_HASH }}
 
     - name: Install Dependencies
@@ -84,76 +84,46 @@ jobs:
       id: cache-itk
       uses: actions/cache@v4
       with:
-        path: |
-          itk-install
+        lookup-only: true
+        path: itk-install
         key: itk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.ITK_HASH }}
 
-    - name: Check ITK Cache
-      shell: bash
-      run: |
-        if [ -d "itk-install" ]; then
-          echo "ITK build found in cache. Skipping clone, configure, and build."
-          echo "CACHE_HIT=true" >> $GITHUB_ENV
-        else
-          echo "ITK not found in cache. Proceeding with clone, configure, and build."
-          echo "CACHE_HIT=false" >> $GITHUB_ENV
-        fi
-
     - name: Install Dependencies
+      if: steps.cache-itk.outputs.cache-hit != 'true'
       shell: bash
       if: contains(matrix.os, 'ubuntu')
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping install dependencies (cache hit)."
-        else
-          echo "Installing system dependencies..."
-          sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
-        fi
+        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Clone ITK
+      if: steps.cache-itk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK clone (cache hit)."
-        else
-          echo "Cloning ITK..."
-          mkdir itk
-          cd itk
-          git init
-          git remote add origin https://github.com/InsightSoftwareConsortium/ITK.git
-          git fetch --depth 1 origin $ITK_HASH
-          git checkout FETCH_HEAD
-        fi
+        echo "Cloning ITK..."
+        mkdir itk
+        cd itk
+        git init
+        git remote add origin https://github.com/InsightSoftwareConsortium/ITK.git
+        git fetch --depth 1 origin $ITK_HASH
+        git checkout FETCH_HEAD
 
     - name: Configure ITK
+      if: steps.cache-itk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK configuration (cache hit)."
-        else
-          echo "Configuring ITK..."
-          cmake -S itk -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
-        fi
+        cmake -S itk -B itk-build -DCMAKE_INSTALL_PREFIX=itk-install -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
 
     - name: Build ITK
+      if: steps.cache-itk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK build (cache hit)."
-        else
-          echo "Building ITK..."
-          cmake --build itk-build --parallel 4 --config ${{ matrix.build_type }}
-        fi
+        cmake --build itk-build --parallel 4 --config ${{ matrix.build_type }}
 
     - name: Install ITK
+      if: steps.cache-itk.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        if [ "$CACHE_HIT" == "true" ]; then
-          echo "Skipping ITK install (cache hit)."
-        else
-          echo "Installing ITK..."
-          cmake --install itk-build
-        fi
+        cmake --install itk-build
 
   build:
     needs: [update_vtk, update_itk]
@@ -178,16 +148,14 @@ jobs:
       id: cache-vtk
       uses: actions/cache/restore@v4
       with:
-        path: |
-          vtk-install
+        path: vtk-install
         key: vtk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.VTK_HASH }}
 
     - name: Restore ITK Cache
       id: cache-itk
       uses: actions/cache/restore@v4
       with:
-        path: |
-          itk-install
+        path: itk-install
         key: itk-${{ runner.os }}-${{ matrix.build_type }}-${{ env.ITK_HASH }}
 
     - name: Configure CMake

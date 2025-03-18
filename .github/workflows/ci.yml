@@ -144,7 +144,7 @@ jobs:
     - name: Check ITK Cache
       shell: bash
       run: |
-        if [ -d "itk-build" ]; then
+        if [ -d "itk-install" ]; then
           echo "ITK build found in cache. Skipping clone, configure, and build."
           echo "CACHE_HIT=true" >> $GITHUB_ENV
         else

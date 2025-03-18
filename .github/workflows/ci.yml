@@ -244,6 +244,7 @@ jobs:
         key: itk-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{needs.update_itk.outputs.git_hash}}
 
     - name: Configure CMake
+      working-directory: ${{github.workspace}}
       shell: bash
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DVTK_DIR=${{github.workspace}}/vtk-install/lib/cmake/vtk -DITK_DIR=itk-install/lib/cmake/ITK-5.4 -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ runner.os }} ${{ env.BUILD_TYPE }}"

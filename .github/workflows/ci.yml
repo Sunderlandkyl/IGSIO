@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "master" ]
   schedule:
-    - cron: "47 13 * * *"
+    - cron: "43 5 * * *" # Run nightly at 5:43 UTC. Picked a time when the load may be lower. https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule
 
 env:
   # Specify VTK version
@@ -130,20 +130,12 @@ jobs:
     needs: [update_vtk, update_itk]
     runs-on: ${{ matrix.os }}
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Dependencies
-      if: contains(matrix.os, 'ubuntu')
-      shell: bash
-      run: |
-        echo "Installing system dependencies..."
-        sudo apt update && sudo apt install -y cmake g++ libgl1-mesa-dev libxt-dev libxrender-dev libxext-dev libglu1-mesa-dev make
 
     - name: Restore VTK Cache
       id: cache-vtk
@@ -162,22 +154,18 @@ jobs:
     - name: Configure CMake
       working-directory: ${{github.workspace}}
       run: |
-        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ matrix.os }} ${{ matrix.build_type }}"
+        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
 
     - name: Experimental Build
       if: ${{ github.event_name != 'schedule' }}
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         ctest -C ${{ matrix.build_type }} -D Experimental -DCTEST_SITE="GH Action ${{ github.event_name}}"
 
     - name: Nightly Build
       if: ${{ github.event_name == 'schedule' }}
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
-        ctest -C ${{ matrix.build_type }} -D Nightly -DCTEST_SITE="GH Action Nightly"
+        ctest -C ${{ matrix.build_type }} -D Nightly
         cd inner-build
-        ctest -C ${{ matrix.build_type }} -D Nightly -DCTEST_SITE="GH Action Nightly -- Inner Build"
+        ctest -C ${{ matrix.build_type }} -D Nightly

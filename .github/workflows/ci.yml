@@ -13,6 +13,8 @@ env:
   VTK_HASH: 6b6b89ee577e6c6a5ee6f5220b9c6a12513c30b4 # v9.4.1
   # Specify ITK version
   ITK_HASH: 898def645183e6a2d3293058ade451ec416c4514 # v5.4.2
+  # IGSIO build options
+  BUILD_OPTIONS: -DIGSIO_BUILD_VOLUMERECONSTRUCTION:ON
 
 jobs:
   ########
@@ -161,7 +163,7 @@ jobs:
     - name: Configure CMake
       working-directory: ${{github.workspace}}
       run: |
-        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
+        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
 
     - name: Experimental Build
       if: ${{ github.event_name != 'schedule' }}

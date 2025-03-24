@@ -164,13 +164,13 @@ jobs:
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
 
     - name: Experimental Build
-      if: ${{ github.event_name != 'schedule' }} && ${{ github.repository == "IGSIO/IGSIO" }}
+      if: ${{ github.event_name != 'schedule' }} && ${{ github.repository == 'IGSIO/IGSIO' }}
       working-directory: ${{github.workspace}}/build
       run: |
         ctest -C ${{ matrix.build_type }} -D Experimental -DCTEST_SITE="GH Action ${{ github.event_name}}"
 
     - name: Nightly Build
-      if: ${{ github.event_name == 'schedule' }} && ${{ github.repository == "IGSIO/IGSIO" }}
+      if: ${{ github.event_name == 'schedule' }} && ${{ github.repository == 'IGSIO/IGSIO' }}
       working-directory: ${{github.workspace}}/build
       run: |
         ctest -C ${{ matrix.build_type }} -D Nightly

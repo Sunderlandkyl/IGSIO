@@ -167,4 +167,5 @@ jobs:
       run: |
         echo "${{github.workspace}}/vtk-install/bin" >> $GITHUB_PATH
         echo "${{github.workspace}}/itk-install/bin" >> $GITHUB_PATH
-        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build --build-and-test -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
+        cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
+        ctest --build-and-test -C Release

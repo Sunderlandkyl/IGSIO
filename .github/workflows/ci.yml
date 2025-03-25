@@ -170,4 +170,5 @@ jobs:
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
         cd ./build
         ctest -C ${{ matrix.build_type }} -D Experimental -V
+        cd ./inner-build
         make test

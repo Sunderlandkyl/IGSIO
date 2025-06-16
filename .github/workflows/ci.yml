@@ -172,28 +172,35 @@ jobs:
       run: |
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
 
-    - name: Copy VTK runtime libraries to IGSIO bin
+    - name: Copy VTK and ITK runtime libraries to IGSIO bin
       shell: bash
       run: |
-        echo "Copying VTK runtime libraries..."
+        echo "Copying VTK and ITK runtime libraries..."
 
         case "${{ runner.os }}" in
           Windows)
-            src_dir="${{ github.workspace }}/vtk-install/bin"
-            dest_dir="${{ github.workspace }}/build/inner-build/bin/${{ matrix.build_type }}"
+            bin_dir="${{ github.workspace }}/build/inner-build/bin/${{ matrix.build_type }}"
+            vtk_lib_dir="${{ github.workspace }}/vtk-install/bin"
+            itk_lib_dir="${{ github.workspace }}/itk-install/bin"
             ;;
           macOS)
-            src_dir="${{ github.workspace }}/vtk-install/lib"
-            dest_dir="${{ github.workspace }}/build/bin"
+            bin_dir="${{ github.workspace }}/build/bin"
+            vtk_lib_dir="${{ github.workspace }}/vtk-install/lib"
+            itk_lib_dir="${{ github.workspace }}/itk-install/lib"
             ;;
           Linux)
-            src_dir="${{ github.workspace }}/vtk-install/lib"
-            dest_dir="${{ github.workspace }}/build/bin"
+            bin_dir="${{ github.workspace }}/build/bin"
+            vtk_lib_dir="${{ github.workspace }}/vtk-install/lib"
+            itk_lib_dir="${{ github.workspace }}/itk-install/lib"
             ;;
         esac
 
-        mkdir -p "$dest_dir"
-        cp -v "$src_dir"/*.{dll,dylib,so} "$dest_dir" 2>/dev/null || true
+        mkdir -p "$bin_dir"
+        echo "Copying VTK libs from $vtk_lib_dir → $bin_dir"
+        cp -v "$vtk_lib_dir"/*.{dll,dylib,so} "$bin_dir" 2>/dev/null || true
+
+        echo "Copying ITK libs from $itk_lib_dir → $bin_dir"
+        cp -v "$itk_lib_dir"/*.{dll,dylib,so} "$bin_dir" 2>/dev/null || true
 
     - name: Experimental Build
       if: ${{ github.event_name != 'schedule' }}

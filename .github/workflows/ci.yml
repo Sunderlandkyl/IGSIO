@@ -172,6 +172,29 @@ jobs:
       run: |
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVTK_DIR='${{github.workspace}}/vtk-install/lib/cmake/vtk' -DITK_DIR='${{github.workspace}}/itk-install/lib/cmake/ITK-5.4' -DIGSIO_SUPERBUILD=ON ${{ env.BUILD_OPTIONS }} -DBUILDNAME="GH Action ${{ matrix.os }} ${{ github.event_name }}"
 
+    - name: Copy VTK runtime libraries to IGSIO bin
+      shell: bash
+      run: |
+        echo "Copying VTK runtime libraries..."
+
+        case "${{ runner.os }}" in
+          Windows)
+            src_dir="${{ github.workspace }}/vtk-install/bin"
+            dest_dir="${{ github.workspace }}/build/inner-build/bin/${{ matrix.build_type }}"
+            ;;
+          macOS)
+            src_dir="${{ github.workspace }}/vtk-install/lib"
+            dest_dir="${{ github.workspace }}/build/bin"
+            ;;
+          Linux)
+            src_dir="${{ github.workspace }}/vtk-install/lib"
+            dest_dir="${{ github.workspace }}/build/bin"
+            ;;
+        esac
+
+        mkdir -p "$dest_dir"
+        cp -v "$src_dir"/*.{dll,dylib,so} "$dest_dir" 2>/dev/null || true
+
     - name: Experimental Build
       if: ${{ github.event_name != 'schedule' }}
       working-directory: ${{github.workspace}}/build

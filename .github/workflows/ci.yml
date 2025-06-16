@@ -184,14 +184,14 @@ jobs:
             itk_lib_dir="${{ github.workspace }}/itk-install/bin"
             ;;
           macOS)
-            bin_dir="${{ github.workspace }}/build/bin"
-            vtk_lib_dir="${{ github.workspace }}/vtk-install/bin"
-            itk_lib_dir="${{ github.workspace }}/itk-install/bin"
+            bin_dir="${{ github.workspace }}/build/lib"
+            vtk_lib_dir="${{ github.workspace }}/vtk-install/lib"
+            itk_lib_dir="${{ github.workspace }}/itk-install/lib"
             ;;
           Linux)
-            bin_dir="${{ github.workspace }}/build/bin"
-            vtk_lib_dir="${{ github.workspace }}/vtk-install/bin"
-            itk_lib_dir="${{ github.workspace }}/itk-install/bin"
+            bin_dir="${{ github.workspace }}/build/lib"
+            vtk_lib_dir="${{ github.workspace }}/vtk-install/lib"
+            itk_lib_dir="${{ github.workspace }}/itk-install/lib"
             ;;
         esac
 

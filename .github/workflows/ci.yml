@@ -179,7 +179,7 @@ jobs:
 
         case "${{ runner.os }}" in
           Windows)
-            bin_dir="${{ github.workspace }}/build/inner-build/bin/${{ matrix.build_type }}"
+            bin_dir="${{ github.workspace }}/build/bin/${{ matrix.build_type }}"
             vtk_lib_dir="${{ github.workspace }}/vtk-install/bin"
             itk_lib_dir="${{ github.workspace }}/itk-install/bin"
             ;;

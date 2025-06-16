@@ -202,7 +202,6 @@ jobs:
         ctest -C ${{ matrix.build_type }} -D Experimental -V
 
     - name: Nightly Build
-      if: ${{ github.event_name == 'schedule' }}
       working-directory: ${{github.workspace}}/build
       run: |
         ctest -C ${{ matrix.build_type }} -D Nightly -V
